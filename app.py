@@ -14,7 +14,7 @@ from docx import Document
 
 @st.cache_resource
 def load_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    return SentenceTransformer("BAAI/bge-large-en-v1.5")
 
 
 model = load_model()
@@ -65,9 +65,21 @@ def extract_text(file):
 
 def calculate_match_score(resume_text, job_text):
 
-    resume_embedding = model.encode([resume_text])
+    resume_embedding = model.encode(
+        [
+            "Represent this resume for retrieval:"
+            +resume_text
+        ],
+        normalize_embeddings=True
+    )
 
-    job_embedding = model.encode([job_text])
+    job_embedding = model.encode(
+        [
+            "Represent this description for matching:"
+            +job_text
+        ],
+        normalize_embeddings=True
+    )
 
     similarity = cosine_similarity(
         resume_embedding,
@@ -157,19 +169,35 @@ Compare the RESUME and JOB DESCRIPTION.
 
 Identify:
 
-1. Resume Skills
-2. Job Description Skills
-3. Missing Skills
+1. Matching Skills
+   (Skills present in both Resume and JD)
+2. Missing Skills
+   (Skills required in JD but absent in Resume)
+3. Match Reason
+   (Professional recruiter-style explanation explaining why this candidate received the match score.)
 
 Return ONLY valid JSON.
+Do not include markdown.
+Do not include explanations.
+Do not include text before or after the JSON.
+Ensure all strings are properly escaped.
 
 Format:
 
 {{
-    "resume_skills": [],
-    "jd_skills": [],
-    "missing_skills": []
+    "matching_skills": [],
+    "missing_skills": [],
+    "match_reason": ""
 }}
+
+Match Reason Rules:
+
+- Use professional recruiter language.
+- Maximum 2 sentences.
+- Explain strengths and skill gaps.
+- Consider matching skills and missing skills.
+- Do not mention percentages.
+- Do not use bullet points.
 
 RESUME:
 
@@ -198,15 +226,19 @@ JOB DESCRIPTION:
         end = result.rfind("}") + 1
 
         json_text = result[start:end]
+        print(json_text)
+
+        print(result)
 
         return json.loads(json_text)
 
-    except Exception:
+    except Exception as e:
+        print("ERROR:", e)
 
         return {
-            "resume_skills": [],
-            "jd_skills": [],
-            "missing_skills": []
+            "matching_skills": [],
+            "missing_skills": [],
+            "match_reason": "Unable to generate match explanation."
         }
 # ==================================================
 # PROCESS SINGLE RESUME
@@ -380,6 +412,10 @@ if resumes and job_description.strip():
         by="Match Score (%)",
         ascending=False
     )
+    
+    top_5_names = ranking_df.head(5)[
+        "Resume Name"
+    ].tolist()
 
     ranking_df.index = range(
         1,
@@ -399,10 +435,13 @@ if resumes and job_description.strip():
     # ==============================================
 
     st.subheader(
-        "🔍 Detailed Candidate Analysis"
+        "⭐ Top 5 Candidate Detailed Analysis"
     )
 
     for resume in resumes:
+
+        if resume.name not in top_5_names:
+            continue
 
         with st.expander(
             f"📄 {resume.name}"
@@ -412,7 +451,13 @@ if resumes and job_description.strip():
                 resume
             )
 
-            score = calculate_match_score(
+            score = ranking_df.loc[
+                ranking_df["Resume Name"]
+                == resume.name,
+                "Match Score (%)"
+            ].values[0]
+
+            skills = analyze_skill_gap(
                 resume_text,
                 job_description
             )
@@ -421,22 +466,18 @@ if resumes and job_description.strip():
                 "Match Score",
                 f"{score}%"
             )
-
-            skills = analyze_skill_gap(
-                resume_text,
-                job_description
+            
+            st.info(
+                skills.get(
+                    "match_reason",
+                    ""
+                )
             )
             
             max_len = max(
                 len(
                     skills.get(
-                        "resume_skills",
-                        []
-                    )
-                ),
-                len(
-                    skills.get(
-                        "jd_skills",
+                        "matching_skills",
                         []
                     )
                 ),
@@ -448,9 +489,9 @@ if resumes and job_description.strip():
                 )
             )
 
-            resume_skills = (
+            matching_skills = (
                 skills.get(
-                    "resume_skills",
+                    "matching_skills",
                     []
                 )
                 + [""] *
@@ -458,24 +499,7 @@ if resumes and job_description.strip():
                     max_len -
                     len(
                         skills.get(
-                            "resume_skills",
-                            []
-                        )
-                    )
-                )
-            )
-
-            jd_skills = (
-                skills.get(
-                    "jd_skills",
-                    []
-                )
-                + [""] *
-                (
-                    max_len -
-                    len(
-                        skills.get(
-                            "jd_skills",
+                            "matching_skills",
                             []
                         )
                     )
@@ -501,9 +525,8 @@ if resumes and job_description.strip():
 
             skill_df = pd.DataFrame(
                 {
-                    "Resume Skills": resume_skills,
-                    "JD Skills": jd_skills,
-                    "Missing Skills": missing_skills
+                    "✅ Matching Skills": matching_skills,
+                    "❌ Missing Skills": missing_skills
                 }
             )
 
