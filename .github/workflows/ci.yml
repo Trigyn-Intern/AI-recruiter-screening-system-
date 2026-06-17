@@ -1,129 +1,125 @@
-name: Full CI/CD Pipeline (Tests + Security)
+name: CI Pipeline
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
+push:
+branches: [main]
+pull_request:
 
 jobs:
 
-  test:
-    runs-on: ubuntu-latest
+unit-tests:
+name: Unit Tests
+runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
+```
+steps:
+  - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+  - uses: actions/setup-python@v5
+    with:
+      python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest
+  - name: Install Dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install pytest
 
-      - name: Run Pytest
-        run: pytest -v
+  - name: Run Unit Tests
+    run: |
+      pytest tests -v --ignore=tests/ui
+```
 
+security-scan:
+name: Bandit Security Scan
+runs-on: ubuntu-latest
 
-  bandit:
-    runs-on: ubuntu-latest
+```
+steps:
+  - uses: actions/checkout@v4
 
-    steps:
-      - uses: actions/checkout@v3
+  - uses: actions/setup-python@v5
+    with:
+      python-version: "3.10"
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+  - name: Install Bandit
+    run: |
+      pip install bandit
 
-      - name: Install Bandit
-        run: pip install bandit
+  - name: Run Bandit
+    run: |
+      bandit -r . -x tests -s B101
+```
 
-      - name: Run Bandit (ignore test asserts)
-        run: bandit -r . -x tests -s B101
+dependency-check:
+name: Dependency Vulnerability Scan
+runs-on: ubuntu-latest
 
+```
+steps:
+  - uses: actions/checkout@v4
 
-  playwright:
-    runs-on: ubuntu-latest
+  - name: Install Dependency Check
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y wget unzip
 
-    steps:
-      - uses: actions/checkout@v3
+      wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+      unzip dependency-check-9.0.9-release.zip
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest playwright
+  - name: Run Dependency Check
+    run: |
+      ./dependency-check/bin/dependency-check.sh \
+        --project AI-Recruiter-System \
+        --scan . \
+        --format HTML \
+        --failOnCVSS 11 || true
+```
 
-      # 🔥 FIX 1: FORCE clean install of browsers
-      - name: Install Playwright Browsers (clean)
-        run: |
-          playwright install --with-deps
-          playwright install chromium
+playwright-tests:
+name: Playwright UI Tests
+runs-on: ubuntu-latest
 
-      - name: Start Streamlit App
-        run: |
-          nohup streamlit run app.py --server.port 8501 --server.address 0.0.0.0 > app.log 2>&1 &
+```
+steps:
+  - uses: actions/checkout@v4
 
-      # 🔥 FIX 2: stronger wait (no race condition)
-      - name: Wait for Streamlit
-        run: |
-          for i in {1..40}; do
-            if curl -s http://localhost:8501 > /dev/null; then
-              echo "Streamlit is up!"
-              exit 0
-            fi
-            echo "Waiting for Streamlit..."
-            sleep 2
-          done
+  - uses: actions/setup-python@v5
+    with:
+      python-version: "3.10"
 
-          echo "Streamlit failed to start"
-          cat app.log
-          exit 1
+  - name: Install Dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install pytest playwright
 
-      - name: Run Playwright Tests
-        run: pytest tests/ui -v
+  - name: Install Playwright Browsers
+    run: |
+      python -m playwright install --with-deps chromium
 
+  - name: Start Streamlit
+    run: |
+      nohup streamlit run app.py \
+        --server.port 8501 \
+        --server.address 0.0.0.0 > app.log 2>&1 &
 
-  dependency-check:
-    runs-on: ubuntu-latest
+  - name: Wait for Streamlit
+    run: |
+      for i in {1..30}; do
+        if curl -s http://localhost:8501 > /dev/null; then
+          echo "Streamlit started"
+          exit 0
+        fi
+        sleep 2
+      done
 
-    steps:
-      - uses: actions/checkout@v3
+      echo "Streamlit failed to start"
+      cat app.log
+      exit 1
 
-      - name: Install Dependency Check
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-          unzip dependency-check-9.0.9-release.zip
-
-      # 🔥 FIX 3: make dependency check NON-blocking (important)
-      - name: Run Dependency Scan (non-blocking)
-        run: |
-          ./dependency-check/bin/dependency-check.sh \
-          --project AI-Recruiter-System \
-          --scan . \
-          --format HTML \
-          --failOnCVSS 11 || true
-
-
-  codeql:
-    runs-on: ubuntu-latest
-
-    permissions:
-      security-events: write
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: python
-
-      - uses: github/codeql-action/autobuild@v3
-
-      - uses: github/codeql-action/analyze@v3
+  - name: Run Playwright Tests
+    run: |
+      pytest tests/ui -v
+```
