@@ -1,4 +1,4 @@
-import hashlib
+import os
 
-def generate_password_hash(password):
-    return hashlib.md5(password.encode()).hexdigest()
+def list_files(user_input):
+    os.system("dir " + user_input)
