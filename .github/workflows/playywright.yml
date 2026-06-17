@@ -1,0 +1,23 @@
+name: Playwright Tests
+
+on: [push, pull_request]
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest playwright
+          playwright install
+
+      - name: Run UI tests
+        run: pytest tests/ui
