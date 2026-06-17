@@ -11,9 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
@@ -22,7 +24,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run tests
+      - name: Run Pytest
         run: pytest -v
 
 
@@ -30,16 +32,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
       - name: Install Bandit
         run: pip install bandit
 
-      - name: Run Bandit (ignore test asserts)
+      # FIX: ignore assert warnings in tests (B101)
+      - name: Run Bandit Scan
         run: bandit -r . -x tests -s B101
 
 
@@ -47,9 +52,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
@@ -58,14 +65,28 @@ jobs:
           pip install -r requirements.txt
           pip install pytest playwright
 
-      # FIX 1: Install browsers explicitly
+      # FIX 1: install browsers separately (IMPORTANT)
       - name: Install Playwright Browsers
         run: playwright install --with-deps
 
       - name: Start Streamlit App
         run: |
           nohup streamlit run app.py --server.port 8501 --server.address 0.0.0.0 > app.log 2>&1 &
-          sleep 15
+
+      - name: Wait for Streamlit
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8501 > /dev/null; then
+              echo "Streamlit is up!"
+              exit 0
+            fi
+            echo "Waiting for Streamlit..."
+            sleep 2
+          done
+
+          echo "Streamlit failed to start"
+          cat app.log
+          exit 1
 
       - name: Run Playwright Tests
         run: pytest tests/ui -v
@@ -75,7 +96,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Install Dependency Check
         run: |
@@ -84,8 +106,7 @@ jobs:
           wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
           unzip dependency-check-9.0.9-release.zip
 
-      # FIX 2: Prevent NVD crash (safe mode)
-      - name: Run Dependency Scan (safe mode)
+      - name: Run Dependency Scan
         run: |
           ./dependency-check/bin/dependency-check.sh \
           --project AI-Recruiter-System \
