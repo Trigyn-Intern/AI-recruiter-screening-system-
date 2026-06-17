@@ -5,18 +5,24 @@ def test_resume_upload():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
 
-        page.goto("http://localhost:8501")
+        # wait longer for CI stability
+        page.goto("http://localhost:8501", timeout=60000)
 
-        # wait for file input properly
-        page.wait_for_selector("input[type='file']")
+        page.wait_for_selector("input[type='file']", timeout=60000)
 
-        # correct file upload
         page.locator("input[type='file']").set_input_files(
             "tests/data/sample_resume.pdf"
         )
 
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(5000)
 
-        assert page.content() is not None
+        content = page.content().lower()
+
+        assert (
+            "analysis" in content
+            or "score" in content
+            or "rank" in content
+            or "candidate" in content
+        )
 
         browser.close()
