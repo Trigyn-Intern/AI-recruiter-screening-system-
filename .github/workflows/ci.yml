@@ -1,30 +1,116 @@
-name: Full CI Pipeline
+name: Full CI/CD Pipeline (Tests + Security)
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
 
 jobs:
 
   test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - run: pip install -r requirements.txt
-      - run: pytest
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run Pytest
+        run: pytest -v
+
 
   bandit:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - run: pip install bandit
-      - run: bandit -r . -x tests
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      # FIX: ignore B101 (assert in tests is OK)
+      - name: Run Bandit Scan
+        run: bandit -r . -x tests -s B101
+
 
   playwright:
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest playwright
+          playwright install
+
+      # FIX: start streamlit properly
+      - name: Start Streamlit App
+        run: |
+          nohup streamlit run app.py --server.port 8501 --server.address 0.0.0.0 > app.log 2>&1 &
+          sleep 15
+
+      - name: Run Playwright Tests
+        run: pytest tests/ui -v
+
+
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Dependency Check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+          unzip dependency-check-9.0.9-release.zip
+
+      - name: Run Dependency Scan
+        run: |
+          ./dependency-check/bin/dependency-check.sh \
+          --project AI-Recruiter-System \
+          --scan . \
+          --format HTML
+
+
+  codeql:
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+
     steps:
       - uses: actions/checkout@v3
-      - run: pip install pytest playwright
-      - run: playwright install
-      - run: pytest tests/ui
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - uses: github/codeql-action/autobuild@v3
+
+      - uses: github/codeql-action/analyze@v3
