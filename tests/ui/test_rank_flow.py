@@ -1,17 +1,17 @@
-from playwright.sync_api import sync_playwright
 
-def test_ranking_flow():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
 
-        page.goto("http://localhost:8501")
+def test_ranking_flow(page):
+    page.goto("http://localhost:8501", timeout=60000)
 
-        page.fill("textarea", "Data Science role")
-        page.set_input_files("input[type='file']", "tests/data/sample_resume.pdf")
+    page.fill("textarea", "Data Science role")
 
-        page.wait_for_timeout(3000)
+    page.set_input_files(
+        "input[type='file']",
+        "tests/data/sample_resume.pdf"
+    )
 
-        assert "Rank" in page.content() or "Score" in page.content()
+    page.wait_for_timeout(3000)
 
-        browser.close()
+    content = page.content()
+
+    assert "Rank" in content or "Score" in content
