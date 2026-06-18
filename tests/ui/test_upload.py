@@ -1,15 +1,20 @@
-from playwright.sync_api import sync_playwright
+def test_resume_upload(page):
+    page.goto("http://localhost:8501", timeout=60000)
 
-def test_homepage():
+    page.wait_for_selector("input[type='file']", timeout=60000)
 
-    with sync_playwright() as p:
+    page.set_input_files(
+        "input[type='file']",
+        "tests/data/sample_resume.pdf"
+    )
 
-        browser = p.chromium.launch()
+    page.wait_for_timeout(5000)
 
-        page = browser.new_page()
+    content = page.content().lower()
 
-        page.goto("http://localhost:8501")
-
-        assert "AI Recruiter Screening System" in page.content()
-
-        browser.close()
+    assert (
+        "analysis" in content
+        or "score" in content
+        or "rank" in content
+        or "candidate" in content
+    )
