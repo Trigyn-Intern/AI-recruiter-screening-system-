@@ -1,0 +1,12 @@
+We are hiring a Python Developer with strong Machine Learning experience.
+Responsibilities:
+- Build ML pipelines using Python and scikit-learn.
+- Deploy FastAPI services for model inference.
+- Work with SQL and data engineering teams.
+Requirements:
+- 3+ years Python development.
+- Hands-on with ML, NLP, and LLM integrations.
+- Experience with Docker and cloud deployments.
+Nice to have:
+- Experience with vector databases (FAISS, ChromaDB).
+- Familiarity with Streamlit or similar dashboards.
