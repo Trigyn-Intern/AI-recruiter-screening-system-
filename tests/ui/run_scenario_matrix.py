@@ -233,7 +233,8 @@ def kill_listeners(port: int) -> None:
             try:
                 os.kill(pid, signal.SIGTERM)
             except OSError:
-                pass
+                # Best-effort cleanup: PID may have exited already or be inaccessible.
+                continue
     # Give the OS a moment to release the port.
     for _ in range(20):
         if not port_in_use(port):
