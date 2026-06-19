@@ -1,0 +1,9 @@
+Frontend Engineer (React).
+We are looking for a React developer to build recruiter dashboards.
+Requirements:
+- 3+ years React and TypeScript.
+- Strong CSS, HTML, and accessibility skills.
+- Experience with REST and GraphQL APIs.
+Nice to have:
+- Streamlit, Plotly, or data visualization libraries.
+- UX design sense.

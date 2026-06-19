@@ -10,6 +10,7 @@ venv/
 # Streamlit logs
 streamlit.log
 streamlit.err.log
+streamlit.out.log
 
 # Distribution / packaging
 build/
@@ -22,3 +23,9 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local security / Playwright / pytest outputs
+test-results/
+tests/ui/screenshots/
+.pytest_cache/
+.bandit/
