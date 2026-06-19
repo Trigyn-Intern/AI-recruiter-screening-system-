@@ -1,35 +1,3 @@
-"""Single parameterized Playwright test that drives every scenario.
-
-This is the file the manager asked for: one test, but each (model, JD,
-resumes) combination defined in ``tests/data/scenarios.yaml`` runs as its
-own parameterized case. The pytest IDs come from the scenario `id` field,
-so a run looks like:
-
-    tests/ui/test_scenario_matrix.py::test_recruiter_scenario[python_ml_llama32]
-
-Each case:
-  1. Opens the Streamlit app (Resume Analyzer tab is active by default).
-  2. Switches to the Configurations tab and ensures the scenario's Ollama
-     model is selected (skips the popup if the right one is already chosen).
-  3. Switches back to the Resume Analyzer tab.
-  4. Uploads every resume listed for the scenario.
-  5. Pastes the JD text from the scenario's ``jd_file`` and commits it
-     with Ctrl+Enter (Streamlit text-areas only re-run on that key).
-  6. Waits for the ranking dashboard and reads the top score from the
-     Glide data grid.
-  7. Optionally asserts a minimum top score and an expected top-1 resume.
-  8. Saves a screenshot tagged with the scenario id.
-
-Streamlit UI notes (verified against Streamlit 1.58):
-  - ``st.tabs`` -> ``[role=tab]``
-  - ``st.selectbox`` -> ``[data-testid=stSelectbox]`` with a hidden
-    ``<input role=combobox>`` (BaseWeb). The dropdown options render in a
-    BaseWeb virtualized list as ``<li role=option>``.
-  - ``st.file_uploader`` -> ``[data-testid=stFileUploader] input[type=file]``
-  - ``st.dataframe`` -> ``[data-testid=stDataFrame]`` whose body is a
-    Glide data grid; cells are ``[data-testid=glide-cell-{col}-{row}]``.
-"""
-
 from __future__ import annotations
 
 import re
