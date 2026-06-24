@@ -1,0 +1,81 @@
+.dashboard-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fb;
+}
+
+.dashboard-header {
+  background: #ffffff;
+  border-bottom: 1px solid #dce2eb;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.dashboard-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1f5eff, #4f8bff);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.dashboard-brand h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.dashboard-brand p {
+  margin: 0;
+  font-size: 12px;
+  color: #617089;
+}
+
+.dashboard-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #3c4960;
+}
+
+.dashboard-user strong {
+  font-size: 14px;
+  color: #172033;
+}
+
+.logout-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: #eef3fb;
+  color: #26364f;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #dde7f6;
+}
