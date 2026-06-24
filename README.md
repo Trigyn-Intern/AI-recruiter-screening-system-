@@ -6,10 +6,13 @@ The AI Recruiter Screening System is an intelligent resume screening application
 
 The application extracts information from resumes, analyzes job descriptions, calculates resume-job match scores, performs skill gap analysis, and generates candidate rankings to assist recruiters in making faster and more informed hiring decisions.
 
+A modern React + FastAPI frontend replaces the legacy Streamlit UI and adds a recruiter authentication screen.
+
 ---
 
 ## Features
 
+* Secure recruiter login and signup flow (default demo credentials shown on the login screen)
 * Upload and analyze multiple resumes simultaneously
 * Supports PDF and Word document resumes
 * AI-powered Job Description analysis
@@ -22,8 +25,10 @@ The application extracts information from resumes, analyzes job descriptions, ca
   * Moderate Fit
   * Bad Fit
 * Detailed resume-level analysis
-* Local AI processing using Ollama and Llama 3.2
-* Interactive web interface built with Streamlit
+* Configurable AI provider (Ollama or Gemini) and model
+* Editable prompt templates for JD analysis, skill gap, candidate detail, and resume skill extraction
+* Local AI processing using Ollama and Llama 3.2 (with Gemini as an alternative)
+* Interactive web interface built with React, Vite, and FastAPI
 
 ---
 
@@ -31,43 +36,57 @@ The application extracts information from resumes, analyzes job descriptions, ca
 
 ### Frontend
 
-* Streamlit
+* React 18
+* Vite
+* React Router
+* lucide-react icons
+* Plain CSS (Outfit font, glassmorphism auth screen)
 
 ### Backend
 
-* Python
+* Python 3.10+
+* FastAPI
+* Uvicorn
 
 ### Artificial Intelligence & NLP
 
-* Ollama
-* Llama 3.2
+* Ollama (Llama 3.2 by default)
+* Google Gemini (optional)
 * Sentence Transformers
 * Cosine Similarity
+* FAISS (vector store)
 
 ### Libraries
 
-* PyPDF2
+* pypdf
+* python-docx
 * Pandas
 * Scikit-Learn
 * Sentence Transformers
 * Ollama Python Library
-* python-docx
+* google-genai
+* jsonschema
+* pytest, pytest-playwright, bandit (testing and security)
 
 ---
 
 ## System Architecture
 
-Resume Upload
+Recruiter Login
 ↓
-Text Extraction
+React Frontend (Vite, React Router)
 ↓
-Embedding Generation
+FastAPI Backend (`api.py`)
+↓
+Resume Text Extraction (pypdf / python-docx)
+↓
+Embedding Generation (Sentence Transformers + FAISS)
 ↓
 Semantic Similarity Calculation
 ↓
 Match Score Generation
 ↓
-Skill Gap Analysis using Llama 3.2
+Skill Gap Analysis using Llama 3.2 / Gemini
 ↓
 Candidate Ranking
 ↓
@@ -78,6 +97,17 @@ Recruiter Dashboard
 ## Prerequisites
 
 Before running the application, ensure the following software is installed:
+
+### Node.js (for the React frontend)
+
+Install Node.js 18 or above.
+
+Verify installation:
+
+```bash
+node --version
+npm --version
+```
 
 ### Python
 
@@ -117,10 +147,12 @@ ollama pull llama3.2
 
 ```bash
 git clone <repository-url>
-cd resume-analyzer
+cd AI-recruiter-screening-system-
 ```
 
-### Create Virtual Environment
+### Backend Setup
+
+Create a virtual environment:
 
 ```bash
 python -m venv venv
@@ -140,65 +172,76 @@ Mac/Linux:
 source venv/bin/activate
 ```
 
-### Install Dependencies
+Install backend dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If requirements.txt is unavailable:
+### Frontend Setup
 
 ```bash
-pip install streamlit
-pip install PyPDF2
-pip install pandas
-pip install scikit-learn
-pip install sentence-transformers
-pip install ollama
-pip install python-docx
+cd frontend
+npm install
 ```
 
 ---
 
 ## Running the Application
 
-Start Ollama:
+Start Ollama in one terminal:
 
 ```bash
 ollama serve
 ```
 
-Open a new terminal and activate the virtual environment.
-
-Run the Streamlit application:
+Start the FastAPI backend in another terminal (with the virtual environment activated):
 
 ```bash
-streamlit run app.py
+uvicorn api:app --reload --port 8000
 ```
 
-The application will open automatically in your browser.
+Start the React frontend in a third terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The web app will open automatically in your browser.
 
 Default URL:
 
 ```text
-http://localhost:8501
+http://localhost:5173/
+```
+
+The FastAPI backend listens on:
+
+```text
+http://127.0.0.1:8000
 ```
 
 ---
 
 ## How to Use
 
-1. Launch the application.
-2. Upload one or more resumes.
-3. Paste the Job Description.
-4. Wait for the system to analyze the JD.
-5. View:
+1. Launch Ollama, the FastAPI backend, and the React frontend.
+2. Open `http://localhost:5173/` and sign in with the demo credentials shown on the login screen.
+3. Upload one or more resumes (PDF or DOCX).
+4. Paste the Job Description.
+5. Pick the AI provider and model (defaults are preconfigured).
+6. Click **Analyze** and wait for the system to evaluate the JD.
+7. View:
 
    * Match Scores
    * Candidate Rankings
    * Skill Gap Analysis
    * Candidate Categorization
-6. Expand individual candidates to view detailed analysis.
+8. Switch to the **Configurations** tab to edit prompts or reset them to the defaults.
+9. Use the **Logout** button in the header to return to the login screen.
+
+New users can click **Sign up** on the login screen to create an account; the form validates the username, email, and matching passwords before returning to the login page.
 
 ---
 
@@ -217,13 +260,15 @@ Purpose:
 * Generate text embeddings
 * Resume-JD semantic matching
 * Match score calculation
+* FAISS-backed vector retrieval
 
-### 2. Llama 3.2
+### 2. Llama 3.2 (Ollama) and Gemini
 
-Model:
+Models:
 
 ```text
 llama3.2
+gemini-2.5-flash
 ```
 
 Purpose:
@@ -237,7 +282,8 @@ Purpose:
 
 ## Future Enhancements
 
-* Vector Database Integration (FAISS / ChromaDB)
+* Persistent recruiter accounts (currently a local demo login)
+* Vector Database tuning (FAISS / ChromaDB)
 * BGE Large Embedding Models
 * Cross Encoder Re-ranking
 * Parallel Resume Processing
@@ -245,7 +291,7 @@ Purpose:
 * Interview Question Generation
 * Resume Summarization
 * Cloud Deployment
-* Recruiter Login and Authentication
+* Role-based access control for recruiters and hiring managers
 
 ---
 
@@ -253,33 +299,61 @@ Purpose:
 
 Implemented:
 
-* Cached embedding model loading using Streamlit cache
+* Cached embedding model loading
+* FAISS vector store for resumable candidate profiles
 * On-demand AI analysis for resume details
 * Single JD analysis for multiple resumes
 
 Planned:
 
 * Parallel processing using ThreadPoolExecutor
-* Vector search-based retrieval
-* Embedding storage for reusable candidate profiles
+* Embedding storage versioning for reusable candidate profiles
+* Server-side recruiter session management
 
 ---
 
 ## Project Structure
 
 ```text
-resume-analyzer/
+AI-recruiter-screening-system-/
 │
-├── app.py
+├── api.py
+├── backend.py
+├── app.py                    # Legacy Streamlit entry point kept for reference
 ├── requirements.txt
 ├── README.md
-├── resumes/
+├── tests/
+│   ├── test_extraction.py
+│   ├── test_json.py
+│   ├── test_ollama.py
+│   ├── test_scoring.py
+│   ├── test_validation.py
+│   └── ui/                  # Playwright end-to-end tests
 │
-└── venv/
+└── frontend/
+    ├── index.html
+    ├── package.json
+    └── src/
+        ├── main.jsx          # React Router entry (login, signup, dashboard)
+        ├── App.jsx           # Analyzer + Configurations dashboard
+        ├── defaultModels.js
+        ├── defaultPrompts.js
+        ├── styles.css
+        ├── assets/
+        │   └── monstera_bg.png
+        └── pages/
+            ├── RequireAuth.jsx
+            ├── auth/
+            │   ├── Login.jsx
+            │   ├── Signup.jsx
+            │   └── auth.css
+            └── dashboard/
+                ├── Dashboard.jsx
+                └── dashboard.css
 ```
 
 ---
 
 ## Authors
 
-Developed as an AI-powered Resume Screening and Candidate Ranking System using Streamlit, Sentence Transformers, Ollama, and Llama 3.2.
+Developed as an AI-powered Resume Screening and Candidate Ranking System using React, FastAPI, Sentence Transformers, Ollama, Llama 3.2, and Google Gemini.
