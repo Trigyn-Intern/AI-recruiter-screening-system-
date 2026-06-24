@@ -11,6 +11,16 @@ venv/
 streamlit.log
 streamlit.err.log
 
+# Runtime resume vector and skill caches
+vector_store/
+
+# Accidental nested clone
+AI-recruiter-screening-system-/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
 # Distribution / packaging
 build/
 dist/
