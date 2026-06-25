@@ -1,23 +1,28 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import request from "../../api/client";
 import "./auth.css";
 
 function Signup() {
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  async function handleSignup(e) {
     e.preventDefault();
     setError("");
 
-    if (!username.trim()) {
-      setError("Username is required.");
+    const trimmedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName) {
+      setError("Name is required.");
       return;
     }
 
@@ -26,8 +31,27 @@ function Signup() {
       return;
     }
 
-    navigate("/");
-  };
+    setIsSubmitting(true);
+    try {
+      await request("/api/auth/signup", {
+        method: "POST",
+        body: {
+          name: trimmedName,
+          email: normalizedEmail,
+          password,
+          confirmPassword,
+        },
+      });
+
+      navigate("/", {
+        state: { signupNotice: "Account created. Please sign in." },
+      });
+    } catch (requestError) {
+      setError(requestError.message || "Could not create the account.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="auth-page">
@@ -39,9 +63,10 @@ function Signup() {
           <div className="form-group">
             <input
               type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
               required
             />
           </div>
@@ -52,6 +77,7 @@ function Signup() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               required
             />
           </div>
@@ -63,6 +89,7 @@ function Signup() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
               <button
@@ -82,14 +109,16 @@ function Signup() {
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
               required
             />
           </div>
 
           {error && <p className="login-error">{error}</p>}
 
-          <button type="submit" className="main-btn">
-            Create account
+          <button type="submit" className="main-btn" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="spin" size={18} /> : null}
+            {isSubmitting ? "Creating account..." : "Create account"}
           </button>
         </form>
 
