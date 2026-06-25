@@ -1,33 +1,52 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import request, {
+  AUTH_TOKEN_KEY,
+  AUTH_USER_KEY,
+  storeSession,
+} from "../../api/client";
 import "./auth.css";
-
-const DEFAULT_EMAIL = "admin@gmail.com";
-const DEFAULT_PASSWORD = "admin123";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
     setError("");
 
-    const okEmail = email.trim().toLowerCase() === DEFAULT_EMAIL;
-    const okPassword = password === DEFAULT_PASSWORD;
-
-    if (!okEmail || !okPassword) {
-      setError("Invalid email or password.");
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) {
+      setError("Please enter both email and password.");
       return;
     }
 
-    localStorage.setItem("recruiter.auth", "true");
-    navigate("/dashboard");
-  };
+    setIsSubmitting(true);
+    try {
+      const data = await request("/api/auth/login", {
+        method: "POST",
+        body: { email: trimmedEmail, password },
+      });
+
+      if (!data || !data.token) {
+        throw new Error("Login response was missing a token.");
+      }
+
+      storeSession(data.token, data.user);
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user || {}));
+      navigate("/dashboard");
+    } catch (requestError) {
+      setError(requestError.message || "Invalid email or password.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="auth-page">
@@ -42,6 +61,7 @@ function Login() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               required
             />
           </div>
@@ -53,6 +73,7 @@ function Login() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
               <button
@@ -74,12 +95,13 @@ function Login() {
             </a>
           </div>
 
-          <button type="submit" className="main-btn">
-            Login
+          <button type="submit" className="main-btn" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="spin" size={18} /> : null}
+            {isSubmitting ? "Signing in..." : "Login"}
           </button>
 
           <p className="login-hint">
-            Use <code>admin@gmail.com</code> / <code>admin123</code>
+            Need an account? <Link to="/signup">Create one</Link>
           </p>
         </form>
 
