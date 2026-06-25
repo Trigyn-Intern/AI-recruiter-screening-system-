@@ -1,4 +1,4 @@
-# AI Recruiter Screening System
+﻿# AI Recruiter Screening System
 
 ## Overview
 
@@ -73,23 +73,23 @@ A modern React + FastAPI frontend replaces the legacy Streamlit UI and adds a re
 ## System Architecture
 
 Recruiter Login
-↓
+â†“
 React Frontend (Vite, React Router)
-↓
+â†“
 FastAPI Backend (`api.py`)
-↓
+â†“
 Resume Text Extraction (pypdf / python-docx)
-↓
+â†“
 Embedding Generation (Sentence Transformers + FAISS)
-↓
+â†“
 Semantic Similarity Calculation
-↓
+â†“
 Match Score Generation
-↓
+â†“
 Skill Gap Analysis using Llama 3.2 / Gemini
-↓
+â†“
 Candidate Ranking
-↓
+â†“
 Recruiter Dashboard
 
 ---
@@ -316,40 +316,40 @@ Planned:
 
 ```text
 AI-recruiter-screening-system-/
-│
-├── api.py
-├── backend.py
-├── app.py                    # Legacy Streamlit entry point kept for reference
-├── requirements.txt
-├── README.md
-├── tests/
-│   ├── test_extraction.py
-│   ├── test_json.py
-│   ├── test_ollama.py
-│   ├── test_scoring.py
-│   ├── test_validation.py
-│   └── ui/                  # Playwright end-to-end tests
-│
-└── frontend/
-    ├── index.html
-    ├── package.json
-    └── src/
-        ├── main.jsx          # React Router entry (login, signup, dashboard)
-        ├── App.jsx           # Analyzer + Configurations dashboard
-        ├── defaultModels.js
-        ├── defaultPrompts.js
-        ├── styles.css
-        ├── assets/
-        │   └── monstera_bg.png
-        └── pages/
-            ├── RequireAuth.jsx
-            ├── auth/
-            │   ├── Login.jsx
-            │   ├── Signup.jsx
-            │   └── auth.css
-            └── dashboard/
-                ├── Dashboard.jsx
-                └── dashboard.css
+â”‚
+â”œâ”€â”€ api.py
+â”œâ”€â”€ backend.py
+â”œâ”€â”€ app.py                    # Legacy Streamlit entry point kept for reference
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ README.md
+â”œâ”€â”€ tests/
+â”‚   â”œâ”€â”€ test_extraction.py
+â”‚   â”œâ”€â”€ test_json.py
+â”‚   â”œâ”€â”€ test_ollama.py
+â”‚   â”œâ”€â”€ test_scoring.py
+â”‚   â”œâ”€â”€ test_validation.py
+â”‚   â””â”€â”€ ui/                  # Playwright end-to-end tests
+â”‚
+â””â”€â”€ frontend/
+    â”œâ”€â”€ index.html
+    â”œâ”€â”€ package.json
+    â””â”€â”€ src/
+        â”œâ”€â”€ main.jsx          # React Router entry (login, signup, dashboard)
+        â”œâ”€â”€ App.jsx           # Analyzer + Configurations dashboard
+        â”œâ”€â”€ defaultModels.js
+        â”œâ”€â”€ defaultPrompts.js
+        â”œâ”€â”€ styles.css
+        â”œâ”€â”€ assets/
+        â”‚   â””â”€â”€ monstera_bg.png
+        â””â”€â”€ pages/
+            â”œâ”€â”€ RequireAuth.jsx
+            â”œâ”€â”€ auth/
+            â”‚   â”œâ”€â”€ Login.jsx
+            â”‚   â”œâ”€â”€ Signup.jsx
+            â”‚   â””â”€â”€ auth.css
+            â””â”€â”€ dashboard/
+                â”œâ”€â”€ Dashboard.jsx
+                â””â”€â”€ dashboard.css
 ```
 
 ---
@@ -357,3 +357,52 @@ AI-recruiter-screening-system-/
 ## Authors
 
 Developed as an AI-powered Resume Screening and Candidate Ranking System using React, FastAPI, Sentence Transformers, Ollama, Llama 3.2, and Google Gemini.
+
+---
+
+## Auth Backend (Node.js + Express + MongoDB)
+
+The React login/signup pages now call a separate Node.js API. The legacy FastAPI analyzer still runs on port 8000; the auth API listens on `http://localhost:4000` and persists users in MongoDB.
+
+### Prerequisites
+
+- Node.js 18+
+- A running MongoDB instance (local install, Docker container, or Atlas cluster)
+
+### Setup
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+### `backend/.env` variables
+
+| Variable | What it is | Where to get it |
+| --- | --- | --- |
+| `PORT` | Port the auth API listens on. | Pick any free port; default `4000`. |
+| `MONGO_URI` | MongoDB connection string used by Mongoose. | Local: `mongodb://127.0.0.1:27017/ai_recruiter` (start `mongod` or `docker run -p 27017:27017 mongo`). Atlas: copy the "Connect your application" URI from the Atlas dashboard and replace `<password>` with the database user password. |
+| `JWT_SECRET` | Signing key for the JWT issued on login/signup. | Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` and paste it here. Never commit it. |
+| `JWT_EXPIRES_IN` | Token lifetime accepted by `jsonwebtoken` (e.g. `7d`, `12h`). | Pick any value supported by [the `ms` library](https://github.com/vercel/ms#examples). |
+| `CLIENT_ORIGIN` | Allowed CORS origin for the React app. | The URL Vite serves the frontend on; default `http://localhost:5173`. |
+
+### Frontend env
+
+`frontend/.env`:
+
+```
+VITE_API_URL=http://localhost:4000
+```
+
+Override `VITE_API_URL` if the auth API runs on a different host/port.
+
+### API
+
+- `POST /api/auth/signup` — `{ name, email, password, confirmPassword }` → `{ token, user }`.
+- `POST /api/auth/login` — `{ email, password }` → `{ token, user }`.
+- `GET /api/auth/me` — `Authorization: Bearer <token>` → `{ user }`.
+- `GET /api/health` — liveness probe.
+
+The React frontend stores the returned token under `localStorage.recruiter.token` and the user under `localStorage.recruiter.user`, then redirects to `/dashboard`. `RequireAuth` and `Dashboard` call `/api/auth/me` to refresh the session and clear storage on 401.
