@@ -189,40 +189,92 @@ npm install
 
 ## Running the Application
 
-Start Ollama in one terminal:
+There are two ways to start the stack: the one-click PowerShell script, or the manual multi-terminal flow.
 
-```bash
-ollama serve
+### Option 1 — One-click: `start-app.ps1` (recommended)
+
+From the project root, run:
+
+```powershell
+.\start-app.ps1
 ```
 
-Start the FastAPI backend in another terminal (with the virtual environment activated):
+What the script does for you:
 
-```bash
-uvicorn api:app --reload --port 8000
-```
+1. Starts the `recruiter-mongo` Docker container (creates it on first run, see Auth backend below).
+2. Frees ports 4000, 8000, and 5173 if anything is still bound to them.
+3. Opens a new terminal running `ollama serve` on `http://127.0.0.1:12000`.
+4. Opens a new terminal running `ollama pull llama3.2` to make sure the model is present.
+5. Creates the Python `venv` (first run only) and installs `requirements.txt`.
+6. Opens a new terminal running the FastAPI analyzer: `uvicorn api:api --host 127.0.0.1 --port 8000`.
+7. Opens a new terminal running the Node auth API: `npm run dev` inside `backend/`.
+8. Opens a new terminal running the React frontend: `npm run dev` inside `frontend/`.
 
-Start the React frontend in a third terminal:
-
-```bash
-cd frontend
-npm run dev
-```
-
-The web app will open automatically in your browser.
-
-Default URL:
+Once all five windows are up, open the web app:
 
 ```text
 http://localhost:5173/
 ```
 
-The FastAPI backend listens on:
+The FastAPI analyzer listens on `http://127.0.0.1:8000`, the Node auth API on `http://127.0.0.1:4000`, and Ollama on `http://127.0.0.1:12000` (note: the script intentionally uses 12000 to avoid clashing with another Ollama instance on 11434).
 
-```text
-http://127.0.0.1:8000
+To stop everything, close the spawned PowerShell windows or run:
+
+```powershell
+Get-Process powershell -ErrorAction SilentlyContinue | Where-Object {
+    $_.MainWindowTitle -match 'ollama|uvicorn|npm run dev'
+} | Stop-Process -Force
 ```
 
----
+### Option 2 — Manual start (if you do not want to use the script)
+
+Use five separate terminals. Activate the venv in the Python terminals.
+
+Terminal 1 — MongoDB (skip if you already have it running):
+
+```bash
+docker start recruiter-mongo
+# or, for a one-off container:
+docker run -d --name recruiter-mongo -p 27017:27017 mongo
+```
+
+Terminal 2 — Ollama:
+
+```bash
+ollama serve
+# Optional: pre-pull the default model
+ollama pull llama3.2
+```
+
+If you do not need a parallel Ollama on port 12000, just let `ollama serve` use the default `127.0.0.1:11434`. The backend reads `OLLAMA_HOST` from the environment, so set it to match:
+
+```powershell
+$env:OLLAMA_HOST = "http://127.0.0.1:11434"
+```
+
+Terminal 3 — FastAPI analyzer (venv activated, project root):
+
+```bash
+uvicorn api:api --host 127.0.0.1 --port 8000 --reload
+```
+
+Terminal 4 — Node auth API (first run: `cd backend && npm install`):
+
+```bash
+cd backend
+npm run dev
+```
+
+Terminal 5 — React frontend (first run: `cd frontend && npm install`):
+
+```bash
+cd frontend
+npm install     # first run only
+npm run dev
+```
+
+Once every terminal reports a ready state, the app is live at `http://localhost:5173/`. The default demo credentials are shown on the login screen.
+
 
 ## How to Use
 
@@ -406,3 +458,4 @@ Override `VITE_API_URL` if the auth API runs on a different host/port.
 - `GET /api/health` — liveness probe.
 
 The React frontend stores the returned token under `localStorage.recruiter.token` and the user under `localStorage.recruiter.user`, then redirects to `/dashboard`. `RequireAuth` and `Dashboard` call `/api/auth/me` to refresh the session and clear storage on 401.
+
