@@ -396,3 +396,250 @@ li {
     display: grid;
   }
 }
+
+.skills-layout {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  margin: 0 auto;
+  max-width: 1360px;
+}
+
+.skills-sidebar {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.skills-sidebar-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.skills-sidebar-header h2 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.skills-sidebar-header p {
+  color: #617089;
+  font-size: 12px;
+  margin: 0;
+}
+
+.skills-refresh {
+  margin-left: auto;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+}
+
+.skills-list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.skill-row {
+  align-items: center;
+  background: #f4f7fb;
+  border-radius: 8px;
+  color: #172033;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.skill-row.active {
+  background: #1f5eff;
+  color: #ffffff;
+}
+
+.skill-row span {
+  color: inherit;
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.skill-row strong {
+  font-size: 14px;
+}
+
+.skills-detail {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.skills-detail-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.skills-detail-header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.skills-detail-header p {
+  color: #617089;
+  margin-top: 4px;
+}
+
+.skills-detail-meta {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.skills-detail-meta span {
+  background: #eef3fb;
+  border-radius: 6px;
+  color: #26364f;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.skills-block {
+  border-top: 1px solid #e4e9f1;
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.skills-block-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.skills-block-header h3 {
+  font-size: 14px;
+  margin: 0;
+  text-transform: uppercase;
+  color: #526177;
+}
+
+.skills-block-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.skills-block-actions select {
+  min-width: 130px;
+}
+
+.skills-editor {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 260px;
+  white-space: pre;
+}
+
+.skills-contract {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.skills-contract dt {
+  color: #526177;
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.skills-contract dd {
+  margin: 0;
+}
+
+.skills-contract ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.skills-contract li {
+  background: #f7f9fc;
+  border: 1px solid #e4e9f1;
+  border-radius: 6px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+}
+
+.skills-contract code {
+  color: #1f5eff;
+  font-size: 13px;
+}
+
+.skills-contract span {
+  color: #526177;
+  font-size: 12px;
+}
+
+.skills-contract small {
+  color: #344257;
+  font-size: 12px;
+}
+
+.skills-run-inputs {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.skills-run-inputs label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #526177;
+}
+
+.skills-run-inputs textarea {
+  min-height: 100px;
+}
+
+.skills-run-inputs input {
+  background: #ffffff;
+  border: 1px solid #ccd4e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.skills-run-output {
+  background: #0f172a;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre;
+}
+
+@media (max-width: 920px) {
+  .skills-layout,
+  .skills-contract,
+  .skills-run-inputs {
+    grid-template-columns: 1fr;
+  }
+}

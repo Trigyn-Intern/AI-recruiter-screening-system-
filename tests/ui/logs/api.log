@@ -1,0 +1,118 @@
+INFO:     127.0.0.1:57864 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57865 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21044 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21045 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21046 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10570 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19817 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38165 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:39760 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38168 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38173 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38176 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38178 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38187 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38192 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38193 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38194 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38197 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2772 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1565 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:1566 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1568 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1569 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45025 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45026 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45027 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20045 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20047 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20049 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:20050 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18952 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19449 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5645 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61090 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39765 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21675 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21676 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21677 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21678 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21680 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21681 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:21682 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21683 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21684 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61688 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29563 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37948 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1407 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27639 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27639 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53325 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12562 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12562 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29974 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19727 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19727 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40372 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38740 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38740 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46435 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14061 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14061 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24987 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17871 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17871 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14545 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40617 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40617 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27417 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58227 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58227 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20377 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20378 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20379 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20380 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20382 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19492 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:19493 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42293 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3325 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41258 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26155 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47058 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1745 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1069 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43114 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62328 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14198 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15617 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15618 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30074 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30074 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7648 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10074 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10074 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20255 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20256 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20257 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20258 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42445 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42446 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:42447 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53539 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53540 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43222 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60613 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57266 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2410 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [18392]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started server process [21520]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

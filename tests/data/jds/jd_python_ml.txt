@@ -1,0 +1,27 @@
+Senior Python / Machine Learning Engineer
+
+We are looking for a senior engineer to own our Python-based ML services end to end.
+You will design training and inference pipelines, ship models to production, and partner
+with product teams to turn research ideas into reliable features.
+
+Responsibilities
+- Build and maintain services in Python 3.11 with FastAPI and pytest coverage.
+- Train, evaluate, and deploy classical ML and deep learning models (scikit-learn, PyTorch).
+- Design retrieval-augmented features using embeddings, FAISS, and sentence-transformers.
+- Operate workloads on AWS (ECS, Lambda, S3, Bedrock) and write clean IaC with Terraform.
+- Mentor junior engineers and review pull requests.
+
+Required experience
+- 5+ years building production Python systems.
+- 3+ years working hands-on with PyTorch or TensorFlow.
+- Strong SQL and PostgreSQL skills; comfort with OLAP warehouses like BigQuery or Snowflake.
+- Hands-on with Docker, Kubernetes, and CI/CD pipelines (GitHub Actions).
+- Solid grounding in linear algebra, statistics, and experimentation.
+
+Nice to have
+- LLM fine-tuning, prompt engineering, and evaluation.
+- Experience with Airflow or Dagster.
+- Familiarity with React for internal tooling.
+
+Education
+- BS/MS in Computer Science, Mathematics, or related quantitative field.

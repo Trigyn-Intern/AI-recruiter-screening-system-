@@ -1,0 +1,27 @@
+Senior React / Frontend Engineer
+
+Help us build the recruiter experience our customers love. You will own the React
+codebase, push our design system forward, and raise the quality bar for accessibility,
+performance, and tests.
+
+Responsibilities
+- Ship features in React 18 with TypeScript, hooks, and Suspense.
+- Maintain our component library in Storybook with Tailwind CSS.
+- Own the build pipeline (Vite, ESLint, Prettier, Vitest, Playwright).
+- Improve Core Web Vitals, bundle size, and runtime performance.
+- Partner with designers and product to refine UX and accessibility (WCAG 2.1 AA).
+
+Required experience
+- 4+ years building production React applications.
+- Strong TypeScript and modern CSS (Tailwind, CSS Modules, or styled-components).
+- Hands-on with state management (Redux Toolkit, Zustand, or React Query).
+- Practical accessibility, responsive design, and performance debugging skills.
+- Comfort with CI/CD and feature flag workflows.
+
+Nice to have
+- React Native or Electron experience.
+- Design system or component library ownership.
+- GraphQL clients (Apollo, urql).
+
+Education
+- BS in Computer Science or equivalent experience.
