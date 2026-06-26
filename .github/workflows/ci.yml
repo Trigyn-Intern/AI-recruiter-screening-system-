@@ -70,6 +70,14 @@ jobs:
           wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
           unzip dependency-check-9.0.9-release.zip
 
+      - name: Cache OWASP Dependency-Check Data
+        uses: actions/cache@v4
+        with:
+          path: ~/.dependency-check-data
+          key: dependency-check-data-v1
+          restore-keys: |
+            dependency-check-data-v1-
+
       - name: Run Dependency Check
         run: |
           ./dependency-check/bin/dependency-check.sh \
@@ -116,12 +124,16 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
+      - name: Install Ollama CLI
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
       - name: Pull Ollama Model
+        env:
+          OLLAMA_HOST: http://localhost:11434
         run: |
           for i in {1..30}; do
-            if curl --fail http://localhost:11434/api/tags; then
-              break
-            fi
+            curl --fail http://localhost:11434/api/tags >/dev/null 2>&1 && break
             sleep 2
           done
           ollama pull llama3.2
@@ -194,12 +206,16 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
+      - name: Install Ollama CLI
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
       - name: Pull Ollama Model
+        env:
+          OLLAMA_HOST: http://localhost:11434
         run: |
           for i in {1..30}; do
-            if curl --fail http://localhost:11434/api/tags; then
-              break
-            fi
+            curl --fail http://localhost:11434/api/tags >/dev/null 2>&1 && break
             sleep 2
           done
           ollama pull llama3.2
