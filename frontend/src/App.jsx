@@ -272,6 +272,13 @@ function App() {
             Analyzer
           </button>
           <button
+            className={activePage === "skills" ? "tab active" : "tab"}
+            onClick={() => setActivePage("skills")}
+            type="button"
+          >
+            Skills
+          </button>
+          <button
             className={activePage === "config" ? "tab active" : "tab"}
             onClick={() => setActivePage("config")}
             type="button"
@@ -627,3 +634,6 @@ function SkillColumn({ title, items }) {
 }
 
 export default App;
+
+
+import SkillsPage from "./pages/dashboard/SkillsPage";
