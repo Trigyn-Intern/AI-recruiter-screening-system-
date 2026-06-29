@@ -10,6 +10,13 @@ function signToken(userId) {
   });
 }
 
+class DuplicateEmailError extends Error {
+  constructor() {
+    super("duplicate_email");
+    this.code = 11000;
+  }
+}
+
 async function signup(req, res) {
   try {
     const { name, email, password } = req.body || {};
@@ -100,4 +107,4 @@ async function me(req, res) {
   return res.json({ user: req.user.toJSON() });
 }
 
-module.exports = { signup, login, me };
+module.exports = { signup, login, me, DuplicateEmailError };
