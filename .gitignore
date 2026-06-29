@@ -13,6 +13,17 @@ streamlit.err.log
 
 # Runtime resume vector and skill caches
 vector_store/
+.requirements.sha
+
+# Local auth/runtime data
+backend/data/
+
+# Local OWASP ZAP reports
+zap-reports/
+zap-baseline-report.*
+
+# Test run logs
+tests/ui/logs/
 
 # Accidental nested clone
 AI-recruiter-screening-system-/
@@ -34,3 +45,6 @@ dist/
 Thumbs.db
 
 .env
+
+tests/ui/screenshots
+tests/ui/logs

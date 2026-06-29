@@ -1,4 +1,4 @@
-﻿import io
+import io
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,13 +23,6 @@ from backend import (
     validate_upload,
 )
 
-from backend_skills import (
-    SkillNotFoundError,
-    get_skill,
-    list_skills,
-    run_skill,
-)
-from backend_skills.runner import SkillExecutionError, SkillValidationError
 
 
 api = FastAPI(title="Resume Analyzer API")
@@ -91,51 +84,8 @@ def models():
     }
 
 
-@api.get("/skills")
-def skills():
-    """Return every Skill discovered under the repo ``skills/`` folder."""
-    return {
-        "skills": list_skills(),
-    }
 
 
-@api.post("/skills/{name}/run")
-def run_skill_endpoint(name: str, payload: dict | None = None):
-    """Execute a Skill end-to-end and return its parsed JSON output."""
-    payload = payload or {}
-    inputs = payload.get("inputs") or {}
-    provider = payload.get("provider")
-    model_name = payload.get("model_name")
-
-    if provider is not None and provider not in AI_PROVIDER_OPTIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported provider '{provider}'.",
-        )
-
-    try:
-        result = run_skill(
-            name,
-            inputs=inputs,
-            provider=provider,
-            model_name=model_name,
-        )
-    except SkillNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Skill '{name}' was not found.",
-        )
-    except SkillValidationError as error:
-        raise HTTPException(status_code=400, detail=str(error))
-    except SkillExecutionError as error:
-        raise HTTPException(status_code=502, detail=str(error))
-
-    summary = get_skill(name).to_summary()
-    return {
-        "skill": summary,
-        "result": result,
-        "runtime_status": get_runtime_status(),
-    }
 
 
 @api.get("/configuration")
@@ -302,3 +252,4 @@ async def analyze(
         ],
         "runtime_status": get_runtime_status(),
     }
+
