@@ -57,7 +57,19 @@ DEFAULT_AUTH_PORT = int(os.environ.get("AUTH_PORT", "4000"))
 # ``api:api`` import path so uvicorn doesn't need an ``app`` symbol.
 UVICORN_APP = os.environ.get("UVICORN_APP", "api:api")
 
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+def _normalize_ollama_host(value):
+    """Accept bare `127.0.0.1:11434`, `localhost`, or full URLs.
+    Always return a value `urllib.request.urlopen` can use."""
+    v = (value or "").strip()
+    if not v:
+        return "http://127.0.0.1:11434"
+    if "://" in v:
+        return v.rstrip("/")
+    if v.startswith("127.") or v.startswith("localhost") or (":" in v and not v.startswith("/")):
+        return "http://" + v
+    return v
+
+OLLAMA_HOST = _normalize_ollama_host(os.environ.get("OLLAMA_HOST"))
 
 
 # ------------------------------------------------------------
@@ -390,3 +402,5 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
