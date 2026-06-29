@@ -386,24 +386,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
     mock_encode.assert_not_called()
 
 
-@pytest.mark.backend
-def test_skills_registry_discovers_expected_skills():
-    from backend_skills import discover, get_skill, list_skills
-
-    skills = discover()
-    assert {
-        "jd-analyzer",
-        "skill-gap-analyzer",
-        "candidate-explainer",
-        "resume-skill-extractor",
-    }.issubset(skills.keys())
-
-    jd_skill = get_skill("jd-analyzer")
-    assert jd_skill.config_key == "jd_prompt_template"
-    assert any(input.name == "job_text" for input in jd_skill.inputs)
-    assert list_skills(), "list_skills() should return at least one summary"
-
-
+# Skills registry test removed: backend_skills module not shipped in this build.
 @pytest.mark.backend
 def test_safe_ollama_json_success_and_fallback(mocker):
     from backend import JD_SCHEMA, safe_ollama_json
@@ -605,3 +588,4 @@ def test_ranking_flow_orders_candidates_by_score(scenario, data_root):
     assert scores == sorted(scores, reverse=True), (
         f"Ranking not sorted descending: {scores}"
     )
+
