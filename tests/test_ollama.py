@@ -2,6 +2,9 @@ from jsonschema import validate
 
 from backend import (
     CANDIDATE_DETAIL_SCHEMA,
+    CANDIDATE_GRADING_SCHEMA,
+    DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE,
+    DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE,
     DEFAULT_OLLAMA_MODEL,
     GEMINI_RESUME_SKILL_MODEL,
     GEMINI_MODEL_OPTIONS,
@@ -10,11 +13,13 @@ from backend import (
     OLLAMA_MODEL_OPTIONS,
     DEFAULT_JD_PROMPT_TEMPLATE,
     analyze_candidate_detail,
+    analyze_candidate_grading,
     analyze_match_justification,
     get_resume_skill_profile,
     get_model_options,
     is_complete_resume_skill_profile,
     normalize_configuration,
+    summarize_gemini_error,
     safe_ollama_json,
 )
 
@@ -162,6 +167,15 @@ def test_candidate_detail_schema_requires_display_fields():
     ]
 
 
+def test_candidate_grading_schema_requires_display_fields():
+    assert CANDIDATE_GRADING_SCHEMA["required"] == [
+        "grade",
+        "summary",
+        "strengths",
+        "concerns",
+    ]
+
+
 def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
@@ -200,8 +214,8 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "backend.get_ai_cache",
         return_value={
             (
-                "candidate_detail|Gemini|gemini-2.5-flash|90|"
-                "resume text|job text"
+                "candidate_detail_with_grading_v1|Gemini|gemini-2.5-flash|90|"
+                f"resume text|job text|{DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE}"
             ): cached_result,
         },
     )
@@ -242,6 +256,13 @@ def test_analyze_candidate_detail_falls_back_to_indexed_skills(mocker):
             "tools": ["Jira"],
             "domains": ["Recruiting"],
             "experience_summary": "Backend developer.",
+            "skill_evidence": [
+                {
+                    "skill": "Python",
+                    "evidence": "Built FastAPI services using Python.",
+                    "source": "Payments project",
+                }
+            ],
         },
         provider="Ollama",
         job_skill_requirements={
@@ -253,6 +274,80 @@ def test_analyze_candidate_detail_falls_back_to_indexed_skills(mocker):
     assert result["matching_skills"] == ["Python", "SQL"]
     assert result["missing_skills"] == ["Docker", "FastAPI"]
     assert "indexed resume skills" in result["justification"]
+    assert result["matching_evidence"][0] == {
+        "skill": "Python",
+        "evidence": "Built FastAPI services using Python.",
+        "source": "Payments project",
+    }
+    assert result["matching_evidence"][1]["source"] == (
+        "Indexed experience summary"
+    )
+
+
+def test_candidate_detail_replaces_not_found_missing_skills(mocker):
+    mocker.patch("backend.get_selected_provider", return_value="Gemini")
+    mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "matching_skills": ["Python"],
+            "missing_skills": ["Not Found"],
+            "justification": "Python matches.",
+        },
+    )
+
+    result = analyze_candidate_detail(
+        "resume text",
+        "Need Python, AWS, Docker.",
+        70,
+        model_name="gemini-2.5-flash",
+        resume_skill_profile={
+            "technical_skills": ["Python"],
+            "soft_skills": [],
+            "tools": [],
+            "domains": [],
+            "experience_summary": "Python developer.",
+            "skill_evidence": [],
+        },
+        job_skill_requirements={
+            "primary_skills": "Python, AWS, Docker",
+        },
+    )
+
+    assert result["missing_skills"] == ["AWS", "Docker"]
+
+
+def test_candidate_grading_falls_back_without_not_found(mocker):
+    mocker.patch(
+        "backend.safe_gemini_json",
+        return_value={
+            "grade": "Not Found",
+            "summary": "Candidate grading could not be generated.",
+            "strengths": [],
+            "concerns": [],
+        },
+    )
+    mocker.patch("backend.get_ai_cache", return_value={})
+
+    result = analyze_candidate_grading(
+        "Built Python APIs and deployed Docker projects.",
+        "Need Python, Docker, AWS.",
+        ["Python", "Docker"],
+        ["AWS"],
+    )
+
+    assert result["grade"] in ["A", "B", "C", "D", "F"]
+    assert result["grade"] != "Not Found"
+    assert "does not use the generated match score" in result["summary"]
+    assert result["strengths"]
+    assert result["concerns"]
+
+
+def test_summarize_gemini_quota_error():
+    assert summarize_gemini_error("429 RESOURCE_EXHAUSTED details") == (
+        "Gemini quota exhausted; local fallback used."
+    )
 
 
 def test_resume_skill_profile_cache_is_complete():
@@ -263,6 +358,7 @@ def test_resume_skill_profile_cache_is_complete():
             "tools": [],
             "domains": [],
             "experience_summary": "Summary",
+            "skill_evidence": [],
         }
     )
 
@@ -280,6 +376,13 @@ def test_get_resume_skill_profile_uses_cached_gemini_flash_data(mocker):
         "tools": ["Jira"],
         "domains": ["Recruiting"],
         "experience_summary": "Cached summary.",
+        "skill_evidence": [
+            {
+                "skill": "Python",
+                "evidence": "Python automation project.",
+                "source": "Projects",
+            }
+        ],
     }
     mocker.patch(
         "backend.read_json_file",
@@ -314,3 +417,7 @@ def test_normalize_configuration_prefills_blank_prompts():
 
     assert result["ai_provider"] == "Gemini"
     assert result["jd_prompt_template"] == DEFAULT_JD_PROMPT_TEMPLATE
+    assert (
+        result["candidate_grading_prompt_template"]
+        == DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
+    )

@@ -16,14 +16,16 @@ function toJsonTransform(doc) {
   const { _id, password, ...rest } = doc;
   const out = { ...rest };
   if (_id !== undefined) out.id = _id;
+  if (out.id === undefined && doc.id !== undefined) out.id = doc.id;
   return out;
 }
 
 function applySelect(doc, fields) {
   if (!doc) return doc;
+  const id = doc._id || doc.id;
   return {
     raw: doc,
-    id: doc._id,
+    id,
     name: doc.name,
     email: doc.email,
     createdAt: doc.createdAt,
@@ -79,7 +81,10 @@ const User = {
 
   async findById(id) {
     await _readyNow();
-    const doc = await collection.findById(String(id));
+    const lookupId = String(id);
+    const doc =
+      await collection.findById(lookupId)
+      || await collection.findOne({ id: lookupId });
     return doc ? applySelect(doc, []) : null;
   },
 

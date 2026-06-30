@@ -10,7 +10,7 @@
   justify-content: center;
   align-items: center;
   padding: 24px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), url('../assets/monstera_bg.png');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), url('../../assets/monstera_bg.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

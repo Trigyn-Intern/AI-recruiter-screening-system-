@@ -1,7 +1,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$projectRoot = "D:\trigyn\trigyn project\AI-recruiter-screening-system-"
+$projectRoot = $PSScriptRoot
 $backendRoot = Join-Path $projectRoot "backend"
 $frontendRoot = Join-Path $projectRoot "frontend"
 $venvActivate = Join-Path $projectRoot "venv\Scripts\Activate.ps1"
