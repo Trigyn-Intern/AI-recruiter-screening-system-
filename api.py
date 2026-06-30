@@ -9,10 +9,14 @@ from backend import (
     OLLAMA_MODEL_OPTIONS,
     analyze_candidate_detail,
     analyze_job_description,
+    clear_runtime_status,
     display_value,
     extract_text,
+    ensure_candidate_grading,
     get_configuration,
+    get_indexed_resume_analysis_records,
     get_or_create_resume_embedding,
+    get_resume_database_records,
     get_resume_id,
     get_resume_skill_profile,
     get_runtime_status,
@@ -98,6 +102,27 @@ def configuration():
     }
 
 
+@api.get("/resume-db")
+def resume_database():
+    records = get_resume_database_records()
+
+    return {
+        "records": records,
+        "total": len(records),
+        "fully_indexed": sum(
+            1
+            for record in records
+            if record["embedding_indexed"] and record["skills_indexed"]
+        ),
+        "embedding_indexed": sum(
+            1 for record in records if record["embedding_indexed"]
+        ),
+        "skills_indexed": sum(
+            1 for record in records if record["skills_indexed"]
+        ),
+    }
+
+
 @api.put("/configuration")
 def save_configuration(config: dict):
     return {
@@ -117,8 +142,11 @@ async def analyze(
     job_description: str = Form(...),
     provider: str = Form("Gemini"),
     model_name: str = Form("gemini-2.5-flash"),
-    resumes: list[UploadFile] = File(...),
+    detail_limit: int = Form(5),
+    resumes: list[UploadFile] | None = File(None),
 ):
+    clear_runtime_status()
+
     if provider not in AI_PROVIDER_OPTIONS:
         raise HTTPException(status_code=400, detail="Unsupported provider.")
 
@@ -128,11 +156,7 @@ async def analyze(
             detail="Job description is required.",
         )
 
-    if not resumes:
-        raise HTTPException(
-            status_code=400,
-            detail="At least one resume is required.",
-        )
+    detail_limit = max(1, min(int(detail_limit), 50))
 
     jd_info = analyze_job_description(
         job_description,
@@ -140,16 +164,16 @@ async def analyze(
         provider=provider,
     )
 
-    resume_records = []
-    file_cache = []
+    invalid_resumes = []
+    uploaded_records = {}
 
-    for resume in resumes:
+    for resume in resumes or []:
         content = await resume.read()
         resume_file = InMemoryUpload(content, resume.filename)
         is_valid, message = validate_upload(resume_file)
 
         if not is_valid:
-            resume_records.append(
+            invalid_resumes.append(
                 {
                     "resume_name": resume.filename,
                     "error": message,
@@ -159,6 +183,19 @@ async def analyze(
 
         resume_id = get_resume_id(resume_file)
         resume_text = extract_text(resume_file)
+
+        if not resume_text.strip():
+            invalid_resumes.append(
+                {
+                    "resume_name": resume.filename,
+                    "error": (
+                        "No readable text could be extracted. Use a text-based "
+                        "PDF/DOCX or run OCR before uploading."
+                    ),
+                }
+            )
+            continue
+
         resume_embedding = get_or_create_resume_embedding(
             resume_id,
             resume.filename,
@@ -169,18 +206,40 @@ async def analyze(
             resume.filename,
             resume_text,
         )
+        uploaded_records[resume_id] = {
+            "resume_id": resume_id,
+            "resume_name": resume.filename,
+            "resume_text": resume_text,
+            "resume_embedding": resume_embedding,
+            "resume_skill_profile": resume_skill_profile,
+        }
+
+    file_cache = []
+    indexed_resume_ids = set()
+
+    for item in get_indexed_resume_analysis_records():
+        indexed_resume_ids.add(item["resume_id"])
+        uploaded_item = uploaded_records.get(item["resume_id"])
+        resume_text = (
+            uploaded_item["resume_text"]
+            if uploaded_item
+            else item["resume_text"]
+        )
+        resume_skill_profile = (
+            uploaded_item["resume_skill_profile"]
+            if uploaded_item
+            else item["resume_skill_profile"]
+        )
         score = calculate_match_score(
-            resume_embedding,
+            item["resume_embedding"],
             job_description,
         )
-
         record = {
-            "resume_name": resume.filename,
-            "resume_id": resume_id,
+            "resume_name": item["resume_name"],
+            "resume_id": item["resume_id"],
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        resume_records.append(record)
         file_cache.append(
             {
                 "record": record,
@@ -189,23 +248,57 @@ async def analyze(
             }
         )
 
-    valid_records = [
-        record for record in resume_records if "match_score" in record
-    ]
+    for resume_id, item in uploaded_records.items():
+        if resume_id in indexed_resume_ids:
+            continue
+
+        score = calculate_match_score(
+            item["resume_embedding"],
+            job_description,
+        )
+        record = {
+            "resume_name": item["resume_name"],
+            "resume_id": item["resume_id"],
+            "match_score": score,
+            "fit": build_fit_bucket(score),
+        }
+        file_cache.append(
+            {
+                "record": record,
+                "resume_text": item["resume_text"],
+                "resume_skill_profile": item["resume_skill_profile"],
+            }
+        )
+
+    if not file_cache:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Resume DB is empty. Upload at least one PDF or DOCX resume "
+                "to create the index."
+            ),
+        )
+
+    valid_records = [item["record"] for item in file_cache]
     ranking = sorted(
         valid_records,
         key=lambda item: item["match_score"],
         reverse=True,
     )
-    top_ids = {
-        record["resume_id"] for record in ranking[:5]
+    detail_records = ranking[:detail_limit]
+    detail_ids = {
+        record["resume_id"] for record in detail_records
+    }
+    detail_order = {
+        record["resume_id"]: index
+        for index, record in enumerate(detail_records)
     }
     top_details = []
 
     for item in file_cache:
         record = item["record"]
 
-        if record["resume_id"] not in top_ids:
+        if record["resume_id"] not in detail_ids:
             continue
 
         detail = analyze_candidate_detail(
@@ -216,6 +309,13 @@ async def analyze(
             resume_skill_profile=item["resume_skill_profile"],
             provider=provider,
             job_skill_requirements=jd_info,
+            resume_name=record["resume_name"],
+        )
+        detail = ensure_candidate_grading(
+            detail,
+            resume_context=item["resume_text"],
+            matching_skills=detail.get("matching_skills", []),
+            missing_skills=detail.get("missing_skills", []),
         )
         top_details.append(
             {
@@ -223,6 +323,11 @@ async def analyze(
                 **detail,
             }
         )
+
+    top_details = sorted(
+        top_details,
+        key=lambda item: detail_order.get(item["resume_id"], 0),
+    )
 
     categories = {
         "good_fit": [
@@ -246,10 +351,9 @@ async def analyze(
         "job_description": serialize_jd_info(jd_info),
         "ranking": ranking,
         "top_details": top_details,
+        "detail_limit": detail_limit,
         "categories": categories,
-        "invalid_resumes": [
-            record for record in resume_records if "error" in record
-        ],
+        "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
     }
 

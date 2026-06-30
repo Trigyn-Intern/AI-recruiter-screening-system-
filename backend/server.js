@@ -8,6 +8,11 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = "local-dev-jwt-secret-change-before-production";
+  console.warn("JWT_SECRET is not set. Using local development default.");
+}
+
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
