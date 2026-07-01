@@ -1,4 +1,4 @@
-fastapi==0.124.2
+fastapi==0.139.0
 uvicorn==0.38.0
 python-multipart==0.0.21
 pandas==2.2.3
