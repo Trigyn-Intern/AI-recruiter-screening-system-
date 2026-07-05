@@ -22,6 +22,8 @@ from backend import (
     get_runtime_status,
     initialize_project_storage_files,
     calculate_match_score,
+    get_indexed_resume_analysis_records,
+    persist_analysis_session,
     reset_configuration,
     update_configuration,
     validate_upload,
@@ -346,6 +348,15 @@ async def analyze(
             if record["fit"] == "Bad Fit"
         ],
     }
+
+    payload = {
+        "job_description": job_description,
+        "provider": provider,
+        "model_name": model_name,
+        "jd_info": jd_info,
+        "file_cache": file_cache,
+    }
+    persist_analysis_session(payload)
 
     return {
         "job_description": serialize_jd_info(jd_info),

@@ -1,0 +1,154 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>security-review - all - 2026-07-03</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+  h1 { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+  .meta-line { font-size: 11px; color: #555; margin-bottom: 12px; }
+  .summary-bar { display: flex; gap: 20px; margin-bottom: 14px; font-size: 12px; font-weight: bold; }
+  .summary-bar .total { color: #333; }
+  .summary-bar .passed { color: #217346; }
+  .summary-bar .failed { color: #c00; }
+  .summary-bar .warning { color: #d97706; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+  thead th { background: #4472C4; color: #fff; font-weight: bold; font-size: 11px; padding: 6px 5px; border: 1px solid #2F5496; text-align: center; vertical-align: middle; position: sticky; top: 0; z-index: 10; }
+  tbody td { border: 1px solid #B4C6E7; padding: 5px 6px; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
+  tbody tr:nth-child(even) { background: #D6E4F0; }
+  tbody tr:nth-child(odd) { background: #fff; }
+  tbody tr:hover { background: #FFF2CC; }
+  td.center { text-align: center; }
+  td.bold { font-weight: bold; }
+  td.pass { color: #217346; font-weight: bold; }
+  td.fail { color: #c00; font-weight: bold; }
+  td.warning { color: #d97706; font-weight: bold; }
+  td.email-cell { font-size: 10px; }
+  th:nth-child(1),td:nth-child(1){width:38px} th:nth-child(2),td:nth-child(2){width:60px} th:nth-child(3),td:nth-child(3){width:120px} th:nth-child(4),td:nth-child(4){width:180px} th:nth-child(5),td:nth-child(5){width:180px} th:nth-child(6),td:nth-child(6){width:220px} th:nth-child(7),td:nth-child(7){width:160px} th:nth-child(8),td:nth-child(8){width:160px} th:nth-child(9),td:nth-child(9){width:180px} th:nth-child(10),td:nth-child(10){width:55px} th:nth-child(11),td:nth-child(11){width:200px} th:nth-child(12),td:nth-child(12){width:220px} th:nth-child(13),td:nth-child(13){width:140px}
+  pre { background: #f3f4f6; padding: 4px; border: 1px solid #ccc; font-family: monospace; white-space: pre-wrap; font-size: 10px; }
+  code.redacted { color: #d97706; font-style: italic; }
+</style>
+</head>
+<body>
+<h1>security-review &mdash; all &mdash; 2026-07-03</h1>
+<div class="meta-line">Generated: 2026-07-03 20:37:14 &nbsp;|&nbsp; Files in scope: all backend and frontend files</div>
+<div class="summary-bar">
+  <span class="passed">Pass: 0</span>
+  <span class="failed">Fail: 4</span>
+  <span class="warning">Warning: 1</span>
+</div>
+<button onclick="exportTableToExcel('report-table', 'security-review-report')" style="margin-top: 10px; padding: 5px 10px; background: #4472C4; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Export to Excel</button>
+
+<script>
+function exportTableToExcel(tableID, filename = ''){
+    var downloadLink;
+    var dataType = 'application/vnd.ms-excel';
+    var tableSelect = document.getElementById(tableID);
+    var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+    
+    filename = filename?filename+'.xls':'excel_data.xls';
+    
+    downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+    
+    if(navigator.msSaveOrOpenBlob){
+        var blob = new Blob(['\ufeff', tableHTML], {
+            type: dataType
+        });
+        navigator.msSaveOrOpenBlob( blob, filename);
+    }else{
+        downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+}
+</script>
+<table id="report-table">
+  <thead>
+    <tr>
+      <th>Sr No</th><th>CR No</th><th>Name</th><th>Description</th><th>Pre-requisite</th><th>Test Steps</th><th>Input Data</th><th>Expected Result</th><th>Actual Result</th><th>Pass/Fail</th><th>New Enhancement</th><th>Codex Prompt</th><th>Reference</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td class="center">SR-001</td>
+      <td class="bold">auth-review / missing-rate-limiting</td>
+      <td>Missing rate limiting on auth endpoints</td>
+      <td>Files: backend/routes/authRoutes.js</td>
+      <td>1. Inspected route definitions for POST /signup and /login.<br>2. Checked for express-rate-limit middleware.</td>
+      <td><pre>router.post('/signup', signup);</pre></td>
+      <td>Rate limiter applied to /login and /signup (e.g., 5 attempts/15 min).</td>
+      <td>Endpoints are mounted directly without any rate limiting middleware.</td>
+      <td class="center fail">Fail</td>
+      <td>Add express-rate-limit to the auth router and apply it before the validators.</td>
+      <td class="email-cell">Please update backend/routes/authRoutes.js to apply express-rate-limit to the /login and /signup endpoints.</td>
+      <td>backend/routes/authRoutes.js:1-12</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td class="center">SR-002</td>
+      <td class="bold">auth-review / jwt-algorithm-not-pinned</td>
+      <td>JWT algorithm not pinned on verify</td>
+      <td>Files: backend/middleware/requireAuth.js</td>
+      <td>1. Reviewed jwt.verify() calls.</td>
+      <td><pre>jwt.verify(token, process.env.JWT_SECRET)</pre></td>
+      <td>jwt.verify called with explicit { algorithms: ["HS256"] }</td>
+      <td>jwt.verify called without an algorithms option.</td>
+      <td class="center fail">Fail</td>
+      <td>Pass { algorithms: ["HS256"] } to jwt.verify.</td>
+      <td class="email-cell">Update backend/middleware/requireAuth.js to pass { algorithms: ["HS256"] } as the third argument to jwt.verify.</td>
+      <td>backend/middleware/requireAuth.js:14</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td class="center">SR-003</td>
+      <td class="bold">auth-review / no-password-complexity</td>
+      <td>No password complexity floor</td>
+      <td>Files: backend/middleware/validate.js</td>
+      <td>1. Checked password validation rules.</td>
+      <td><pre>if (password.length &lt; 6) { ... }</pre></td>
+      <td>Password length &gt;= 12 and complexity requirements enforced.</td>
+      <td>Policy is a flat length &lt; 6.</td>
+      <td class="center fail">Fail</td>
+      <td>Require length &gt;= 12 and reject common passwords.</td>
+      <td class="email-cell">Update backend/middleware/validate.js to enforce a minimum password length of 12 characters.</td>
+      <td>backend/middleware/validate.js:13</td>
+    </tr>
+    <tr>
+      <td class="center">4</td>
+      <td class="center">SR-004</td>
+      <td class="bold">llm-prompt-safety / length-cap</td>
+      <td>No length cap on resume/JD text</td>
+      <td>Files: backend.py, api.py</td>
+      <td>1. Traced resume upload flow to prompt construction.</td>
+      <td><pre>format_prompt(..., resume_text=resume)</pre></td>
+      <td>Extracted text truncated to a safe maximum token budget.</td>
+      <td>No truncation before string substitution into prompts.</td>
+      <td class="center fail">Fail</td>
+      <td>Truncate resume_text and job_text to a known budget (e.g. 8k tokens) inside analyze_*.</td>
+      <td class="email-cell">Update backend.py to truncate resume_text to 8000 tokens before formatting the prompt.</td>
+      <td>backend.py:1001-1024</td>
+    </tr>
+    <tr>
+      <td class="center">5</td>
+      <td class="center">SR-005</td>
+      <td class="bold">secrets-hygiene / env-tracked</td>
+      <td>JWT secret in committed .env</td>
+      <td>Files: backend/.env</td>
+      <td>1. Checked repository for committed .env files.</td>
+      <td><code class="redacted">[REDACTED: high-entropy string]</code></td>
+      <td>.env files are ignored in .gitignore and not committed.</td>
+      <td>.env is checked into version control.</td>
+      <td class="center warning">Warning</td>
+      <td>Rotate JWT_SECRET, untrack .env files, and update .gitignore.</td>
+      <td class="email-cell">Manually remove backend/.env from git history and add it to .gitignore.</td>
+      <td>backend/.env:1</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
+
+

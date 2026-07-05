@@ -1,0 +1,95 @@
+
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m727[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m455[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m603[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m611[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? Terminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m529[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m831[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m447[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m520[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+[2m21:54:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m657[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m21:54:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[2m21:54:56[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+[2m21:54:56[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+^CTerminate batch job (Y/N)? 
+> dev
+> vite --host 127.0.0.1 --port 5173
+
+[2m22:04:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+
+  [32m[1mVITE[22m v8.1.0[39m  [2mready in [0m[1m449[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+^CTerminate batch job (Y/N)? 

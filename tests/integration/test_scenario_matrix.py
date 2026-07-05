@@ -448,6 +448,7 @@ def test_analyze_candidate_detail_uses_cache_when_present(mocker):
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
+    mocker.patch("backend.get_ai_cache_key", return_value="candidate_detail|Gemini|gemini-2.5-flash|90|resume|job")
     mocker.patch("backend.get_ai_cache", return_value={
         "candidate_detail|Gemini|gemini-2.5-flash|90|resume|job": cached,
     })

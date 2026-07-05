@@ -1,0 +1,551 @@
+INFO:     Started server process [32748]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:29809 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39622 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36251 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2403 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:53979 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1073 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1073 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:19198 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19934 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19934 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:44338 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44339 - "GET /models HTTP/1.1" 200 OK
+forrtl: error (200): program aborting due to window-CLOSE event
+Image              PC                Routine            Line        Source             
+KERNELBASE.dll     00007FFF9A153ECD  Unknown               Unknown  Unknown
+KERNEL32.DLL       00007FFF9B40E957  Unknown               Unknown  Unknown
+ntdll.dll          00007FFF9C9E7C1C  Unknown               Unknown  Unknown
+INFO:     Started server process [31264]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:5884 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5891 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [32740]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:15169 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34844 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41716 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [6568]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63853 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15862 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41799 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [21364]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:14807 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58998 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21661 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [14104]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:13534 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13541 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50065 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39228 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28028 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30976 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30976 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49780 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8942 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8942 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14104]
+INFO:     Started server process [13628]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44106 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44114 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17828 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17828 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47479 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41195 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41195 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:17093 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27186 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27186 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29369 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29370 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29371 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13240 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64714 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63372 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:63373 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6563 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46283 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13628]
+INFO:     Started server process [2288]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:13806 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13814 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51484 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60667 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60737 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6876 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57380 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35732 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1398 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25937 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10998 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41579 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41580 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41581 - "POST /analyze HTTP/1.1" 200 OK
+forrtl: error (200): program aborting due to window-CLOSE event
+Image              PC                Routine            Line        Source             
+KERNELBASE.dll     00007FFF9A153ECD  Unknown               Unknown  Unknown
+KERNEL32.DLL       00007FFF9B40E957  Unknown               Unknown  Unknown
+ntdll.dll          00007FFF9C9E7C1C  Unknown               Unknown  Unknown
+INFO:     Started server process [33276]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:3231 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3240 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32957 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32957 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37181 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28577 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28577 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60735 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50609 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50609 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50789 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50790 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50791 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19332 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63601 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63629 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:63630 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63631 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63632 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [33276]
+INFO:     Started server process [17928]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:27334 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27341 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38730 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [34328]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:24689 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55036 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1355 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [15888]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:59781 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59788 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40180 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [14124]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:7535 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33313 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1549 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [18348]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:3292 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3299 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40652 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [31628]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57743 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54483 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [23464]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:48932 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48940 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52920 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52920 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25302 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50903 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50903 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49718 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62972 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62972 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44718 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44719 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44720 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51980 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50111 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26481 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:26482 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26485 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26486 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23464]
+INFO:     Started server process [31084]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:19232 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19240 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25032 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1558 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24895 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48514 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48514 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46488 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4665 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4665 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50754 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50755 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50756 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62736 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45602 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20590 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:20591 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60256 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16045 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [31084]
+INFO:     Started server process [1840]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:3348 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62295 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9074 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54785 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36730 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36730 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48568 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13428 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13428 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35797 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35798 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35799 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55058 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62267 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32624 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:32625 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50685 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50687 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1840]
+INFO:     Started server process [34192]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:1137 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13428 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55150 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38248 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59524 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59530 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36527 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7376 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56162 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:7376 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54741 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65445 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65445 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [34192]
+INFO:     Started server process [21760]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:2617 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60774 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63573 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [25552]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42284 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:23926 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38634 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40811 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60680 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45104 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45104 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65095 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30546 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30546 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19609 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19610 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19611 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60333 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10821 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4316 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:4317 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54900 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4642 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25552]
+INFO:     Started server process [20004]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:9905 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9914 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1886 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [34724]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52804 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40877 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41303 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [14588]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:47875 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47883 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25160 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [34812]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57936 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2816 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12588 - "GET /configuration HTTP/1.1" 200 OK

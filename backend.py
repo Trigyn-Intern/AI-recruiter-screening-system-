@@ -3022,4 +3022,25 @@ def process_resume(resume_file, job_description):
         "Match Score (%)": score,
     }
 
+def persist_analysis_session(payload: dict, base_dir: str = "vector_store") -> str:
+    """Append one analysis session to vector_store/analysis_sessions.json.
+    Returns the session_id.
+    """
+    import os, json, uuid
+    os.makedirs(base_dir, exist_ok=True)
+    path = os.path.join(base_dir, "analysis_sessions.json")
+    sessions = []
+    if os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                sessions = json.load(f) or []
+        except Exception:
+            sessions = []
+    if "session_id" not in payload:
+        payload["session_id"] = uuid.uuid4().hex
+    sessions.append(payload)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(sessions, f, ensure_ascii=False, indent=2)
+    return payload["session_id"]
+
 
