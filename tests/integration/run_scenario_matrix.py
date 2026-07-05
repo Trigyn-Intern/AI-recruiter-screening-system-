@@ -117,8 +117,16 @@ def _ollama_list() -> List[str]:
 
 
 def ensure_ollama_models(required: Iterable[str]) -> None:
-    installed = {name.split(":")[0] for name in _ollama_list()}
-    required_set = {name.split(":")[0] for name in required}
+    required_list = list(required)
+    if not required_list:
+        return
+
+    try:
+        installed = {name.split(":")[0] for name in _ollama_list()}
+    except SystemExit as e:
+        raise e
+
+    required_set = {name.split(":")[0] for name in required_list}
     missing = sorted(required_set - installed)
     if not missing:
         print(f"[ollama] all required models already present: {sorted(required_set)}")
@@ -126,7 +134,12 @@ def ensure_ollama_models(required: Iterable[str]) -> None:
 
     print(f"[ollama] pulling missing models: {missing}")
     for model in missing:
-        subprocess.run(["ollama", "pull", model], check=True, cwd=REPO_ROOT)
+        try:
+            subprocess.run(["ollama", "pull", model], check=True, cwd=REPO_ROOT)
+        except FileNotFoundError:
+            raise SystemExit(
+                f"Error: 'ollama' executable not found in PATH. Please install Ollama or ensure it is in your PATH to pull {model}."
+            )
 
 
 # ------------------------------------------------------------
@@ -140,14 +153,18 @@ def port_in_use(port: int, host: str = "127.0.0.1") -> bool:
 
 
 def _wait_for_http(url: str, timeout_seconds: int = 60, label: str = "") -> None:
+    print(f"[runner] waiting for {label or url} to respond...", end="", flush=True)
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
         try:
             with urllib.request.urlopen(url, timeout=2) as response:
                 if response.status < 500:
+                    print(" OK")
                     return
         except (urllib.error.URLError, ConnectionError, TimeoutError):
+            print(".", end="", flush=True)
             time.sleep(0.5)
+    print(" FAILED")
     raise SystemExit(f"Timed out waiting for {label or url} to respond.")
 
 
@@ -310,6 +327,16 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
                              "without starting services or invoking pytest.")
     parser.add_argument("--log-dir", type=Path, default=HERE / "logs",
                         help="Directory for service + pytest logs.")
+    parser.add_argument("--report-dir", dest="report_dir", type=Path, default=None,
+                        help="If set, write a structured HTML report here. The JUnit "
+                             "JSON is written alongside it. The renderer is "
+                             "tests/render_report.py.")
+    parser.add_argument("--junit", dest="junit_path", type=Path, default=None,
+                        help="Path to write the raw JUnit JSON. Defaults to "
+                             "<report-dir>/junit-<timestamp>.json when --report-dir "
+                             "is set. Ignored otherwise.")
+    parser.add_argument("--open-report", dest="open_report", action="store_true",
+                        help="Open the rendered HTML report in the default browser.")
     return parser.parse_args(argv)
 
 
@@ -391,16 +418,72 @@ def main(argv: Optional[List[str]] = None) -> int:
         pytest_env["WEB_BASE_URL"] = env_overrides["WEB_BASE_URL"]
         pytest_env["AUTH_API_URL"] = env_overrides["AUTH_API_URL"]
 
-        print(f"[runner] {' '.join(pytest_cmd)}")
+        # Resolve JUnit + HTML output paths. --report-dir drives both.
+        if args.report_dir is not None:
+            args.report_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            junit_path = args.report_dir / ("junit-" + timestamp + ".json")
+            html_path  = args.report_dir / ("scenario-report-" + timestamp + ".html")
+        elif args.junit_path is not None:
+            junit_path = args.junit_path
+            html_path  = None
+        else:
+            junit_path = None
+            html_path  = None
+
+        if junit_path is not None:
+            junit_path.parent.mkdir(parents=True, exist_ok=True)
+            pytest_cmd.append("--junit-xml=" + str(junit_path))
+            print("[runner] JUnit will be written to: " + str(junit_path))
+
+        print("[runner] " + " ".join(pytest_cmd))
         result = subprocess.run(pytest_cmd, env=pytest_env)
 
         if args.keep_streamlit:
             print("[runner] --keep-streamlit set; leaving services running.")
+
+    # Render the HTML report outside the services context.
+    if html_path is not None and junit_path is not None and junit_path.exists():
+        renderer = REPO_ROOT / "tests" / "render_report.py"
+
+        if not renderer.exists():
+            print("[runner] WARNING: renderer not found at " + str(renderer) + "; skipping HTML report.")
+        else:
+            stamp = junit_path.stem.replace("junit-", "", 1)
+            filter_value = args.scenario_filter or "(all)"
+            render_cmd = [
+                sys.executable,
+                str(renderer),
+                "--junit",  str(junit_path),
+                "--output", str(html_path),
+                "--filter", filter_value,
+                "--stamp",  stamp,
+            ]
+            print("[runner] rendering report: " + " ".join(render_cmd))
+            render_result = subprocess.run(render_cmd, env=os.environ.copy())
+            if render_result.returncode == 0:
+                print("[runner] HTML report: " + str(html_path))
+                if args.open_report:
+                    try:
+                        if os.name == "nt":
+                            os.startfile(str(html_path))  # type: ignore[attr-defined]
+                        elif sys.platform == "darwin":
+                            subprocess.Popen(["open", str(html_path)])
+                        else:
+                            subprocess.Popen(["xdg-open", str(html_path)])
+                    except Exception as exc:  # pragma: no cover
+                        print("[runner] could not open report: " + str(exc))
+            else:
+                print("[runner] renderer exited " + str(render_result.returncode) +
+                      "; HTML report not generated.")
 
     return result.returncode
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+
 
 

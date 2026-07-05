@@ -48,3 +48,4 @@ Thumbs.db
 
 tests/ui/screenshots
 tests/ui/logs
+reports/allure-results

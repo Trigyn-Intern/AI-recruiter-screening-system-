@@ -13,6 +13,7 @@ jsonschema==4.24.0
 torch==2.7.1
 transformers==4.52.4
 pytest-mock
+allure-pytest==2.16.0
 pytest
 pytest-playwright
 playwright
