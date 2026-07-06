@@ -610,6 +610,50 @@ def encode_text_embedding(text, prefix):
 
 def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
     if faiss is None:
+        return None, []
+    if FAISS_INDEX_PATH.exists():
+        try:
+            index = faiss.read_index(str(FAISS_INDEX_PATH))
+        except Exception:
+            index = faiss.IndexFlatIP(dimension)
+    else:
+        index = faiss.IndexFlatIP(dimension)
+    metadata = []
+    if FAISS_METADATA_PATH.exists():
+        try:
+            metadata = json.loads(FAISS_METADATA_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            metadata = []
+    return index, metadata
+
+def faiss_index_lookup(resume_id):
+    """Return the cached embedding for 
+esume_id from the FAISS index,
+    or None if it isn't indexed yet.
+
+    This is a fast path used by get_or_create_resume_embedding so repeat
+    uploads of the same resume skip the embedding model entirely.
+    """
+    if faiss is None or not FAISS_INDEX_PATH.exists():
+        return None
+    if not FAISS_METADATA_PATH.exists():
+        return None
+
+    try:
+        metadata = json.loads(FAISS_METADATA_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    for i, rec in enumerate(metadata):
+        if rec.get("id") == resume_id or rec.get("resume_id") == resume_id:
+            try:
+                index = faiss.read_index(str(FAISS_INDEX_PATH))
+                return index.reconstruct(i)
+            except Exception:
+                return None
+    return None
+
+    if faiss is None:
         raise RuntimeError(
             "Install faiss-cpu to use the resume vector database."
         )
@@ -644,6 +688,12 @@ def get_current_timestamp():
 
 
 def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
+
+    # Fast path: if the embedding is already in FAISS, skip the model
+    # call entirely. This makes repeat uploads of the same resume free.
+    cached_embedding = faiss_index_lookup(resume_id)
+    if cached_embedding is not None:
+        return cached_embedding
     try:
         index, metadata = load_resume_vector_store()
         existing = find_resume_metadata(metadata, resume_id)
@@ -1413,7 +1463,7 @@ def normalize_skill_list(value):
 
     if isinstance(value, str):
         value = [
-            item.strip(" -•\t")
+            item.strip(" -ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢\t")
             for item in value.replace("\n", ",").split(",")
         ]
 
@@ -2052,11 +2102,26 @@ def extract_text(file):
     if hasattr(file, "seek"):
         file.seek(0)
 
-    if file.name.endswith(".pdf"):
+    # `file` may be a SpooledTemporaryFile from FastAPI/Uvicorn without
+    # a `.name`, or an in-memory BytesIO that already has one set; the
+    # DOCX benchmark relies on the latter case. Sniff the bytes when
+    # the filename is missing or unfamiliar.
+    name = getattr(file, "name", "") or ""
+    lower_name = name.lower()
+    if lower_name.endswith(".pdf"):
         return extract_pdf_text(file)
 
-    if file.name.endswith(".docx"):
+    if lower_name.endswith(".docx"):
         return extract_docx_text(file)
+
+    if hasattr(file, "read"):
+        head = file.read(4)
+        if hasattr(file, "seek"):
+            file.seek(0)
+        if head.startswith(b"%PDF"):
+            return extract_pdf_text(file)
+        if head[:2] == b"PK":
+            return extract_docx_text(file)
 
     return ""
 
@@ -2088,6 +2153,21 @@ def calculate_match_score(resume_embedding, job_text):
 # ==================================================
 # AI ANALYSIS
 # ==================================================
+_JD_ANALYSIS_CACHE = {}
+
+
+def analyze_job_description_cached(job_text, model_name=None, provider=None):
+    """Memoized wrapper around analyze_job_description.
+
+    Same JD text + same provider/model = same response, so cache it.
+    Scenario matrix re-runs hit the cache 100% after the first pass.
+    """
+    key = (job_text.strip(), provider, model_name)
+    if key in _JD_ANALYSIS_CACHE:
+        return _JD_ANALYSIS_CACHE[key]
+    result = analyze_job_description(job_text, model_name=model_name, provider=provider)
+    _JD_ANALYSIS_CACHE[key] = result
+    return result
 
 def analyze_job_description(
     job_text,
@@ -3022,11 +3102,22 @@ def process_resume(resume_file, job_description):
         "Match Score (%)": score,
     }
 
-def persist_analysis_session(payload: dict, base_dir: str = "vector_store") -> str:
+def persist_analysis_session(*args, **kwargs) -> str:
     """Append one analysis session to vector_store/analysis_sessions.json.
-    Returns the session_id.
+
+    Accepts either a single ``payload`` dict (legacy callers) or the
+    keyword-argument form used by ``api.py`` (e.g. ``job_description=``,
+    ``file_cache=``). All extra args are folded into the stored payload
+    so any caller shape works.
     """
     import os, json, uuid
+
+    if args and isinstance(args[0], dict) and not kwargs:
+        payload = dict(args[0])
+    else:
+        payload = dict(kwargs)
+
+    base_dir = payload.pop("base_dir", "vector_store")
     os.makedirs(base_dir, exist_ok=True)
     path = os.path.join(base_dir, "analysis_sessions.json")
     sessions = []
@@ -3042,5 +3133,10 @@ def persist_analysis_session(payload: dict, base_dir: str = "vector_store") -> s
     with open(path, "w", encoding="utf-8") as f:
         json.dump(sessions, f, ensure_ascii=False, indent=2)
     return payload["session_id"]
+
+
+
+
+
 
 

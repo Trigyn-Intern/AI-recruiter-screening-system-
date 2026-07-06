@@ -549,3 +549,30 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     127.0.0.1:57936 - "GET /health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:2816 - "GET /health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:12588 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [33344]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:35259 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35267 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:27424 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3464 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40655 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8357 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8357 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40715 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33932 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33932 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6435 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6436 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:6437 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22792 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3255 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29641 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:29642 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4176 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4177 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [33344]

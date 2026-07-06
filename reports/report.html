@@ -108,11 +108,11 @@ th:nth-child(13), td:nth-child(13) { width: 140px; }  /* Reference */
 <body>
 
 <h1>AI Recruiter Screening System &mdash; Scenario Matrix Test Report</h1>
-<div class="meta-line">Generated: 2026-07-05 22:10:30 &nbsp;|&nbsp; Filter: (all) &nbsp;|&nbsp; Source: junit.json</div>
+<div class="meta-line">Generated: 2026-07-06 19:56:09 &nbsp;|&nbsp; Filter: (all) &nbsp;|&nbsp; Source: junit.json</div>
 <div class="summary-bar">
   <span class="total">Total: 21</span>
-  <span class="passed">Passed: 9</span>
-  <span class="failed">Failed: 12</span>
+  <span class="passed">Passed: 17</span>
+  <span class="failed">Failed: 4</span>
 </div>
 
 <button onclick="exportTableToExcel('report-table', 'scenario-matrix-report')" style="margin-bottom: 15px; padding: 5px 10px; background: #4472C4; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Export to XLSX</button>
@@ -154,11 +154,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_python_ml.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_python_ml.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_strong_python.pdf<br>2. Match score should be at least: 50</td>
-  <td>playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 180000ms exceeded.<br>Call log:<br>  - waiting for locator(&quot;section:has(h2:text-is(&#x27;Ranking&#x27;)) table tbody tr&quot;).first to be visible</td>
+  <td>AssertionError: Scenario &#x27;python_ml_llama32&#x27;: top score 0.0 &lt; expected minimum 50. Ranking: [{&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;87.37%&#x27;, &#x27;fit&#x27;: &#x27;Good Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;73.18%&#x27;, &#x27;fit&#x27;: &#x27;Good Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;64.92%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;64.32%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;-4.54%&#x27;, &#x27;fit&#x27;: &#x27;Bad Fit&#x27;}]<br>assert 0.0 &gt;= 50.0<br> +  where 50.0 = float(50)</td>
   <td class="center fail">Fail</td>
   <td>1. Investigate failure for scenario python_ml_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
   <td class="email-cell">Subject: AI Recruiter Screening Test Failed - python_ml_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;python_ml_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_strong_python.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: python_ml_llama32.png</td>
+  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">2</td>
@@ -169,11 +169,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_data_engineer.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_data_engineer.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_data_engineer.pdf<br>2. Match score should be at least: 45</td>
-  <td>AssertionError: FastAPI never became reachable at http://127.0.0.1:8000/health within 60s. Last error: URLError(ConnectionRefusedError(10061, &#x27;No connection could be made because the target machine actively refused it&#x27;, None, 10061, None))</td>
+  <td>AssertionError: Scenario &#x27;data_engineer_llama32&#x27;: top score 0.0 &lt; expected minimum 45. Ranking: [{&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;87.6%&#x27;, &#x27;fit&#x27;: &#x27;Good Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;69.09%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;65.58%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;60.33%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;-3.31%&#x27;, &#x27;fit&#x27;: &#x27;Bad Fit&#x27;}]<br>assert 0.0 &gt;= 45.0<br> +  where 45.0 = float(45)</td>
   <td class="center fail">Fail</td>
   <td>1. Investigate failure for scenario data_engineer_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
   <td class="email-cell">Subject: AI Recruiter Screening Test Failed - data_engineer_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;data_engineer_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_data_engineer.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: data_engineer_llama32.png</td>
+  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">3</td>
@@ -184,11 +184,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_frontend_react.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_frontend_react.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_frontend.pdf<br>2. Match score should be at least: 45</td>
-  <td>AssertionError: FastAPI never became reachable at http://127.0.0.1:8000/health within 60s. Last error: URLError(ConnectionRefusedError(10061, &#x27;No connection could be made because the target machine actively refused it&#x27;, None, 10061, None))</td>
+  <td>AssertionError: Scenario &#x27;frontend_react_llama32&#x27;: top score 0.0 &lt; expected minimum 45. Ranking: [{&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;local_fallback&#x27;, &#x27;fit&#x27;: &#x27;miss&#x27;}, {&#x27;resume&#x27;: &#x27;resume_frontend.pdf&#x27;, &#x27;score&#x27;: &#x27;88.71%&#x27;, &#x27;fit&#x27;: &#x27;Good Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_junior.pdf&#x27;, &#x27;score&#x27;: &#x27;65.29%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_data_engineer.pdf&#x27;, &#x27;score&#x27;: &#x27;65.03%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume_strong_python.pdf&#x27;, &#x27;score&#x27;: &#x27;64.91%&#x27;, &#x27;fit&#x27;: &#x27;Moderate Fit&#x27;}, {&#x27;resume&#x27;: &#x27;resume.pdf&#x27;, &#x27;score&#x27;: &#x27;-3.56%&#x27;, &#x27;fit&#x27;: &#x27;Bad Fit&#x27;}]<br>assert 0.0 &gt;= 45.0<br> +  where 45.0 = float(45)</td>
   <td class="center fail">Fail</td>
   <td>1. Investigate failure for scenario frontend_react_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
   <td class="email-cell">Subject: AI Recruiter Screening Test Failed - frontend_react_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;frontend_react_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_frontend.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: frontend_react_llama32.png</td>
+  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">4</td>
@@ -259,10 +259,10 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 0 resume files.<br>7. Paste job description from .<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: <br>Model: llama3.2<br>Resumes:<br>  (none)</td>
   <td>1. Top-ranked resume should be: N/A<br>2. Match score should be at least: N/A</td>
-  <td>Top-ranked resume and score met or exceeded the expected values.</td>
-  <td class="center pass">Pass</td>
-  <td>1. Scenario test_get_or_create_resume_embedding_uses_cached_faiss_row passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - test_get_or_create_resume_embedding_uses_cached_faiss_row<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_get_or_create_resume_embedding_uses_cached_faiss_row&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: N/A<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>AssertionError: <br>Arrays are not equal<br><br>(shapes (0,), (1, 1024) mismatch)<br> ACTUAL: array([], dtype=float64)<br> DESIRED: array([[0.1, 0.1, 0.1, ..., 0.1, 0.1, 0.1]],<br>      shape=(1, 1024), dtype=float32)</td>
+  <td class="center fail">Fail</td>
+  <td>1. Investigate failure for scenario test_get_or_create_resume_embedding_uses_cached_faiss_row.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - test_get_or_create_resume_embedding_uses_cached_faiss_row<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_get_or_create_resume_embedding_uses_cached_faiss_row&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: N/A<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
   <td>1. Case ID: 10560-test_get_or_create_resume_embedding_uses_cached_faiss_row<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
@@ -334,10 +334,10 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 0 resume files.<br>7. Paste job description from .<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: <br>Model: llama3.2<br>Resumes:<br>  (none)</td>
   <td>1. Top-ranked resume should be: N/A<br>2. Match score should be at least: N/A</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario test_api_health_is_reachable.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - test_api_health_is_reachable<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_api_health_is_reachable&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: N/A<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario test_api_health_is_reachable passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - test_api_health_is_reachable<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_api_health_is_reachable&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: N/A<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
   <td>1. Case ID: 10560-test_api_health_is_reachable<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
@@ -349,10 +349,10 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 0 resume files.<br>7. Paste job description from .<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: <br>Model: llama3.2<br>Resumes:<br>  (none)</td>
   <td>1. Top-ranked resume should be: N/A<br>2. Match score should be at least: N/A</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario test_models_endpoint_lists_providers.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - test_models_endpoint_lists_providers<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_models_endpoint_lists_providers&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: N/A<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario test_models_endpoint_lists_providers passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - test_models_endpoint_lists_providers<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_models_endpoint_lists_providers&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: N/A<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
   <td>1. Case ID: 10560-test_models_endpoint_lists_providers<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
@@ -364,11 +364,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_python_ml.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_python_ml.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_strong_python.pdf<br>2. Match score should be at least: 50</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario python_ml_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - python_ml_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;python_ml_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_strong_python.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: python_ml_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario python_ml_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - python_ml_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;python_ml_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_strong_python.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">16</td>
@@ -379,11 +379,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_data_engineer.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_data_engineer.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_data_engineer.pdf<br>2. Match score should be at least: 45</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario data_engineer_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - data_engineer_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;data_engineer_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_data_engineer.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: data_engineer_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario data_engineer_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - data_engineer_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;data_engineer_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_data_engineer.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">17</td>
@@ -394,11 +394,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_frontend_react.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_frontend_react.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_frontend.pdf<br>2. Match score should be at least: 45</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario frontend_react_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - frontend_react_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;frontend_react_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_frontend.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: frontend_react_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario frontend_react_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - frontend_react_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;frontend_react_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_frontend.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">18</td>
@@ -409,10 +409,10 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 0 resume files.<br>7. Paste job description from .<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: <br>Model: llama3.2<br>Resumes:<br>  (none)</td>
   <td>1. Top-ranked resume should be: N/A<br>2. Match score should be at least: N/A</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario test_jd_input_required_field_via_analyze.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - test_jd_input_required_field_via_analyze<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_jd_input_required_field_via_analyze&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: N/A<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario test_jd_input_required_field_via_analyze passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - test_jd_input_required_field_via_analyze<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;test_jd_input_required_field_via_analyze&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: N/A<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
   <td>1. Case ID: 10560-test_jd_input_required_field_via_analyze<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
@@ -424,11 +424,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_python_ml.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_python_ml.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_strong_python.pdf<br>2. Match score should be at least: 50</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario python_ml_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - python_ml_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;python_ml_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_strong_python.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: python_ml_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario python_ml_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - python_ml_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;python_ml_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_strong_python.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">20</td>
@@ -439,11 +439,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_data_engineer.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_data_engineer.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_data_engineer.pdf<br>2. Match score should be at least: 45</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario data_engineer_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - data_engineer_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;data_engineer_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_data_engineer.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: data_engineer_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario data_engineer_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - data_engineer_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;data_engineer_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_data_engineer.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 <tr>
   <td class="center">21</td>
@@ -454,11 +454,11 @@ function exportTableToExcel(tableID, filename = ''){
   <td>1. Open the AI Recruiter Screening app at http://localhost:5173<br>2. Login with recruiter credentials.<br>3. Navigate to Dashboard &gt; Configurations tab.<br>4. Set Provider to Ollama, Model to llama3.2.<br>5. Switch to Analyzer tab.<br>6. Upload 4 resume files.<br>7. Paste job description from jds/jd_frontend_react.txt.<br>8. Click &#x27;Analyze&#x27; and wait for Ranking table.<br>9. Verify top-ranked resume and minimum score.</td>
   <td>JD File: jds/jd_frontend_react.txt<br>Model: llama3.2<br>Resumes:<br>  - resumes/resume_strong_python.pdf<br>  - resumes/resume_data_engineer.pdf<br>  - resumes/resume_frontend.pdf<br>  - resumes/resume_junior.pdf</td>
   <td>1. Top-ranked resume should be: resume_frontend.pdf<br>2. Match score should be at least: 45</td>
-  <td>urllib.error.URLError: &lt;urlopen error [WinError 10061] No connection could be made because the target machine actively refused it&gt;</td>
-  <td class="center fail">Fail</td>
-  <td>1. Investigate failure for scenario frontend_react_llama32.<br>2. Check reports/logs/api.log for backend errors.<br>3. Verify Ollama model llama3.2 is responsive.<br>4. Cross-check score threshold against model version.</td>
-  <td class="email-cell">Subject: AI Recruiter Screening Test Failed - frontend_react_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;frontend_react_llama32&#x27; has FAILED.<br><br>Model: llama3.2<br>Expected Top Resume: resume_frontend.pdf<br>Status: FAILED<br><br>Please check logs at reports/logs/ for details.<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
-  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml<br>3. Screenshot: frontend_react_llama32.png</td>
+  <td>Top-ranked resume and score met or exceeded the expected values.</td>
+  <td class="center pass">Pass</td>
+  <td>1. Scenario frontend_react_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - frontend_react_llama32<br><br>Hi Recruiter,<br>This is to inform you that the automated screening test for scenario &#x27;frontend_react_llama32&#x27; completed successfully.<br><br>Model: llama3.2<br>Top Resume: resume_frontend.pdf<br>Status: PASSED<br><br>Thank you,<br>AI Recruiter Automation Tool</td>
+  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml</td>
 </tr>
 </tbody>
 </table>
