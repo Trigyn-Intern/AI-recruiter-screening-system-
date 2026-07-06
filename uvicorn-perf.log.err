@@ -1,0 +1,39 @@
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started parent process [26588]
+INFO:     Started server process [22372]
+INFO:     Waiting for application startup.
+INFO:     Started server process [34564]
+INFO:     Started server process [21572]
+INFO:     Started server process [20312]
+INFO:     Application startup complete.
+INFO:     Waiting for application startup.
+INFO:     Waiting for application startup.
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Application startup complete.
+INFO:     Application startup complete.
+INFO:     Waiting for child process [22372]
+INFO:     Child process [22372] died
+INFO:     Started server process [18672]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Waiting for child process [18672]
+INFO:     Child process [18672] died
+INFO:     Started server process [12956]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Waiting for child process [12956]
+INFO:     Child process [12956] died
+INFO:     Started server process [30804]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Waiting for child process [30804]
+INFO:     Child process [30804] died
+INFO:     Started server process [23444]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Waiting for child process [23444]
+INFO:     Child process [23444] died
+INFO:     Started server process [2764]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

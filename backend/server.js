@@ -1,17 +1,19 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
+const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
+
+// Ensure JWT_SECRET is set before any module that calls jwt.sign() is loaded.
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
+  console.warn("JWT_SECRET is not set. Generated ephemeral dev secret.");
+}
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 
 const app = express();
-
-if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = "local-dev-jwt-secret-change-before-production";
-  console.warn("JWT_SECRET is not set. Using local development default.");
-}
 
 app.use(
   cors({

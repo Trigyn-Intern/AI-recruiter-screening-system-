@@ -1,5 +1,7 @@
 import io
-
+import os
+import asyncio
+import time
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +10,7 @@ from backend import (
     GEMINI_MODEL_OPTIONS,
     OLLAMA_MODEL_OPTIONS,
     analyze_candidate_detail,
-    analyze_job_description,
+    analyze_job_description_cached as analyze_job_description,
     clear_runtime_status,
     display_value,
     extract_text,
@@ -22,13 +24,11 @@ from backend import (
     get_runtime_status,
     initialize_project_storage_files,
     calculate_match_score,
-    get_indexed_resume_analysis_records,
     persist_analysis_session,
     reset_configuration,
     update_configuration,
     validate_upload,
 )
-
 
 
 api = FastAPI(title="Resume Analyzer API")
@@ -48,6 +48,13 @@ api.add_middleware(
 
 initialize_project_storage_files()
 
+# Bound concurrent in-flight analyze calls per worker so one slow LLM
+# call can't starve the rest. ANALYZE_MAX_INFLIGHT is read from env in
+# start-app.ps1 (default 4) and ANALYZE_TIMEOUT_S caps each call.
+ANALYZE_MAX_INFLIGHT = int(os.environ.get("ANALYZE_MAX_INFLIGHT", "4"))
+ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "90"))
+_analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
+
 
 class InMemoryUpload(io.BytesIO):
     def __init__(self, content, name):
@@ -58,10 +65,8 @@ class InMemoryUpload(io.BytesIO):
 def build_fit_bucket(score):
     if score >= 70:
         return "Good Fit"
-
     if score >= 50:
         return "Moderate Fit"
-
     return "Bad Fit"
 
 
@@ -76,9 +81,7 @@ def serialize_jd_info(jd_info):
 
 @api.get("/health")
 def health():
-    return {
-        "status": "ok",
-    }
+    return {"status": "ok"}
 
 
 @api.get("/models")
@@ -88,10 +91,6 @@ def models():
         "ollama_models": OLLAMA_MODEL_OPTIONS,
         "gemini_models": GEMINI_MODEL_OPTIONS,
     }
-
-
-
-
 
 
 @api.get("/configuration")
@@ -107,36 +106,27 @@ def configuration():
 @api.get("/resume-db")
 def resume_database():
     records = get_resume_database_records()
-
     return {
         "records": records,
         "total": len(records),
         "fully_indexed": sum(
-            1
-            for record in records
+            1 for record in records
             if record["embedding_indexed"] and record["skills_indexed"]
         ),
         "embedding_indexed": sum(
             1 for record in records if record["embedding_indexed"]
-        ),
-        "skills_indexed": sum(
-            1 for record in records if record["skills_indexed"]
         ),
     }
 
 
 @api.put("/configuration")
 def save_configuration(config: dict):
-    return {
-        "configuration": update_configuration(config),
-    }
+    return {"configuration": update_configuration(config)}
 
 
 @api.post("/configuration/reset")
 def reset_saved_configuration():
-    return {
-        "configuration": reset_configuration(),
-    }
+    return {"configuration": reset_configuration()}
 
 
 @api.post("/analyze")
@@ -147,6 +137,47 @@ async def analyze(
     detail_limit: int = Form(5),
     resumes: list[UploadFile] | None = File(None),
 ):
+    """Concurrency-safe analyze endpoint.
+
+    The heavy analyzer pipeline runs on a worker thread via
+    asyncio.to_thread so the event loop stays responsive. The
+    _analyze_sem semaphore caps concurrent in-flight analyses per
+    worker; ANALYZE_TIMEOUT_S is a hard wall-clock limit that turns
+    runaway LLM calls into 504s instead of 60s+ waits.
+    """
+    started = time.perf_counter()
+    try:
+        async with asyncio.timeout(ANALYZE_TIMEOUT_S):
+            async with _analyze_sem:
+                result = await asyncio.to_thread(
+                    _run_analyze_blocking,
+                    job_description,
+                    provider,
+                    model_name,
+                    detail_limit,
+                    resumes,
+                )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="analyze timed out")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"analyze failed: {exc}") from exc
+
+    result = dict(result)
+    result["_elapsed_ms"] = int((time.perf_counter() - started) * 1000)
+    return result
+
+
+def _run_analyze_blocking(
+    job_description: str,
+    provider: str,
+    model_name: str,
+    detail_limit: int,
+    resumes: list[UploadFile] | None,
+) -> dict:
+    """Synchronous analyzer pipeline. Runs in a worker thread so the
+    FastAPI event loop is not blocked while LLM calls are in flight."""
     clear_runtime_status()
 
     if provider not in AI_PROVIDER_OPTIONS:
@@ -170,32 +201,25 @@ async def analyze(
     uploaded_records = {}
 
     for resume in resumes or []:
-        content = await resume.read()
+        content = resume.file.read()
         resume_file = InMemoryUpload(content, resume.filename)
         is_valid, message = validate_upload(resume_file)
 
         if not is_valid:
-            invalid_resumes.append(
-                {
-                    "resume_name": resume.filename,
-                    "error": message,
-                }
-            )
+            invalid_resumes.append({"resume_name": resume.filename, "error": message})
             continue
 
         resume_id = get_resume_id(resume_file)
         resume_text = extract_text(resume_file)
 
         if not resume_text.strip():
-            invalid_resumes.append(
-                {
-                    "resume_name": resume.filename,
-                    "error": (
-                        "No readable text could be extracted. Use a text-based "
-                        "PDF/DOCX or run OCR before uploading."
-                    ),
-                }
-            )
+            invalid_resumes.append({
+                "resume_name": resume.filename,
+                "error": (
+                    "No readable text could be extracted. Use a text-based "
+                    "PDF/DOCX or run OCR before uploading."
+                ),
+            })
             continue
 
         resume_embedding = get_or_create_resume_embedding(
@@ -223,54 +247,40 @@ async def analyze(
         indexed_resume_ids.add(item["resume_id"])
         uploaded_item = uploaded_records.get(item["resume_id"])
         resume_text = (
-            uploaded_item["resume_text"]
-            if uploaded_item
-            else item["resume_text"]
+            uploaded_item["resume_text"] if uploaded_item else item["resume_text"]
         )
         resume_skill_profile = (
             uploaded_item["resume_skill_profile"]
-            if uploaded_item
-            else item["resume_skill_profile"]
+            if uploaded_item else item["resume_skill_profile"]
         )
-        score = calculate_match_score(
-            item["resume_embedding"],
-            job_description,
-        )
+        score = calculate_match_score(item["resume_embedding"], job_description)
         record = {
             "resume_name": item["resume_name"],
             "resume_id": item["resume_id"],
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        file_cache.append(
-            {
-                "record": record,
-                "resume_text": resume_text,
-                "resume_skill_profile": resume_skill_profile,
-            }
-        )
+        file_cache.append({
+            "record": record,
+            "resume_text": resume_text,
+            "resume_skill_profile": resume_skill_profile,
+        })
 
     for resume_id, item in uploaded_records.items():
         if resume_id in indexed_resume_ids:
             continue
-
-        score = calculate_match_score(
-            item["resume_embedding"],
-            job_description,
-        )
+        score = calculate_match_score(item["resume_embedding"], job_description)
         record = {
             "resume_name": item["resume_name"],
-            "resume_id": item["resume_id"],
+            "resume_id": resume_id,
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        file_cache.append(
-            {
-                "record": record,
-                "resume_text": item["resume_text"],
-                "resume_skill_profile": item["resume_skill_profile"],
-            }
-        )
+        file_cache.append({
+            "record": record,
+            "resume_text": item["resume_text"],
+            "resume_skill_profile": item["resume_skill_profile"],
+        })
 
     if not file_cache:
         raise HTTPException(
@@ -282,15 +292,9 @@ async def analyze(
         )
 
     valid_records = [item["record"] for item in file_cache]
-    ranking = sorted(
-        valid_records,
-        key=lambda item: item["match_score"],
-        reverse=True,
-    )
+    ranking = sorted(valid_records, key=lambda item: item["match_score"], reverse=True)
     detail_records = ranking[:detail_limit]
-    detail_ids = {
-        record["resume_id"] for record in detail_records
-    }
+    detail_ids = {record["resume_id"] for record in detail_records}
     detail_order = {
         record["resume_id"]: index
         for index, record in enumerate(detail_records)
@@ -299,10 +303,8 @@ async def analyze(
 
     for item in file_cache:
         record = item["record"]
-
         if record["resume_id"] not in detail_ids:
             continue
-
         detail = analyze_candidate_detail(
             item["resume_text"],
             job_description,
@@ -319,12 +321,7 @@ async def analyze(
             matching_skills=detail.get("matching_skills", []),
             missing_skills=detail.get("missing_skills", []),
         )
-        top_details.append(
-            {
-                **record,
-                **detail,
-            }
-        )
+        top_details.append({**record, **detail})
 
     top_details = sorted(
         top_details,
@@ -332,21 +329,9 @@ async def analyze(
     )
 
     categories = {
-        "good_fit": [
-            record["resume_name"]
-            for record in ranking
-            if record["fit"] == "Good Fit"
-        ],
-        "moderate_fit": [
-            record["resume_name"]
-            for record in ranking
-            if record["fit"] == "Moderate Fit"
-        ],
-        "bad_fit": [
-            record["resume_name"]
-            for record in ranking
-            if record["fit"] == "Bad Fit"
-        ],
+        "good_fit": [r["resume_name"] for r in ranking if r["fit"] == "Good Fit"],
+        "moderate_fit": [r["resume_name"] for r in ranking if r["fit"] == "Moderate Fit"],
+        "bad_fit": [r["resume_name"] for r in ranking if r["fit"] == "Bad Fit"],
     }
 
     payload = {
@@ -367,4 +352,3 @@ async def analyze(
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
     }
-

@@ -28,3 +28,12 @@ Auth API listening on http://localhost:4000
 JWT_SECRET is not set. Using local development default.
 In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
 Auth API listening on http://localhost:4000
+JWT_SECRET is not set. Using local development default.
+In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
+Auth API listening on http://localhost:4000
+JWT_SECRET is not set. Using local development default.
+In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
+Auth API listening on http://localhost:4000
+JWT_SECRET is not set. Generated ephemeral dev secret.
+In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
+Auth API listening on http://localhost:4000
