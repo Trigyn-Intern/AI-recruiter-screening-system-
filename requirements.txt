@@ -1,5 +1,5 @@
 fastapi==0.124.2
-uvicorn==0.38.0
+uvicorn==0.51.0
 python-multipart==0.0.21
 pandas==2.2.3
 ollama==0.5.1
