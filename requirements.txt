@@ -21,6 +21,6 @@ bandit
 reportlab
 pytest==8.0.0
 pytest-benchmark==4.0.0
-scalene==1.5.33
+scalene==2.3.0
 httpx==0.26.0
 requests==2.31.0
