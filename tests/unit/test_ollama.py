@@ -5,7 +5,10 @@ from backend import (
     CANDIDATE_GRADING_SCHEMA,
     DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE,
     DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE,
+    DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE,
+    DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE,
     DEFAULT_OLLAMA_MODEL,
+    CLAUDE_MODEL_OPTIONS,
     GEMINI_RESUME_SKILL_MODEL,
     GEMINI_MODEL_OPTIONS,
     JD_RESPONSE_SCHEMA,
@@ -14,12 +17,10 @@ from backend import (
     DEFAULT_JD_PROMPT_TEMPLATE,
     analyze_candidate_detail,
     analyze_candidate_grading,
-    analyze_match_justification,
     get_resume_skill_profile,
     get_model_options,
     is_complete_resume_skill_profile,
     normalize_configuration,
-    summarize_gemini_error,
     safe_ollama_json,
 )
 
@@ -109,6 +110,13 @@ def test_get_model_options_returns_gemini_models():
     assert "gemini-2.5-flash" in result
 
 
+def test_get_model_options_returns_claude_models():
+    result = get_model_options("Claude")
+
+    assert result == CLAUDE_MODEL_OPTIONS
+    assert "claude-haiku-4-5" in result
+
+
 def test_jd_response_schema_requires_display_fields():
     assert JD_RESPONSE_SCHEMA["required"] == [
         "experience",
@@ -122,6 +130,7 @@ def test_jd_response_schema_requires_display_fields():
         "primary_skills",
         "secondary_skills",
         "education",
+        "additional_insights",
     }
 
 
@@ -137,28 +146,6 @@ def test_jd_response_schema_allows_list_skills():
     )
 
 
-def test_analyze_match_justification_returns_summary(mocker):
-    mocker.patch(
-        "backend.safe_ai_json",
-        return_value={
-            "justification": (
-                "Strong Python and SQL experience match the role. "
-                "Cloud experience is less clear."
-            ),
-        },
-    )
-
-    result = analyze_match_justification(
-        "Python SQL resume",
-        "Python SQL cloud job",
-        78.5,
-        model_name="test-model",
-    )
-
-    assert "Strong Python" in result
-    assert "Cloud experience" in result
-
-
 def test_candidate_detail_schema_requires_display_fields():
     assert CANDIDATE_DETAIL_SCHEMA["required"] == [
         "matching_skills",
@@ -169,7 +156,8 @@ def test_candidate_detail_schema_requires_display_fields():
 
 def test_candidate_grading_schema_requires_display_fields():
     assert CANDIDATE_GRADING_SCHEMA["required"] == [
-        "grade",
+        "grade_percentage",
+        "criteria_scores",
         "summary",
         "strengths",
         "concerns",
@@ -182,11 +170,38 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
     mocker.patch("backend.get_ai_cache", return_value={})
     mock_ai = mocker.patch(
         "backend.safe_ai_json",
-        return_value={
-            "matching_skills": ["Python", "SQL"],
-            "missing_skills": ["AWS"],
-            "justification": "Strong Python and SQL match. AWS is missing.",
-        },
+        side_effect=[
+            {
+                "matching_skills": ["Python", "SQL"],
+                "missing_skills": ["AWS"],
+                "justification": "Strong Python and SQL match. AWS is missing.",
+            },
+            {
+                "total_experience": "Not Found",
+                "timeline": [],
+            },
+            {
+                "candidate_name": "Python Candidate",
+                "likely_role": "Python Developer",
+                "current_title": "Python Developer",
+                "current_company": "Not Found",
+                "location": "Not Found",
+                "total_experience": "Not Found",
+            },
+            {
+                "grade_percentage": 84,
+                "criteria_scores": {
+                    "skill_gap": 70,
+                    "years_experience": 60,
+                    "project_experience": 80,
+                    "education": 75,
+                    "seniority": 65,
+                },
+                "summary": "Gemini grading summary.",
+                "strengths": ["Python and SQL"],
+                "concerns": ["AWS missing"],
+            },
+        ],
     )
 
     result = analyze_candidate_detail(
@@ -199,7 +214,9 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
     assert result["matching_skills"] == ["Python", "SQL"]
     assert result["missing_skills"] == ["AWS"]
     assert "Strong Python" in result["justification"]
-    mock_ai.assert_called_once()
+    assert result["candidate_snapshot"]["candidate_name"] == "Python Candidate"
+    assert result["candidate_grading"]["source"] == "Gemini"
+    assert mock_ai.call_count >= 3
 
 
 def test_analyze_candidate_detail_uses_cache(mocker):
@@ -207,6 +224,21 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "matching_skills": ["Python"],
         "missing_skills": [],
         "justification": "Cached justification.",
+        "candidate_grading": {
+            "grade": "B",
+            "grade_percentage": 80,
+            "criteria_scores": {
+                "skill_gap": 80,
+                "years_experience": 80,
+                "project_experience": 80,
+                "education": 80,
+                "seniority": 80,
+            },
+            "summary": "Cached Gemini grading.",
+            "strengths": ["Python"],
+            "concerns": [],
+            "source": "Gemini",
+        },
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
@@ -214,8 +246,13 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "backend.get_ai_cache",
         return_value={
             (
-                "candidate_detail_with_grading_v1|Gemini|gemini-2.5-flash|90|"
-                f"resume text|job text|{DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE}"
+                "candidate_detail_with_grading_v12|Gemini|gemini-2.5-flash|90|"
+                f"resume text|job text|{DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE}|"
+                f"{DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE}|"
+                f"{DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE}|"
+                '{"education": 5, "project_experience": 15, '
+                '"seniority": 10, "skill_gap": 50, '
+                '"years_experience": 20}'
             ): cached_result,
         },
     )
@@ -230,6 +267,72 @@ def test_analyze_candidate_detail_uses_cache(mocker):
 
     assert result == cached_result
     mock_ai.assert_not_called()
+
+
+def test_cached_fallback_grading_refreshes_with_gemini(mocker):
+    cached_result = {
+        "matching_skills": ["Python"],
+        "missing_skills": ["AWS"],
+        "justification": "Cached justification.",
+        "candidate_grading": {
+            "grade": "C",
+            "grade_percentage": 55,
+            "criteria_scores": {
+                "skill_gap": 55,
+                "years_experience": 55,
+                "project_experience": 55,
+                "education": 55,
+                "seniority": 55,
+            },
+            "summary": "Fallback summary.",
+            "strengths": ["Python"],
+            "concerns": ["AWS"],
+            "source": "local_fallback",
+        },
+    }
+    mocker.patch("backend.get_selected_provider", return_value="Gemini")
+    mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
+    mocker.patch.dict("backend.RUNTIME_STATE", {"skip_gemini_grading": False})
+    mocker.patch(
+        "backend.get_ai_cache",
+        return_value={
+            (
+                "candidate_detail_with_grading_v11|Gemini|gemini-2.5-flash|90|"
+                f"resume text|job text|{DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE}|"
+                f"{DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE}|"
+                f"{DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE}|"
+                '{"education": 5, "project_experience": 15, '
+                '"seniority": 10, "skill_gap": 50, '
+                '"years_experience": 20}'
+            ): cached_result,
+        },
+    )
+    mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "grade_percentage": 82,
+            "criteria_scores": {
+                "skill_gap": 70,
+                "years_experience": 80,
+                "project_experience": 100,
+                "education": 60,
+                "seniority": 90,
+            },
+            "summary": "Gemini grading summary.",
+            "strengths": ["Python experience"],
+            "concerns": ["AWS is unclear"],
+        },
+    )
+
+    result = analyze_candidate_detail(
+        "resume text",
+        "job text",
+        90,
+        model_name="gemini-2.5-flash",
+    )
+
+    assert result["candidate_grading"]["grade_percentage"] == 82
+    assert result["candidate_grading"]["source"] == "Gemini"
 
 
 def test_analyze_candidate_detail_falls_back_to_indexed_skills(mocker):
@@ -320,7 +423,7 @@ def test_candidate_detail_replaces_not_found_missing_skills(mocker):
 
 def test_candidate_grading_falls_back_without_not_found(mocker):
     mocker.patch(
-        "backend.safe_gemini_json",
+        "backend.safe_ai_json",
         return_value={
             "grade": "Not Found",
             "summary": "Candidate grading could not be generated.",
@@ -329,6 +432,7 @@ def test_candidate_grading_falls_back_without_not_found(mocker):
         },
     )
     mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch("backend.get_persistent_candidate_grading", return_value=None)
 
     result = analyze_candidate_grading(
         "Built Python APIs and deployed Docker projects.",
@@ -344,10 +448,83 @@ def test_candidate_grading_falls_back_without_not_found(mocker):
     assert result["concerns"]
 
 
-def test_summarize_gemini_quota_error():
-    assert summarize_gemini_error("429 RESOURCE_EXHAUSTED details") == (
-        "Gemini quota exhausted; local fallback used."
+def test_candidate_grading_uses_persistent_gemini_cache(mocker):
+    cached_grading = {
+        "grade": "A",
+        "grade_percentage": 90,
+        "criteria_scores": {
+            "skill_gap": 90,
+            "years_experience": 90,
+            "project_experience": 90,
+            "education": 90,
+            "seniority": 90,
+        },
+        "summary": "Cached Gemini grading.",
+        "strengths": ["Strong Python"],
+        "concerns": ["AWS unclear"],
+        "source": "Gemini",
+    }
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch(
+        "backend.get_persistent_candidate_grading",
+        return_value=cached_grading,
     )
+    mock_ai = mocker.patch("backend.safe_ai_json")
+
+    result = analyze_candidate_grading(
+        "Python resume",
+        "Python job",
+        ["Python"],
+        [],
+        provider="Gemini",
+        model_name="gemini-2.5-flash",
+    )
+
+    assert result["grade_percentage"] == cached_grading["grade_percentage"]
+    assert result["weights"] == {
+        "skill_gap": 50,
+        "years_experience": 20,
+        "project_experience": 15,
+        "education": 5,
+        "seniority": 10,
+    }
+    mock_ai.assert_not_called()
+
+
+def test_candidate_grading_saves_successful_gemini_result(mocker):
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch("backend.get_persistent_candidate_grading", return_value=None)
+    mock_save = mocker.patch("backend.save_persistent_candidate_grading")
+    mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "grade": "B",
+            "grade_percentage": 80,
+            "criteria_scores": {
+                "skill_gap": 50,
+                "years_experience": 70,
+                "project_experience": 90,
+                "education": 60,
+                "seniority": 80,
+            },
+            "summary": "Gemini grading summary.",
+            "strengths": ["Python experience"],
+            "concerns": ["AWS unclear"],
+        },
+    )
+
+    result = analyze_candidate_grading(
+        "Python resume",
+        "Python and AWS job",
+        ["Python"],
+        ["AWS"],
+        provider="Gemini",
+        model_name="gemini-2.5-flash",
+    )
+
+    assert result["grade"] == "B"
+    assert result["source"] == "Gemini"
+    mock_save.assert_called_once()
 
 
 def test_resume_skill_profile_cache_is_complete():

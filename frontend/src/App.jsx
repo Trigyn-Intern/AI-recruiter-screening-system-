@@ -1,35 +1,93 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
+  ArrowLeft,
+  Award,
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
   Database,
   FileText,
+  Info,
   Loader2,
   RefreshCw,
   Save,
   RotateCcw,
+  Search,
+  X,
   UploadCloud,
 } from "lucide-react";
 import {
+  defaultClaudeModels,
   defaultGeminiModels,
   defaultOllamaModels,
   defaultProviders,
 } from "./defaultModels";
 import { defaultPrompts } from "./defaultPrompts";
+import SkillsPage from "./pages/dashboard/SkillsPage";
 import "./styles.css";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+
+const defaultGradingWeights = {
+  skill_gap: 50,
+  years_experience: 20,
+  project_experience: 15,
+  education: 5,
+  seniority: 10,
+};
 
 const emptyConfig = {
   ai_provider: "Gemini",
   ollama_model: defaultOllamaModels[0],
   gemini_model: defaultGeminiModels[0],
+  claude_model: defaultClaudeModels[0],
+  candidate_grading_weights: defaultGradingWeights,
   ...defaultPrompts,
 };
+
+function normalizeGradingWeights(weights) {
+  const source = weights || {};
+  const expectedKeys = Object.keys(defaultGradingWeights);
+
+  if (!expectedKeys.every((key) => Object.hasOwn(source, key))) {
+    return { ...defaultGradingWeights };
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(defaultGradingWeights).map(([key, fallback]) => {
+      const parsed = Number(source[key]);
+      const value = Number.isFinite(parsed) ? Math.round(parsed) : fallback;
+      return [key, Math.max(0, Math.min(100, value))];
+    }),
+  );
+
+  const isLegacyExpandedRubric =
+    normalized.skill_gap === 50 &&
+    normalized.years_experience === 25 &&
+    normalized.project_experience === 25 &&
+    normalized.education === 5 &&
+    normalized.seniority === 10;
+
+  return isLegacyExpandedRubric ? { ...defaultGradingWeights } : normalized;
+}
+
+function getGradingWeightTotal(weights) {
+  return Object.values(normalizeGradingWeights(weights)).reduce(
+    (total, value) => total + value,
+    0,
+  );
+}
 
 function normalizeConfig(config) {
   const normalizedConfig = {
     ...emptyConfig,
     ...(config || {}),
   };
+
+  normalizedConfig.candidate_grading_weights = normalizeGradingWeights(
+    normalizedConfig.candidate_grading_weights,
+  );
 
   for (const key of Object.keys(defaultPrompts)) {
     if (!String(normalizedConfig[key] || "").trim()) {
@@ -38,6 +96,22 @@ function normalizeConfig(config) {
   }
 
   return normalizedConfig;
+}
+
+function getModelConfigKey(provider) {
+  if (provider === "Gemini") {
+    return "gemini_model";
+  }
+
+  if (provider === "Claude") {
+    return "claude_model";
+  }
+
+  return "ollama_model";
+}
+
+function getConfiguredModel(config, provider) {
+  return config[getModelConfigKey(provider)];
 }
 
 function formatDisplayValue(value, fallback = "Not Found") {
@@ -71,29 +145,6 @@ function getErrorMessage(data, fallback) {
   return formatDisplayValue(data?.detail || data?.error, fallback);
 }
 
-function shortenText(value, fallback = "None", maxLength = 140) {
-  const text = formatDisplayValue(value, fallback);
-  const upperText = text.toUpperCase();
-
-  if (upperText.includes("429") || upperText.includes("RESOURCE_EXHAUSTED")) {
-    return "Gemini quota exhausted; local fallback used.";
-  }
-
-  if (upperText.includes("503") || upperText.includes("UNAVAILABLE")) {
-    return "Gemini temporarily unavailable; local fallback used.";
-  }
-
-  if (upperText.includes("GEMINI_API_KEY")) {
-    return "Gemini API key missing; local fallback used.";
-  }
-
-  if (text.length <= maxLength) {
-    return text;
-  }
-
-  return `${text.slice(0, maxLength)}...`;
-}
-
 function cleanList(items) {
   if (!Array.isArray(items)) {
     return [];
@@ -104,13 +155,142 @@ function cleanList(items) {
     .filter((item) => item && item.toLowerCase() !== "not found");
 }
 
+function formatInsightLabel(key) {
+  return String(key)
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function cleanAdditionalInsights(...sources) {
+  const insights = [];
+
+  for (const source of sources) {
+    if (
+      !source ||
+      typeof source !== "object" ||
+      Array.isArray(source)
+    ) {
+      continue;
+    }
+
+    for (const [key, value] of Object.entries(source)) {
+      const displayValue = formatDisplayValue(value, "");
+
+      if (!displayValue || displayValue === "Not Found") {
+        continue;
+      }
+
+      insights.push({
+        label: formatInsightLabel(key),
+        value: displayValue,
+      });
+    }
+  }
+
+  return insights;
+}
+
+function cleanTimeline(timeline) {
+  if (!timeline || !Array.isArray(timeline.timeline)) {
+    return {
+      totalExperience: formatDisplayValue(timeline?.total_experience),
+      rows: [],
+    };
+  }
+
+  return {
+    totalExperience: formatDisplayValue(timeline.total_experience),
+    rows: timeline.timeline.filter((item) =>
+      Boolean(item && (item.role || item.company || item.summary)),
+    ),
+  };
+}
+
+function cleanSnapshot(snapshot, detail, timeline) {
+  const latestRole = timeline.rows[0] || {};
+  const safeSnapshot = snapshot || {};
+  const currentTitle = formatDisplayValue(
+    safeSnapshot.current_title || latestRole.role,
+  );
+  const currentCompany = formatDisplayValue(
+    safeSnapshot.current_company || latestRole.company,
+  );
+  let current = "Not Found";
+
+  if (currentTitle !== "Not Found" && currentCompany !== "Not Found") {
+    current = `${currentTitle} at ${currentCompany}`;
+  } else if (currentTitle !== "Not Found") {
+    current = currentTitle;
+  } else if (currentCompany !== "Not Found") {
+    current = currentCompany;
+  }
+
+  return {
+    candidateName: formatDisplayValue(
+      safeSnapshot.candidate_name,
+      formatDisplayValue(detail.resume_name),
+    ),
+    likelyRole: formatDisplayValue(
+      safeSnapshot.likely_role || currentTitle,
+    ),
+    current,
+    location: formatDisplayValue(safeSnapshot.location),
+    totalExperience: formatDisplayValue(
+      safeSnapshot.total_experience,
+      timeline.totalExperience,
+    ),
+  };
+}
+
 function isUsableGrading(grading) {
   return Boolean(
     grading &&
-      grading.grade &&
-      grading.grade !== "Not Found" &&
+      getGradingPercentage(grading) !== null &&
       grading.summary &&
       grading.summary !== "Candidate grading could not be generated.",
+  );
+}
+
+function getGradingPercentage(grading) {
+  if (!grading) return null;
+
+  const rawPercentage =
+    grading.grade_percentage ??
+    grading.percentage ??
+    grading.score ??
+    grading.candidate_score ??
+    grading.fit_percentage ??
+    grading.fit_score;
+
+  if (rawPercentage !== undefined && rawPercentage !== null) {
+    const parsed = Number(String(rawPercentage).replace("%", "").trim());
+    if (Number.isFinite(parsed)) {
+      return Math.max(0, Math.min(100, Math.round(parsed)));
+    }
+  }
+
+  const grade = String(grading.grade || "").trim().toUpperCase();
+  const letterFallback = {
+    A: 90,
+    B: 80,
+    C: 65,
+    D: 45,
+    F: 25,
+  };
+
+  return letterFallback[grade] ?? null;
+}
+
+function normalizeCriteriaScores(scores) {
+  const source = scores || {};
+  return Object.fromEntries(
+    Object.keys(defaultGradingWeights).map((key) => {
+      const parsed = Number(source[key]);
+      return [key, Number.isFinite(parsed) ? Math.round(parsed) : null];
+    }),
   );
 }
 
@@ -119,22 +299,30 @@ function buildDisplayGradingFallback(detail) {
   const missingSkills = cleanList(detail.missing_skills);
   const totalSignals = matchingSkills.length + missingSkills.length;
   const ratio = totalSignals ? matchingSkills.length / totalSignals : 0;
+  let gradePercentage = Math.round(ratio * 70);
+
+  if (matchingSkills.length) {
+    gradePercentage += 10;
+  }
+
+  gradePercentage = Math.max(0, Math.min(100, gradePercentage));
   let grade = "F";
 
-  if (ratio >= 0.8) {
+  if (gradePercentage >= 90) {
     grade = "A";
-  } else if (ratio >= 0.65) {
+  } else if (gradePercentage >= 75) {
     grade = "B";
-  } else if (ratio >= 0.4) {
+  } else if (gradePercentage >= 55) {
     grade = "C";
-  } else if (ratio >= 0.2) {
+  } else if (gradePercentage >= 35) {
     grade = "D";
   }
 
   return {
     grade,
+    grade_percentage: gradePercentage,
     summary:
-      `Grade ${grade} is a display fallback based on ` +
+      `Grade ${gradePercentage}% is a display fallback based on ` +
       `${matchingSkills.length} matching skill(s) and ` +
       `${missingSkills.length} missing skill(s). ` +
       "It does not use the generated match score.",
@@ -144,15 +332,6 @@ function buildDisplayGradingFallback(detail) {
     concerns: missingSkills.length
       ? [`Missing or unclear skills include ${missingSkills.slice(0, 4).join(", ")}.`]
       : ["No missing skills were returned for this candidate."],
-    debug: {
-      source: "frontend_display_fallback",
-      cache: "n/a",
-      final_grade: grade,
-      resume_context_chars: "unknown",
-      matching_skill_count: matchingSkills.length,
-      missing_skill_count: missingSkills.length,
-      gemini_error: "Backend grading object was missing or unusable.",
-    },
   };
 }
 
@@ -161,6 +340,7 @@ function App() {
   const [providers, setProviders] = useState(defaultProviders);
   const [ollamaModels, setOllamaModels] = useState(defaultOllamaModels);
   const [geminiModels, setGeminiModels] = useState(defaultGeminiModels);
+  const [claudeModels, setClaudeModels] = useState(defaultClaudeModels);
   const [config, setConfig] = useState(emptyConfig);
   const [provider, setProvider] = useState("Gemini");
   const [model, setModel] = useState(defaultGeminiModels[0]);
@@ -197,8 +377,12 @@ function App() {
       return geminiModels.length ? geminiModels : defaultGeminiModels;
     }
 
+    if (provider === "Claude") {
+      return claudeModels.length ? claudeModels : defaultClaudeModels;
+    }
+
     return ollamaModels.length ? ollamaModels : defaultOllamaModels;
-  }, [provider, geminiModels, ollamaModels]);
+  }, [provider, geminiModels, claudeModels, ollamaModels]);
 
   useEffect(() => {
     if (modelOptions.length > 0 && !modelOptions.includes(model)) {
@@ -206,8 +390,7 @@ function App() {
       setModel(fallbackModel);
       setConfig((current) => ({
         ...current,
-        [provider === "Gemini" ? "gemini_model" : "ollama_model"]:
-          fallbackModel,
+        [getModelConfigKey(provider)]: fallbackModel,
       }));
     }
   }, [modelOptions, model, provider]);
@@ -233,15 +416,17 @@ function App() {
       const loadedGeminiModels = data.gemini_models?.length
         ? data.gemini_models
         : defaultGeminiModels;
+      const loadedClaudeModels = data.claude_models?.length
+        ? data.claude_models
+        : defaultClaudeModels;
       const nextProvider = loadedConfig.ai_provider || defaultProviders[0];
       const nextModelOptions =
         nextProvider === "Ollama"
           ? loadedOllamaModels
-          : loadedGeminiModels;
-      const configuredModel =
-        nextProvider === "Ollama"
-          ? loadedConfig.ollama_model
-          : loadedConfig.gemini_model;
+          : nextProvider === "Claude"
+            ? loadedClaudeModels
+            : loadedGeminiModels;
+      const configuredModel = getConfiguredModel(loadedConfig, nextProvider);
       const nextModel = nextModelOptions.includes(configuredModel)
         ? configuredModel
         : nextModelOptions[0];
@@ -249,6 +434,7 @@ function App() {
       setProviders(loadedProviders);
       setOllamaModels(loadedOllamaModels);
       setGeminiModels(loadedGeminiModels);
+      setClaudeModels(loadedClaudeModels);
       setConfig(loadedConfig);
       setProvider(nextProvider);
       setModel(nextModel);
@@ -266,7 +452,9 @@ function App() {
     setModel(
       nextProvider === "Gemini"
         ? config.gemini_model || geminiModels[0] || defaultGeminiModels[0]
-        : config.ollama_model || ollamaModels[0] || defaultOllamaModels[0],
+        : nextProvider === "Claude"
+          ? config.claude_model || claudeModels[0] || defaultClaudeModels[0]
+          : config.ollama_model || ollamaModels[0] || defaultOllamaModels[0],
     );
   }
 
@@ -274,7 +462,7 @@ function App() {
     setModel(nextModel);
     setConfig((current) => ({
       ...current,
-      [provider === "Gemini" ? "gemini_model" : "ollama_model"]: nextModel,
+      [getModelConfigKey(provider)]: nextModel,
     }));
   }
 
@@ -294,6 +482,20 @@ function App() {
     formData.append("provider", provider);
     formData.append("model_name", model);
     formData.append("detail_limit", String(detailLimit));
+    const gradingWeights = normalizeGradingWeights(
+      config.candidate_grading_weights,
+    );
+    formData.append("skill_gap_weight", String(gradingWeights.skill_gap));
+    formData.append(
+      "years_experience_weight",
+      String(gradingWeights.years_experience),
+    );
+    formData.append(
+      "project_experience_weight",
+      String(gradingWeights.project_experience),
+    );
+    formData.append("education_weight", String(gradingWeights.education));
+    formData.append("seniority_weight", String(gradingWeights.seniority));
 
     for (const resume of resumes) {
       formData.append("resumes", resume);
@@ -330,6 +532,7 @@ function App() {
       ...config,
       ai_provider: provider,
       gemini_model: provider === "Gemini" ? model : config.gemini_model,
+      claude_model: provider === "Claude" ? model : config.claude_model,
       ollama_model: provider === "Ollama" ? model : config.ollama_model,
     };
 
@@ -353,9 +556,7 @@ function App() {
       setConfig(savedConfig);
       setProvider(savedConfig.ai_provider);
       setModel(
-        savedConfig.ai_provider === "Ollama"
-          ? savedConfig.ollama_model
-          : savedConfig.gemini_model,
+        getConfiguredModel(savedConfig, savedConfig.ai_provider),
       );
       setNotice("Configuration saved.");
     } catch (requestError) {
@@ -386,9 +587,7 @@ function App() {
       setConfig(resetConfig);
       setProvider(resetConfig.ai_provider);
       setModel(
-        resetConfig.ai_provider === "Ollama"
-          ? resetConfig.ollama_model
-          : resetConfig.gemini_model,
+        getConfiguredModel(resetConfig, resetConfig.ai_provider),
       );
       setNotice("Configuration reset.");
     } catch (requestError) {
@@ -467,6 +666,7 @@ function App() {
 
       {activePage === "analyzer" ? (
         <AnalyzerPage
+          config={config}
           error={error}
           handleAnalyze={handleAnalyze}
           handleModelChange={handleModelChange}
@@ -483,6 +683,7 @@ function App() {
           resumes={resumes}
           setJobDescription={setJobDescription}
           setDetailLimit={setDetailLimit}
+          setConfig={setConfig}
           setResumes={setResumes}
         />
       ) : activePage === "config" ? (
@@ -514,6 +715,7 @@ function App() {
 }
 
 function AnalyzerPage({
+  config,
   detailLimit,
   error,
   handleAnalyze,
@@ -529,9 +731,25 @@ function AnalyzerPage({
   result,
   resumes,
   setDetailLimit,
+  setConfig,
   setJobDescription,
   setResumes,
 }) {
+  const gradingWeights = normalizeGradingWeights(
+    config?.candidate_grading_weights,
+  );
+  const gradingWeightTotal = getGradingWeightTotal(gradingWeights);
+
+  function updateGradingWeight(key, value) {
+    setConfig((current) => ({
+      ...current,
+      candidate_grading_weights: normalizeGradingWeights({
+        ...current.candidate_grading_weights,
+        [key]: value,
+      }),
+    }));
+  }
+
   return (
     <form className="workspace" onSubmit={handleAnalyze}>
       <section className="panel input-panel">
@@ -573,6 +791,13 @@ function AnalyzerPage({
             </select>
           </label>
         </div>
+
+        <GradingRubricCard
+          weights={gradingWeights}
+          total={gradingWeightTotal}
+          onChange={updateGradingWeight}
+          helperText="Edits here apply to the next analysis run."
+        />
 
         <label className="upload-zone">
           <UploadCloud size={24} />
@@ -648,6 +873,21 @@ function ConfigurationPage({
     }));
   }
 
+  function updateGradingWeight(key, value) {
+    setConfig((current) => ({
+      ...current,
+      candidate_grading_weights: normalizeGradingWeights({
+        ...current.candidate_grading_weights,
+        [key]: value,
+      }),
+    }));
+  }
+
+  const gradingWeights = normalizeGradingWeights(
+    config.candidate_grading_weights,
+  );
+  const gradingWeightTotal = getGradingWeightTotal(gradingWeights);
+
   return (
     <form className="config-layout" onSubmit={saveConfiguration}>
       <section className="panel config-panel">
@@ -699,6 +939,12 @@ function ConfigurationPage({
           </label>
         </div>
 
+        <GradingRubricCard
+          weights={gradingWeights}
+          total={gradingWeightTotal}
+          onChange={updateGradingWeight}
+        />
+
         <PromptEditor
           label="Job Description Analysis Prompt"
           value={config.jd_prompt_template}
@@ -721,6 +967,20 @@ function ConfigurationPage({
           value={config.candidate_grading_prompt_template}
           onChange={(value) =>
             updatePrompt("candidate_grading_prompt_template", value)
+          }
+        />
+        <PromptEditor
+          label="Experience Timeline Prompt"
+          value={config.experience_timeline_prompt_template}
+          onChange={(value) =>
+            updatePrompt("experience_timeline_prompt_template", value)
+          }
+        />
+        <PromptEditor
+          label="Candidate Snapshot Prompt"
+          value={config.candidate_snapshot_prompt_template}
+          onChange={(value) =>
+            updatePrompt("candidate_snapshot_prompt_template", value)
           }
         />
         <PromptEditor
@@ -747,6 +1007,78 @@ function PromptEditor({ label, value, onChange }) {
         rows={12}
       />
     </label>
+  );
+}
+
+function GradingRubricCard({
+  weights,
+  total,
+  onChange,
+  readonly = false,
+  helperText = "Grade uses only these weighted criteria.",
+}) {
+  const rows = [
+    ["skill_gap", "Skill Gap"],
+    ["years_experience", "Years Experience"],
+    ["project_experience", "Hands-on Projects"],
+    ["education", "Education"],
+    ["seniority", "Seniority"],
+  ];
+
+  return (
+    <section className="grading-rubric">
+      <div className="rubric-header">
+        <div>
+          <span>Candidate Grade Rubric</span>
+          <p>{helperText}</p>
+        </div>
+        <strong className={total === 100 ? "ok" : "warn"}>
+          {total}% total
+        </strong>
+      </div>
+      <div className="rubric-grid">
+        {rows.map(([key, label]) => (
+          <label key={key}>
+            {label}
+            {readonly ? (
+              <strong>{weights[key]}%</strong>
+            ) : (
+              <input
+                min="0"
+                max="100"
+                type="number"
+                value={weights[key]}
+                onChange={(event) => onChange(key, event.target.value)}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GradingBreakdown({ scores, weights }) {
+  const rows = [
+    ["skill_gap", "Skill Gap"],
+    ["years_experience", "Years"],
+    ["project_experience", "Projects"],
+    ["education", "Education"],
+    ["seniority", "Seniority"],
+  ];
+
+  return (
+    <div className="grading-breakdown">
+      {rows.map(([key, label]) => (
+        <div key={key}>
+          <span>{label}</span>
+          <strong>
+            {scores[key] === null ? "Not Found" : `${scores[key]}/100`}
+          </strong>
+          <small>{weights[key]}% weight</small>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -889,11 +1221,27 @@ function StatusMessages({ error, notice }) {
 function Results({ result }) {
   const runtimeStatus = result.runtime_status || {};
   const [selectedDetail, setSelectedDetail] = useState(null);
+  const jdInfo = result.job_description || {};
+  const jdCoreEntries = Object.entries(jdInfo).filter(
+    ([key]) => key !== "additional_insights",
+  );
+  const jdAdditionalInsights = cleanAdditionalInsights(
+    jdInfo.additional_insights,
+  );
   const detailMap = useMemo(() => {
     return new Map(
       (result.top_details || []).map((detail) => [detail.resume_id, detail]),
     );
   }, [result.top_details]);
+
+  if (selectedDetail) {
+    return (
+      <DetailPage
+        detail={selectedDetail}
+        onBack={() => setSelectedDetail(null)}
+      />
+    );
+  }
 
   return (
     <div className="results-stack">
@@ -910,55 +1258,29 @@ function Results({ result }) {
         </div>
       ) : null}
 
-      {Array.isArray(runtimeStatus.grading_checkpoints) &&
-      runtimeStatus.grading_checkpoints.length ? (
-        <section className="diagnostics-panel">
-          <h2>Grading Checkpoints</h2>
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Resume</th>
-                  <th>Source</th>
-                  <th>Cache</th>
-                  <th>Final Grade</th>
-                  <th>Input</th>
-                  <th>Gemini Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {runtimeStatus.grading_checkpoints.map((checkpoint, index) => (
-                  <tr key={`${checkpoint.resume_name || "resume"}-${index}`}>
-                    <td>{formatDisplayValue(checkpoint.resume_name)}</td>
-                    <td>{formatDisplayValue(checkpoint.source)}</td>
-                    <td>{formatDisplayValue(checkpoint.cache)}</td>
-                    <td>{formatDisplayValue(checkpoint.final_grade)}</td>
-                    <td>
-                      {formatDisplayValue(checkpoint.resume_context_chars)} chars,
-                      {` ${formatDisplayValue(checkpoint.matching_skill_count)} matching, `}
-                      {`${formatDisplayValue(checkpoint.missing_skill_count)} missing`}
-                    </td>
-                    <td className="diagnostic-error">
-                      {shortenText(checkpoint.gemini_error, "None")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
       <section>
         <h2>Job Description</h2>
         <div className="jd-grid">
-          {Object.entries(result.job_description).map(([key, value]) => (
+          {jdCoreEntries.map(([key, value]) => (
             <div key={key}>
               <span>{key.replaceAll("_", " ")}</span>
               <strong>{formatDisplayValue(value)}</strong>
             </div>
           ))}
         </div>
+        {jdAdditionalInsights.length ? (
+          <div className="additional-insights-grid jd-insights-grid">
+            {jdAdditionalInsights.map((item) => (
+              <article
+                className="additional-insight-card"
+                key={`${item.label}-${item.value}`}
+              >
+                <span>{item.label}</span>
+                <p>{item.value}</p>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section>
@@ -1001,98 +1323,344 @@ function Results({ result }) {
         </table>
       </section>
 
-      {selectedDetail ? (
-        <DetailModal
-          detail={selectedDetail}
-          onClose={() => setSelectedDetail(null)}
-        />
-      ) : null}
     </div>
   );
 }
 
-function DetailModal({ detail, onClose }) {
+function DetailPage({ detail, onBack }) {
   const evidence = Array.isArray(detail.matching_evidence)
     ? detail.matching_evidence
     : [];
   const grading = isUsableGrading(detail.candidate_grading)
     ? detail.candidate_grading
     : buildDisplayGradingFallback(detail);
-  const gradingDebug = grading.debug || {};
   const [showEvidence, setShowEvidence] = useState(false);
+  const matchingCount = cleanList(detail.matching_skills).length;
+  const missingCount = cleanList(detail.missing_skills).length;
+  const strengthCount = cleanList(grading.strengths).length;
+  const concernCount = cleanList(grading.concerns).length;
+  const timeline = cleanTimeline(detail.experience_timeline);
+  const timelineDebug = detail.experience_timeline_debug || {};
+  const snapshot = cleanSnapshot(detail.candidate_snapshot, detail, timeline);
+  const gradingPercentage = getGradingPercentage(grading);
+  const gradingCriteriaScores = normalizeCriteriaScores(
+    grading.criteria_scores,
+  );
+  const appliedGradingWeights = normalizeGradingWeights(grading.weights);
+  const additionalInsights = cleanAdditionalInsights(
+    detail.additional_insights,
+    grading.additional_insights,
+    detail.experience_timeline?.additional_insights,
+    detail.candidate_snapshot?.additional_insights,
+  );
+  const gradeMeterStyle = {
+    "--grade-percent": `${gradingPercentage ?? 0}%`,
+  };
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
-      <section
-        className="detail-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="detail-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <section className="detail-page" aria-labelledby="detail-page-title">
         <div className="detail-header">
           <div>
-            <h2 id="detail-modal-title">
+            <h2 id="detail-page-title">
               {formatDisplayValue(detail.resume_name)}
             </h2>
-            <span>{formatDisplayValue(detail.match_score)}% match</span>
+            <span>Detailed candidate analysis</span>
           </div>
-          <button className="secondary modal-close" onClick={onClose} type="button">
-            Close
+          <button
+            className="secondary"
+            onClick={onBack}
+            title="Back to results"
+            type="button"
+          >
+            <ArrowLeft size={18} />
+            Back to Results
           </button>
         </div>
-        <p>{formatDisplayValue(detail.justification)}</p>
-        <div className="grading-panel">
-          <div className="grade-mark">
-            {formatDisplayValue(grading.grade, "Not Found")}
+
+        <section className="candidate-snapshot">
+          <div>
+            <span>Candidate</span>
+            <h3>{snapshot.candidateName}</h3>
+            <p>{formatDisplayValue(detail.resume_name)}</p>
           </div>
           <div>
-            <span>Candidate Grade</span>
-            <p>{formatDisplayValue(grading.summary)}</p>
+            <span>Likely Role</span>
+            <strong>{snapshot.likelyRole}</strong>
           </div>
-        </div>
-        <div className="skills modal-skills-grid grading-grid">
-          <SkillColumn title="Strengths" items={grading.strengths} />
-          <SkillColumn title="Concerns" items={grading.concerns} />
-        </div>
-        {Object.keys(gradingDebug).length ? (
-          <div className="debug-panel">
-            <span>Grading Debug</span>
-            <p>
-              Source: {formatDisplayValue(gradingDebug.source)} | Cache:{" "}
-              {formatDisplayValue(gradingDebug.cache)} | Final grade:{" "}
-              {formatDisplayValue(gradingDebug.final_grade)}
-            </p>
-            <p>
-              Resume context:{" "}
-              {formatDisplayValue(gradingDebug.resume_context_chars)} chars |
-              Matching: {formatDisplayValue(gradingDebug.matching_skill_count)} |
-              Missing: {formatDisplayValue(gradingDebug.missing_skill_count)}
-            </p>
-            <p>
-              Gemini error: {shortenText(gradingDebug.gemini_error, "None")}
-            </p>
+          <div>
+            <span>Current</span>
+            <strong>{snapshot.current}</strong>
           </div>
-        ) : null}
-        {evidence.length ? (
-          <div className="evidence-summary">
-            <div>
-              <span>Matching Evidence</span>
-              <p>{evidence.length} evidence-backed skill notes available.</p>
+          <div>
+            <span>Experience</span>
+            <strong>{snapshot.totalExperience}</strong>
+          </div>
+          <div>
+            <span>Location</span>
+            <strong>{snapshot.location}</strong>
+          </div>
+          <div className="snapshot-score">
+            <span>Match Score</span>
+            <strong>{formatDisplayValue(detail.match_score)}%</strong>
+          </div>
+        </section>
+
+        <div className="detail-workspace">
+          <div className="detail-left-column">
+            <div className="grade-card">
+              <span>Candidate Grade</span>
+              <div className="grade-card-main">
+                <div
+                  className="grade-meter"
+                  style={gradeMeterStyle}
+                  aria-label={`Candidate grade ${formatDisplayValue(
+                    gradingPercentage,
+                    "Not Found",
+                  )} percent`}
+                >
+                  <strong>
+                    {gradingPercentage !== null
+                      ? `${gradingPercentage}%`
+                      : "Not Found"}
+                  </strong>
+                </div>
+                <div>
+                  <strong>
+                    {gradingPercentage !== null
+                      ? `${gradingPercentage}/100`
+                      : "Not Found"}
+                  </strong>
+                  <small>candidate fit grade</small>
+                </div>
+              </div>
+              <p>{formatDisplayValue(grading.summary)}</p>
+              <GradingBreakdown
+                scores={gradingCriteriaScores}
+                weights={appliedGradingWeights}
+              />
             </div>
-            <button
-              className="secondary"
-              onClick={() => setShowEvidence(true)}
-              type="button"
-            >
-              View evidence
-            </button>
+
+            <div className="detail-metrics">
+              <MetricTile
+                icon={<CheckCircle2 size={18} />}
+                label="Matching"
+                value={matchingCount}
+              />
+              <MetricTile
+                icon={<AlertTriangle size={18} />}
+                label="Missing"
+                value={missingCount}
+              />
+              <MetricTile
+                icon={<Award size={18} />}
+                label="Strengths"
+                value={strengthCount}
+              />
+              <MetricTile
+                icon={<Info size={18} />}
+                label="Concerns"
+                value={concernCount}
+              />
+              <MetricTile
+                icon={<BriefcaseBusiness size={18} />}
+                label="Roles"
+                value={timeline.rows.length}
+              />
+              <MetricTile
+                icon={<CalendarDays size={18} />}
+                label="Experience"
+                value={timeline.totalExperience}
+              />
+            </div>
+
+            <div className="detail-actions">
+              <button
+                className="secondary"
+                disabled={!evidence.length}
+                onClick={() => setShowEvidence(true)}
+                type="button"
+              >
+                <Search size={17} />
+                Evidence
+              </button>
+            </div>
+
+            <section className="detail-section">
+              <div className="section-title-row">
+                <h3>Recruiter Review</h3>
+              </div>
+              <div className="skills modal-skills-grid grading-grid">
+                <SkillColumn
+                  icon={<Award size={16} />}
+                  title="Strengths"
+                  items={grading.strengths}
+                />
+                <SkillColumn
+                  icon={<AlertTriangle size={16} />}
+                  title="Concerns"
+                  items={grading.concerns}
+                />
+              </div>
+            </section>
+
+            <section className="detail-section detail-skill-gap-section">
+              <div className="section-title-row">
+                <h3>Skill Gap</h3>
+                {evidence.length ? (
+                  <button
+                    className="secondary compact-button"
+                    onClick={() => setShowEvidence(true)}
+                    type="button"
+                  >
+                    <Search size={16} />
+                    {evidence.length} evidence notes
+                  </button>
+                ) : null}
+              </div>
+              <div className="skills modal-skills-grid">
+                <SkillColumn
+                  icon={<CheckCircle2 size={16} />}
+                  title="Matching Skills"
+                  items={detail.matching_skills}
+                />
+                <SkillColumn
+                  icon={<AlertTriangle size={16} />}
+                  title="Missing Skills"
+                  items={detail.missing_skills}
+                />
+              </div>
+            </section>
+
+            {additionalInsights.length ? (
+              <section className="detail-section">
+                <div className="section-title-row">
+                  <h3>Additional Insights</h3>
+                  <span className="section-pill">
+                    {additionalInsights.length}
+                  </span>
+                </div>
+                <div className="additional-insights-grid">
+                  {additionalInsights.map((item) => (
+                    <article
+                      className="additional-insight-card"
+                      key={`${item.label}-${item.value}`}
+                    >
+                      <span>{item.label}</span>
+                      <p>{item.value}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
-        ) : null}
-        <div className="skills modal-skills-grid">
-          <SkillColumn title="Matching" items={detail.matching_skills} />
-          <SkillColumn title="Missing" items={detail.missing_skills} />
+
+          <div className="detail-right-column">
+            <section className="detail-section">
+              <div className="section-title-row">
+                <h3>Match Justification</h3>
+              </div>
+              <p className="detail-copy">
+                {formatDisplayValue(detail.justification)}
+              </p>
+            </section>
+
+            <section className="detail-section">
+              <div className="section-title-row">
+                <h3>Experience Timeline</h3>
+                <span className="section-pill">
+                  {timeline.totalExperience}
+                </span>
+              </div>
+              {timeline.rows.length ? (
+                <div className="experience-timeline">
+                  {timeline.rows.map((item, index) => (
+                    <article className="timeline-item" key={`${item.role}-${item.company}-${index}`}>
+                      <div className="timeline-marker" />
+                      <div className="timeline-card">
+                        <div className="timeline-heading">
+                          <div>
+                            <h4>{formatDisplayValue(item.role)}</h4>
+                            <p>{formatDisplayValue(item.company)}</p>
+                          </div>
+                          <span>
+                            {formatDisplayValue(item.start_date)} -{" "}
+                            {formatDisplayValue(item.end_date)}
+                          </span>
+                        </div>
+                        <p className="detail-copy">
+                          {formatDisplayValue(item.summary)}
+                        </p>
+                        <p className="timeline-relevance">
+                          {formatDisplayValue(item.relevance)}
+                        </p>
+                        <div className="timeline-meta">
+                          <span>{formatDisplayValue(item.duration)}</span>
+                          <span>{formatDisplayValue(item.location)}</span>
+                        </div>
+                        {cleanList(item.technologies).length ? (
+                          <div className="chip-row">
+                            {cleanList(item.technologies).map((skill) => (
+                              <span className="skill-chip" key={skill}>
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {cleanList(item.projects).length ? (
+                          <div className="timeline-projects">
+                            <strong>Projects</strong>
+                            <p>{cleanList(item.projects).join(", ")}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="detail-copy">
+                  Experience timeline was not found for this resume.
+                </p>
+              )}
+              {Object.keys(timelineDebug).length ? (
+                <div className="timeline-debug">
+                  <strong>Temporary Timeline Debug</strong>
+                  <div>
+                    <span>Provider</span>
+                    <p>{formatDisplayValue(timelineDebug.provider)}</p>
+                  </div>
+                  <div>
+                    <span>Model</span>
+                    <p>{formatDisplayValue(timelineDebug.model)}</p>
+                  </div>
+                  <div>
+                    <span>Resume Context</span>
+                    <p>{formatDisplayValue(timelineDebug.resume_context_chars, "0")} chars</p>
+                  </div>
+                  <div>
+                    <span>Rows</span>
+                    <p>
+                      model {formatDisplayValue(timelineDebug.model_rows, "0")} / local{" "}
+                      {formatDisplayValue(timelineDebug.local_rows, "0")} / final{" "}
+                      {formatDisplayValue(timelineDebug.final_rows, "0")}
+                    </p>
+                  </div>
+                  <div>
+                    <span>Source</span>
+                    <p>{formatDisplayValue(timelineDebug.source)}</p>
+                  </div>
+                  {timelineDebug.error ? (
+                    <div className="timeline-debug-error">
+                      <span>Error</span>
+                      <p>{formatDisplayValue(timelineDebug.error)}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+          </div>
+
         </div>
+
         {showEvidence ? (
           <EvidenceModal
             evidence={evidence}
@@ -1101,6 +1669,15 @@ function DetailModal({ detail, onClose }) {
           />
         ) : null}
       </section>
+  );
+}
+
+function MetricTile({ icon, label, value }) {
+  return (
+    <div className="metric-tile">
+      {icon}
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
@@ -1152,12 +1729,15 @@ function EvidenceModal({ evidence, resumeName, onClose }) {
   );
 }
 
-function SkillColumn({ title, items }) {
+function SkillColumn({ icon, title, items }) {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div>
-      <span>{title}</span>
+    <div className="skill-column">
+      <span>
+        {icon}
+        {title}
+      </span>
       <ul>
         {(safeItems.length ? safeItems : ["Not Found"]).map((item, index) => (
           <li key={`${formatDisplayValue(item)}-${index}`}>
@@ -1170,6 +1750,3 @@ function SkillColumn({ title, items }) {
 }
 
 export default App;
-
-
-import SkillsPage from "./pages/dashboard/SkillsPage";

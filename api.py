@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend import (
     AI_PROVIDER_OPTIONS,
+    CLAUDE_MODEL_OPTIONS,
     GEMINI_MODEL_OPTIONS,
     OLLAMA_MODEL_OPTIONS,
     analyze_candidate_detail,
@@ -15,6 +16,8 @@ from backend import (
     display_value,
     extract_text,
     ensure_candidate_grading,
+    ensure_candidate_snapshot,
+    ensure_resume_experience_timeline,
     get_configuration,
     get_indexed_resume_analysis_records,
     get_or_create_resume_embedding,
@@ -24,7 +27,9 @@ from backend import (
     get_runtime_status,
     initialize_project_storage_files,
     calculate_match_score,
+    normalize_candidate_grading_weights,
     persist_analysis_session,
+    persist_resume_text,
     reset_configuration,
     update_configuration,
     validate_upload,
@@ -76,6 +81,7 @@ def serialize_jd_info(jd_info):
         "primary_skills": display_value(jd_info.get("primary_skills")),
         "secondary_skills": display_value(jd_info.get("secondary_skills")),
         "education": display_value(jd_info.get("education")),
+        "additional_insights": jd_info.get("additional_insights", {}),
     }
 
 
@@ -90,6 +96,7 @@ def models():
         "providers": AI_PROVIDER_OPTIONS,
         "ollama_models": OLLAMA_MODEL_OPTIONS,
         "gemini_models": GEMINI_MODEL_OPTIONS,
+        "claude_models": CLAUDE_MODEL_OPTIONS,
     }
 
 
@@ -100,6 +107,7 @@ def configuration():
         "providers": AI_PROVIDER_OPTIONS,
         "ollama_models": OLLAMA_MODEL_OPTIONS,
         "gemini_models": GEMINI_MODEL_OPTIONS,
+        "claude_models": CLAUDE_MODEL_OPTIONS,
     }
 
 
@@ -135,6 +143,11 @@ async def analyze(
     provider: str = Form("Gemini"),
     model_name: str = Form("gemini-2.5-flash"),
     detail_limit: int = Form(5),
+    skill_gap_weight: int = Form(50),
+    years_experience_weight: int = Form(20),
+    project_experience_weight: int = Form(15),
+    education_weight: int = Form(5),
+    seniority_weight: int = Form(10),
     resumes: list[UploadFile] | None = File(None),
 ):
     """Concurrency-safe analyze endpoint.
@@ -155,6 +168,11 @@ async def analyze(
                     provider,
                     model_name,
                     detail_limit,
+                    skill_gap_weight,
+                    years_experience_weight,
+                    project_experience_weight,
+                    education_weight,
+                    seniority_weight,
                     resumes,
                 )
     except asyncio.TimeoutError:
@@ -174,6 +192,11 @@ def _run_analyze_blocking(
     provider: str,
     model_name: str,
     detail_limit: int,
+    skill_gap_weight: int,
+    years_experience_weight: int,
+    project_experience_weight: int,
+    education_weight: int,
+    seniority_weight: int,
     resumes: list[UploadFile] | None,
 ) -> dict:
     """Synchronous analyzer pipeline. Runs in a worker thread so the
@@ -190,6 +213,15 @@ def _run_analyze_blocking(
         )
 
     detail_limit = max(1, min(int(detail_limit), 50))
+    grading_weights = normalize_candidate_grading_weights(
+        {
+            "skill_gap": skill_gap_weight,
+            "years_experience": years_experience_weight,
+            "project_experience": project_experience_weight,
+            "education": education_weight,
+            "seniority": seniority_weight,
+        }
+    )
 
     jd_info = analyze_job_description(
         job_description,
@@ -227,10 +259,32 @@ def _run_analyze_blocking(
             resume.filename,
             resume_text,
         )
+        persist_resume_text(
+            resume_id,
+            resume.filename,
+            resume_text,
+        )
         resume_skill_profile = get_resume_skill_profile(
             resume_id,
             resume.filename,
             resume_text,
+        )
+        resume_skill_profile = ensure_resume_experience_timeline(
+            resume_skill_profile,
+            resume_text,
+            job_description,
+            provider=provider,
+            model_name=model_name,
+            resume_name=resume.filename,
+            resume_id=resume_id,
+        )
+        resume_skill_profile = ensure_candidate_snapshot(
+            resume_skill_profile,
+            resume_text,
+            provider=provider,
+            model_name=model_name,
+            resume_name=resume.filename,
+            resume_id=resume_id,
         )
         uploaded_records[resume_id] = {
             "resume_id": resume_id,
@@ -314,12 +368,15 @@ def _run_analyze_blocking(
             provider=provider,
             job_skill_requirements=jd_info,
             resume_name=record["resume_name"],
+            resume_id=record["resume_id"],
+            grading_weights=grading_weights,
         )
         detail = ensure_candidate_grading(
             detail,
             resume_context=item["resume_text"],
             matching_skills=detail.get("matching_skills", []),
             missing_skills=detail.get("missing_skills", []),
+            grading_weights=grading_weights,
         )
         top_details.append({**record, **detail})
 
@@ -348,6 +405,7 @@ def _run_analyze_blocking(
         "ranking": ranking,
         "top_details": top_details,
         "detail_limit": detail_limit,
+        "grading_weights": grading_weights,
         "categories": categories,
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),

@@ -1,4 +1,4 @@
-export const defaultProviders = ["Gemini", "Ollama"];
+export const defaultProviders = ["Gemini", "Ollama", "Claude"];
 
 export const defaultOllamaModels = [
   "llama3.2",
@@ -29,4 +29,11 @@ export const defaultGeminiModels = [
   "gemini-3-flash-preview",
   "gemini-3.1-pro-preview",
   "gemini-3.1-flash-lite",
+];
+
+export const defaultClaudeModels = [
+  "claude-haiku-4-5",
+  "claude-haiku-4-5-20251001",
+  "claude-sonnet-4-6",
+  "claude-sonnet-4-5",
 ];

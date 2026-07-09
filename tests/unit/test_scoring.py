@@ -41,4 +41,4 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
     assert result.shape == (1, 1024)
     index.reconstruct.assert_called_once_with(4)
     mock_encode.assert_not_called()
-    mock_save.assert_called_once()
+    mock_save.assert_not_called()
