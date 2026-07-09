@@ -1,4 +1,4 @@
-# Python cache and build artifacts
+﻿# Python cache and build artifacts
 __pycache__/
 *.py[cod]
 *$py.class
@@ -30,6 +30,8 @@ AI-recruiter-screening-system-/
 
 # Frontend dependencies and builds
 frontend/node_modules/
+frontend-test/node_modules/
+frontend-test/dist/
 frontend/dist/
 
 # Distribution / packaging
@@ -49,3 +51,14 @@ Thumbs.db
 tests/ui/screenshots
 tests/ui/logs
 reports/allure-results
+reports/junit.json
+        reports/logs/api.log
+        reports/logs/auth.log
+        reports/logs/web.log
+        
+
+/chrome
+/uvicorn-perf.log
+backend/uvicorn-smoke.err
+backend/uvicorn-test.err
+/.benchmarks

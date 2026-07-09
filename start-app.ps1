@@ -78,7 +78,7 @@ if ($currentHash -ne $storedHash) {
 
 # 6. Start the Python FastAPI analyzer on :8000.
 # New: 4 workers, bounded in-flight analyzes, 90s hard timeout
-$uvicornCmd = ". '$venvActivate'; `$env:ANALYZE_MAX_INFLIGHT='4'; `$env:ANALYZE_TIMEOUT_S='90'; uvicorn api:api --host 127.0.0.1 --port 8000 --workers 4 --loop uvloop --http httptools"
+$uvicornCmd = ". '$venvActivate'; `$env:ANALYZE_MAX_INFLIGHT='4'; `$env:ANALYZE_TIMEOUT_S='90'; uvicorn api:api --host 127.0.0.1 --port 8000 --workers 4"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $uvicornCmd -WorkingDirectory $projectRoot
 
 # 7. Start the Node auth API (Express + in-process JSON store) on :4000.
@@ -93,5 +93,6 @@ Write-Host "  FastAPI (Ollama): http://127.0.0.1:8000"
 Write-Host "  Auth API:         http://localhost:4000"
 Write-Host "  React UI:         http://localhost:5173"
 Write-Host "  Ollama:           http://127.0.0.1:11434"
+
 
 

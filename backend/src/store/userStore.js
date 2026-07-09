@@ -1,4 +1,4 @@
-// Mongoose-shaped facade over the JSON collection so the controllers,
+﻿// Mongoose-shaped facade over the JSON collection so the controllers,
 // middleware, and routes can keep using `User.findOne()`, `.select()`,
 // `.create()`, `.toJSON()` etc. without changing.
 
@@ -28,6 +28,7 @@ function applySelect(doc, fields) {
     id,
     name: doc.name,
     email: doc.email,
+    role: doc.role,
     createdAt: doc.createdAt,
     get password() {
       if (!fields || fields.length === 0) return undefined;
@@ -102,3 +103,4 @@ const User = {
 };
 
 module.exports = User;
+

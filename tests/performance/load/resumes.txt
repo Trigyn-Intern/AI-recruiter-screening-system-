@@ -1,0 +1,4 @@
+﻿D:/trigyn/trigyn project/AI-recruiter-screening-system-/tests/data/resumes/resume_strong_python.pdf
+D:/trigyn/trigyn project/AI-recruiter-screening-system-/tests/data/resumes/resume_data_engineer.pdf
+D:/trigyn/trigyn project/AI-recruiter-screening-system-/tests/data/resumes/resume_frontend.pdf
+D:/trigyn/trigyn project/AI-recruiter-screening-system-/tests/data/resumes/resume_junior.pdf

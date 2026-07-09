@@ -12,12 +12,29 @@ if (!process.env.JWT_SECRET) {
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const seedManager = require("./seeders/seedManager");
 
 const app = express();
 
+// Allow the main recruiter app and the separate testing dashboard to
+// call this API. CLIENT_ORIGIN may be a comma-separated list; the
+// testing app on :5174 is always allowed.
+const envOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const allowedOrigins = Array.from(
+  new Set([...envOrigins, "http://localhost:5174"])
+);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -41,6 +58,7 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 4000;
 
 connectDB()
+  .then(seedManager)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Auth API listening on http://localhost:${PORT}`);
