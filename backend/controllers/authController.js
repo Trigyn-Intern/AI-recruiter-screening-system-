@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+﻿const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
@@ -49,6 +49,7 @@ async function signup(req, res) {
       name: trimmedName,
       email: normalizedEmail,
       password: hashed,
+      role: "recruiter",
     });
 
     const token = signToken(user.id);
@@ -108,3 +109,4 @@ async function me(req, res) {
 }
 
 module.exports = { signup, login, me, DuplicateEmailError };
+

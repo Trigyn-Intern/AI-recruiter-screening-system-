@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import request, {
@@ -7,6 +7,12 @@ import request, {
   storeSession,
 } from "../../api/client";
 import "./auth.css";
+
+// The testing dashboard runs on a separate Vite app (different port,
+// no shared bundle). After a manager logs in here we redirect the
+// browser to that app and hand the JWT over via the query string.
+const TESTING_APP_URL =
+  import.meta.env.VITE_TESTING_APP_URL || "http://localhost:5174/";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +46,24 @@ function Login() {
       storeSession(data.token, data.user);
       localStorage.setItem(AUTH_TOKEN_KEY, data.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user || {}));
+
+      const role = (data.user && data.user.role) || "recruiter";
+      if (role === "manager") {
+        window.location.href = `http://localhost:5174/?token=${encodeURIComponent(data.token)}`;
+        return;
+      }
+      navigate("/dashboard");
+
+      if (data.user && data.user.role === "manager") {
+        const target = new URL(TESTING_APP_URL);
+        target.searchParams.set("token", data.token);
+        if (data.user && data.user.id) {
+          target.searchParams.set("uid", data.user.id);
+        }
+        window.location.assign(target.toString());
+        return;
+      }
+
       navigate("/dashboard");
     } catch (requestError) {
       setError(requestError.message || "Invalid email or password.");

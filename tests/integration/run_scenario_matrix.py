@@ -152,7 +152,7 @@ def port_in_use(port: int, host: str = "127.0.0.1") -> bool:
         return sock.connect_ex((host, port)) == 0
 
 
-def _wait_for_http(url: str, timeout_seconds: int = 60, label: str = "") -> None:
+def _wait_for_http(url: str, timeout_seconds: int = 60, label: str = "", required: bool = True) -> None:
     print(f"[runner] waiting for {label or url} to respond...", end="", flush=True)
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
@@ -165,7 +165,10 @@ def _wait_for_http(url: str, timeout_seconds: int = 60, label: str = "") -> None
             print(".", end="", flush=True)
             time.sleep(0.5)
     print(" FAILED")
-    raise SystemExit(f"Timed out waiting for {label or url} to respond.")
+    if required:
+        raise SystemExit(f"Timed out waiting for {label or url} to respond.")
+    else:
+        print(f"[runner] WARNING: {label or url} did not respond but continuing anyway.")
 
 
 # ------------------------------------------------------------
@@ -190,11 +193,15 @@ def start_api(
     api_port: int,
     log_path: Path,
     venv_python: Path,
-) -> subprocess.Popen:
-    """Start the FastAPI analyzer (uvicorn api:api)."""
+) -> tuple:
+    """Start the FastAPI analyzer (uvicorn api:api).
+    
+    Returns (process, already_running) tuple.
+    already_running=True means the port was in use before we spawned anything.
+    """
     if port_in_use(api_port):
         print(f"[runner] FastAPI already listening on :{api_port}; reusing it.")
-        return _noop_process()
+        return _noop_process(), True
 
     print("[runner] starting FastAPI analyzer")
     return _spawn(
@@ -204,13 +211,13 @@ def start_api(
             "uvicorn",
             UVICORN_APP,
             "--host",
-            "127.0.0.1",
+            "0.0.0.0",
             "--port",
             str(api_port),
         ],
         cwd=REPO_ROOT,
         log_path=log_path,
-    )
+    ), False
 
 
 def start_web(
@@ -383,9 +390,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     ensure_ollama_models(required_models)
 
     with supervised_services(args.log_dir) as supervisor:
-        api_process = start_api(args.api_port, args.log_dir / "api.log", venv_python)
+        api_process, api_already_running = start_api(args.api_port, args.log_dir / "api.log", venv_python)
         supervisor.add("fastapi", api_process)
-        _wait_for_http(f"http://127.0.0.1:{args.api_port}/health", label="FastAPI /health")
+        # If the port was already in use we give a short probe window (10 s) but
+        # don't abort the run if it times out — the pre-existing process may be
+        # bound on 0.0.0.0 or a host that urllib can't reach via 127.0.0.1.
+        _wait_for_http(
+            f"http://127.0.0.1:{args.api_port}/health",
+            timeout_seconds=10 if api_already_running else 60,
+            label="FastAPI /health",
+            required=not api_already_running,
+        )
 
         web_process = start_web(args.web_port, args.log_dir / "web.log")
         supervisor.add("vite", web_process)
