@@ -211,7 +211,7 @@ def render_detailed(data=None):
             n = _norm(it)
             p_ = it[:40].lower()
             checked = (n in norm_checked) or (p_ in prefix_checked)
-            box = '<input type="checkbox" checked />' if checked else '<input type="checkbox" />'
+            box = '<input type="checkbox" checked />' if checked else '<input type="checkbox" s/>'
             note = ' <span class="llm-tick">verified by LLM</span>' if checked else ''
             out.append('<li class="checklist-item"><label class="checkbox-row">' + box + html.escape(it) + note + '</label></li>')
         out.append('</ul></div>')

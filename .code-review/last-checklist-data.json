@@ -3,13 +3,13 @@
   "repositoryBranch": "origin/main",
   "reviewerName": "Code Review Policy (mode=changed-files)",
   "reviewDate": "2026-07-13",
-  "hasTests": "Yes (bash hook smoke-tested in three pushes)",
-  "coveragePercent": "Manual",
+  "hasTests": "Yes (perf benchmarks + Lighthouse CI added in this push)",
+  "coveragePercent": "Manual + perf job (informational on first run)",
   "manualTestNotes": "Run `git push` from a feature branch with a stale report, confirm the hook archives and blocks. Then with a fresh report, confirm it allows.",
   "generalChecklist": [
     {
       "item": "Diff scope verified",
-      "comment": "5 files in this push: pre-push hook, README, SKILL.md, renderer, detailed template."
+      "comment": "21 paths in this push: 11 source/config, 8 review artifacts, 1 stray log file, 1 gitignore update."
     },
     {
       "item": "Per-push freshness contract is in place",
@@ -25,7 +25,7 @@
     },
     {
       "item": "Tickable HTML checkboxes",
-      "comment": "39 real `<input type=\"checkbox\">` elements; ticked ones are `checked disabled` with a green badge."
+      "comment": "39 real `<input type=\"checkbox\">` elements; ticked ones are clickable, unticked ones are disabled."
     }
   ],
   "codeQuality": [
@@ -55,9 +55,9 @@
       "notes": "tail -n 1 works by accident; no `grep -c` guard."
     },
     {
-      "checkItem": "Auto-render example block",
+      "checkItem": "Diff focus",
       "status": "Fail",
-      "notes": "Still shows absolute paths in one example."
+      "notes": "Stray `reports/logs/api.log` in the diff; should be gitignored."
     }
   ],
   "hasSecuritySection": true,
@@ -76,12 +76,22 @@
       "checkItem": "Verdict string is matched exactly",
       "status": "Pass",
       "comments": "Case-statement on the trimmed verdict, falls through to a clear error."
+    },
+    {
+      "checkItem": "Lighthouse budget is enforced (error level)",
+      "status": "Fail",
+      "comments": "No `assert` step in the workflow; budget is informational only."
+    },
+    {
+      "checkItem": "Stray log file in diff",
+      "status": "Fail",
+      "comments": "`reports/logs/api.log` is 36 KB of runtime output; should be gitignored."
     }
   ],
   "performanceChecks": [
     {
-      "title": "Hash computation is O(diff size)",
-      "details": "Switching to full `git diff` will make the hash a few KB larger. Negligible cost; correctness benefit dominates."
+      "title": "Lighthouse and perf jobs run on pull_request",
+      "details": "Performance gates are in place but the AI review gate is bypassed when the PR is opened via the web UI."
     },
     {
       "title": "Renderer is stdlib-only",
@@ -94,8 +104,8 @@
       "issuesFound": "Pass - each step in the hook is labeled."
     },
     {
-      "practice": "CSS handles the no-bullet case",
-      "issuesFound": "Medium - relies on `margin-left: -24px`; a comment would help the next maintainer."
+      "practice": "Lighthouse workflow ollama install",
+      "issuesFound": "Medium - the workflow assumes ollama is pre-installed; brittle."
     }
   ],
   "reviewerFeedbacks": [
@@ -104,10 +114,10 @@
       "comment": "The LLM always ends its chat reply with the one-liner. The user pastes it once."
     }
   ],
-  "finalNotes": "Approve with Suggestions. Three Medium items: full-diff hash, multi-VERDICT guard, --no-verify doc. None block this push. The LLM walked all 39 detailed checklist items; all are ticked in the printable report.",
+  "finalNotes": "Request Changes. Three High issues block the push: (1) the Lighthouse and perf workflows are pull_request triggers and bypass the AI review gate, (2) the Lighthouse budget is not enforced (no `assert` step), (3) a stray `reports/logs/api.log` is being committed. None of these are dealbreakers but they should be addressed before merging.",
   "approvedBy": "Code Review Policy",
   "approvalDate": "2026-07-13",
-  "mergeStatus": "Approve with Suggestions",
+  "mergeStatus": "Request Changes",
   "checkedItems": [
     "Does the code do what the PR description says it does?",
     "Are edge cases handled? (empty input, null values, boundary conditions)",
