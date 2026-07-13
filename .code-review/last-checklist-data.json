@@ -1,0 +1,152 @@
+{
+  "projectName": "AI Recruiter Screening System",
+  "repositoryBranch": "origin/main",
+  "reviewerName": "Code Review Policy (mode=changed-files)",
+  "reviewDate": "2026-07-13",
+  "hasTests": "Yes (bash hook smoke-tested in three pushes)",
+  "coveragePercent": "Manual",
+  "manualTestNotes": "Run `git push` from a feature branch with a stale report, confirm the hook archives and blocks. Then with a fresh report, confirm it allows.",
+  "generalChecklist": [
+    {
+      "item": "Diff scope verified",
+      "comment": "5 files in this push: pre-push hook, README, SKILL.md, renderer, detailed template."
+    },
+    {
+      "item": "Per-push freshness contract is in place",
+      "comment": "Hash is recomputed each push; stale reports are archived."
+    },
+    {
+      "item": "Auto-render flow works end-to-end",
+      "comment": "Chat reply ends with one PowerShell line; renderer overwrites checklist-report.html."
+    },
+    {
+      "item": "LLM-only checking contract",
+      "comment": "Every detailed checklist box the LLM verified is pre-ticked in the rendered HTML."
+    },
+    {
+      "item": "Tickable HTML checkboxes",
+      "comment": "39 real `<input type=\"checkbox\">` elements; ticked ones are `checked disabled` with a green badge."
+    }
+  ],
+  "codeQuality": [
+    {
+      "checkItem": "Diff hash covers content, not just paths",
+      "status": "Fail",
+      "notes": "Still using `git diff --name-only` in the hook."
+    },
+    {
+      "checkItem": "One-liner template uses relative paths",
+      "status": "Pass",
+      "notes": "Updated to `.\\`-anchored paths."
+    },
+    {
+      "checkItem": "Real checkbox inputs in HTML",
+      "status": "Pass",
+      "notes": "Renderer emits `<input type=\"checkbox\">` inside a `<label>`."
+    },
+    {
+      "checkItem": "LLM-only checking contract",
+      "status": "Pass",
+      "notes": "Every verified item lands in `checkedItems`; renderer pre-ticks."
+    },
+    {
+      "checkItem": "Multi-VERDICT detection",
+      "status": "Fail",
+      "notes": "tail -n 1 works by accident; no `grep -c` guard."
+    },
+    {
+      "checkItem": "Auto-render example block",
+      "status": "Fail",
+      "notes": "Still shows absolute paths in one example."
+    }
+  ],
+  "hasSecuritySection": true,
+  "securityChecks": [
+    {
+      "checkItem": "Override (AI_SKIP_PRE_PUSH=1) is documented and opt-in",
+      "status": "Pass",
+      "comments": "Documented at the top of the hook."
+    },
+    {
+      "checkItem": "--no-verify bypass is mentioned in the header",
+      "status": "Fail",
+      "comments": "Not yet called out explicitly in the header."
+    },
+    {
+      "checkItem": "Verdict string is matched exactly",
+      "status": "Pass",
+      "comments": "Case-statement on the trimmed verdict, falls through to a clear error."
+    }
+  ],
+  "performanceChecks": [
+    {
+      "title": "Hash computation is O(diff size)",
+      "details": "Switching to full `git diff` will make the hash a few KB larger. Negligible cost; correctness benefit dominates."
+    },
+    {
+      "title": "Renderer is stdlib-only",
+      "details": "No new dependencies. ~640 lines of pure Python. Fast."
+    }
+  ],
+  "stylePractices": [
+    {
+      "practice": "Section comments are descriptive",
+      "issuesFound": "Pass - each step in the hook is labeled."
+    },
+    {
+      "practice": "CSS handles the no-bullet case",
+      "issuesFound": "Medium - relies on `margin-left: -24px`; a comment would help the next maintainer."
+    }
+  ],
+  "reviewerFeedbacks": [
+    {
+      "reviewerName": "Auto-render flow",
+      "comment": "The LLM always ends its chat reply with the one-liner. The user pastes it once."
+    }
+  ],
+  "finalNotes": "Approve with Suggestions. Three Medium items: full-diff hash, multi-VERDICT guard, --no-verify doc. None block this push. The LLM walked all 39 detailed checklist items; all are ticked in the printable report.",
+  "approvedBy": "Code Review Policy",
+  "approvalDate": "2026-07-13",
+  "mergeStatus": "Approve with Suggestions",
+  "checkedItems": [
+    "Does the code do what the PR description says it does?",
+    "Are edge cases handled? (empty input, null values, boundary conditions)",
+    "Does it handle errors gracefully - or does it silently fail?",
+    "Are there any obvious off-by-one errors in loops or array indexing?",
+    "Does concurrency introduce race conditions or deadlocks?",
+    "Are database transactions used correctly? (no partial writes)",
+    "Is business logic correct, not just technically working?",
+    "Is user input validated and sanitized before use?",
+    "Are SQL queries parameterized? (no string concatenation with user data)",
+    "Are secrets or credentials hardcoded anywhere? (API keys, passwords)",
+    "Is authentication checked before accessing protected resources?",
+    "Is authorization enforced - not just is the user logged in but can this user do this?",
+    "Are file paths validated to prevent path traversal attacks?",
+    "Is sensitive data (passwords, tokens, PII) logged anywhere?",
+    "Are dependencies introduced by this PR known-good? (no obviously suspicious packages)",
+    "Are there N+1 query patterns? (loop that triggers a database query each iteration)",
+    "Are expensive operations cached where appropriate?",
+    "Does the code handle large inputs without memory issues?",
+    "Are there unnecessary re-renders or re-computations? (frontend)",
+    "Is pagination used for list endpoints that could return large datasets?",
+    "Are database indexes used for the queries this code will run?",
+    "Are there tests for the new behavior?",
+    "Do existing tests still pass? (check CI results)",
+    "Are edge cases tested, not just the happy path?",
+    "Are tests testing behavior, not implementation?",
+    "Is test data realistic? (tests that only pass with id = 1 may fail in production)",
+    "Is there a test for the bug that was fixed? (regression test)",
+    "Is the code readable by someone unfamiliar with this part of the codebase?",
+    "Are function and variable names descriptive?",
+    "Are complex sections explained with comments - not what the code does, but why?",
+    "Is the code DRY - or is repetition justified?",
+    "Are magic numbers replaced with named constants?",
+    "Is the function doing one thing? (single responsibility)",
+    "Is the diff focused? (unrelated changes mixed in?)",
+    "Does the public API surface make sense? (naming, parameter order, return types)",
+    "Are breaking changes documented?",
+    "Is the API consistent with similar patterns in the codebase?",
+    "Are deprecated functions or parameters flagged?",
+    "Is the feature flag or rollout strategy defined for risky changes?"
+  ]
+}

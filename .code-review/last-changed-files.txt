@@ -1,0 +1,5 @@
+.githooks/pre-push
+skills/README.md
+skills/code-review-policy/SKILL.md
+skills/code-review-policy/render_checklist.py
+skills/code-review-policy/templates/checklist-detailed.md
