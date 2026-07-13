@@ -29,7 +29,7 @@ Safe-mode runs (`secrets-hygiene`, `test-data-pii`) use redacted input data in t
 
 ## code-review-policy
 
-`skills/code-review-policy/SKILL.md` is the AI Code Review Policy. It reviews backend, frontend, Python, GitHub workflow, and changed files. Invoked manually in chat or by the pre-push Git hook.
+`skills/code-review-policy/SKILL.md` is the AI Code Review Policy. It reviews backend, frontend, Python, GitHub workflow, and changed files. Invoked manually in chat or by the pre-push Git hook. Produces two artifacts: a chat report and a self-contained HTML checklist.
 
 ### Purpose
 
@@ -77,6 +77,25 @@ Invoke the Code Review Policy skill in mode=backend.
 Invoke the Code Review Policy skill in mode=changed-files.
 ```
 
+### Output: chat + HTML (no manual run)
+
+The skill produces two artifacts per invocation. The LLM does not run the renderer itself; it gives the user one PowerShell line to paste.
+
+1. **Chat report** - the full review inline in the conversation, ending with `VERDICT: <verdict>` on the last line.
+2. **HTML checklist report** - written to `skills/code-review-policy/templates/checklist-report.html`. Self-contained, no external assets, no JS, opens offline in a browser. 39 checkboxes in 6 sections, plus the structured table from the review.
+
+The LLM also writes a JSON file at `.code-review/last-checklist-data.json` (gitignored) so the HTML reflects the actual review rather than the blank template. Then it tells the user to run one PowerShell line:
+
+```powershell
+& "<repo>\venv\Scripts\python.exe" "<repo>\skills\code-review-policy\render_checklist.py" `
+  --structured "<repo>\skills\code-review-policy\templates\checklist-structured.md" `
+  --detailed   "<repo>\skills\code-review-policy\templates\checklist-detailed.md" `
+  --data       "<repo>\.code-review\last-checklist-data.json" `
+  --output     "<repo>\skills\code-review-policy\templates\checklist-report.html"
+```
+
+For a blank printable template (no review, just the boxes), drop the `--data` argument.
+
 ### Safe review rules
 
 The skill never echoes secrets, never fabricates findings, never outputs PII, never modifies code, and only provides recommendations. Uncertain observations are labeled `Needs Manual Verification` instead of being reported as findings.
@@ -109,7 +128,7 @@ Merge Pull Request
 
 ### Relationship between AI Skill, Git Hooks, and GitHub Actions
 
-- **AI Skill** (`skills/code-review-policy/`) - LLM-driven contextual review. Catches things scanners cannot: architectural drift, missing tests for a new feature, unclear naming, documentation gaps. The reasoning is qualitative.
+- **AI Skill** (`skills/code-review-policy/`) - LLM-driven contextual review. Catches things scanners cannot: architectural drift, missing tests for a new feature, unclear naming, documentation gaps. The reasoning is qualitative. Produces a chat report and an HTML checklist.
 - **Git Hooks** (`.githooks/`) - Local gate at commit and push time. Run in <1 second. The pre-commit hook is purely mechanical. The pre-push hook is the bridge that turns an AI review into a workflow gate.
 - **GitHub Actions** (`.github/workflows/`) - Server-side CI. Deterministic, fast, exhaustive. Unit tests, dependency checks, static analysis, build verification, deployment validation.
 
@@ -117,7 +136,7 @@ The three layers do not duplicate each other:
 
 | Layer | Purpose | Speed | Deterministic | Catches |
 |---|---|---|---|---|
-| AI Skill | Contextual reasoning | Seconds | No | Architecture, intent, documentation, design |
+| AI Skill | Contextual reasoning + HTML report | Seconds | No | Architecture, intent, documentation, design |
 | Git Hooks | Local gate at commit/push | <1s | Yes | Format, lint, syntax, missing review |
 | GitHub Actions | Server-side CI | Minutes | Yes | Tests, deps, security, build |
 
@@ -144,10 +163,11 @@ Findings from these skills are hints to investigate, not verified issues. Always
 PowerShell:
 ```powershell
 Start-Process .\skills\reports\index.html
+Start-Process .\skills\code-review-policy\templates\checklist-report.html
 ```
 
 bash / Git Bash:
 ```bash
 open skills/reports/index.html
-xdg-open skills/reports/index.html
+open skills/code-review-policy/templates/checklist-report.html
 ```
