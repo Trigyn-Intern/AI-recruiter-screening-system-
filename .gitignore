@@ -32,6 +32,8 @@ AI-recruiter-screening-system-/
 frontend/node_modules/
 frontend-test/node_modules/
 frontend-test/dist/
+frontend-test/vite-test.err
+frontend-test/vite-test.log
 frontend/dist/
 
 # Distribution / packaging
@@ -55,10 +57,14 @@ reports/junit.json
         reports/logs/api.log
         reports/logs/auth.log
         reports/logs/web.log
-        
 
+reports/logs/api.log
 /chrome
 /uvicorn-perf.log
 backend/uvicorn-smoke.err
 backend/uvicorn-test.err
 /.benchmarks
+/.lighthouseci
+
+
+tests/performance/load/run-4workers.log

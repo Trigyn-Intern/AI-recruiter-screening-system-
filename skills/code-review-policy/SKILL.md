@@ -268,60 +268,89 @@ When the user asks for a "checklist report" or a "Code Review Checklist," produc
 
 
 
-## Auto-render (no manual run)
 
-The skill ships a single PowerShell one-liner that the LLM emits in chat every time it produces a review. The user pastes the one-liner once; the renderer regenerates `skills/code-review-policy/templates/checklist-report.html` from the JSON data the LLM just wrote. The one-liner is fully derived from `SKILL.md` - the user never has to remember or type it.
 
-### One-liner template (what the LLM emits)
+## Auto-render: report + checklist in one LLM call
 
-```powershell
-& "<repo>\venv\Scripts\python.exe" "<repo>\skills\code-review-policy\render_checklist.py" --structured "<repo>\skills\code-review-policy\templates\checklist-structured.md" --detailed "<repo>\skills\code-review-policy\templates\checklist-detailed.md" --data "<repo>\.code-review\last-checklist-data.json" --output "<repo>\skills\code-review-policy\templates\checklist-report.html"
-```
+Every invocation of the skill produces three artifacts in a single LLM pass. The user pastes exactly one PowerShell line at the end of the chat reply, and the report plus the tickable checklist HTML are both on disk before the push.
 
-`<repo>` is the absolute path of the project root (the folder that contains `skills/`). The LLM resolves it from the current working directory or from the manifest's location. The LLM does NOT leave `<repo>` as a literal in the chat - it substitutes the real path before emitting.
+### The three artifacts
 
-### What the LLM does, every review
+1. **Chat report** - the full review inline in the conversation, ending with `VERDICT: <verdict>` on the last line. The pre-push hook reads this verdict.
+2. **JSON data file** - `<repo>\.code-review\last-checklist-data.json`. The LLM writes this from the same review that appears in chat. Every section of the JSON is populated; the renderer does not need to invent any data.
+3. **Checklist HTML** - `<repo>\.code-review\checklist-report.html`. Self-contained, real `<input type="checkbox">` elements (39 in the detailed section), filled-in tables in the structured section, status pills on every row.
 
-1. Build the review in chat as usual. The LLM still produces the chat report, the `VERDICT:` line on the last line, the JSON data file, and the diff hash.
-2. Save the JSON to `<repo>\.code-review\last-checklist-data.json` (the folder is created by the hook, gitignored).
-3. Save the report to `<repo>\.code-review\last-report.md` with the trailing `VERDICT:` line.
-4. Save the diff hash to `<repo>\.code-review\last-report.hash`.
-5. Emit the one-liner from the template above, with `<repo>` replaced by the real absolute path. The user pastes it once. The renderer overwrites `checklist-report.html` with the populated version.
-6. On non-Windows hosts, the LLM emits the equivalent bash form (`python` instead of `python.exe`, forward slashes). The manifest tells the LLM to detect the host.
+### The single one-liner the LLM emits at the end of every chat reply
 
-### Empty template (no review data)
-
-When the user asks for a blank printable checklist ("just the boxes, no review"), the LLM emits the one-liner WITHOUT `--data`:
+The LLM ALWAYS ends its chat response with this fenced PowerShell block, with `<repo>` replaced by the absolute path of the project root:
 
 ```powershell
-& "<repo>\venv\Scripts\python.exe" "<repo>\skills\code-review-policy\render_checklist.py" --structured "<repo>\skills\code-review-policy\templates\checklist-structured.md" --detailed "<repo>\skills\code-review-policy\templates\checklist-detailed.md" --output "<repo>\skills\code-review-policy\templates\checklist-report.html"
+& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" --structured ".\skills\code-review-policy\templates\checklist-structured.md" --detailed ".\skills\code-review-policy\templates\checklist-detailed.md" --data ".\.code-review\last-checklist-data.json" --output ".\.code-review\checklist-report.html"
 ```
 
-The renderer produces the 39-checkbox blank template ready to tick.
+The user pastes it once, from inside `<repo>`. The relative paths are anchored with `.\` so PowerShell's parser does not see the trailing dash on the project folder as a parameter. The renderer reads the JSON, populates the structured section, renders the 39 checkboxes, and writes `checklist-report.html`.
+
+### What the LLM does, every review, in one pass
+
+1. Build the review in chat. Include the full Code Quality, Security, Performance, Style, Test Coverage, Final Notes, and Approval sections. Include a trailing `VERDICT: <verdict>` line on the last line.
+2. From that same review, build a JSON object with every key the renderer reads. No field is left blank; if a section has no findings, write a one-line summary instead of omitting the key. The JSON shape is:
+
+   ```json
+   {
+     "projectName": "...",
+     "repositoryBranch": "...",
+     "reviewerName": "...",
+     "reviewDate": "...",
+     "hasTests": "Yes | No | Manual smoke-tested",
+     "coveragePercent": "...",
+     "manualTestNotes": "...",
+     "generalChecklist": [{"item": "...", "comment": "..."}],
+     "codeQuality": [{"checkItem": "...", "status": "Pass|Fail|Warn", "notes": "..."}],
+     "hasSecuritySection": true,
+     "securityChecks": [{"checkItem": "...", "status": "...", "comments": "..."}],
+     "performanceChecks": [{"title": "...", "details": "..."}],
+     "stylePractices": [{"practice": "...", "issuesFound": "..."}],
+     "reviewerFeedbacks": [{"reviewerName": "...", "comment": "..."}],
+     "finalNotes": "...",
+     "approvedBy": "...",
+     "approvalDate": "...",
+     "mergeStatus": "Approve | Approve with Suggestions | Request Changes"
+   }
+   ```
+
+3. Save the JSON to `<repo>\.code-review\last-checklist-data.json` (the folder is created by the hook and is gitignored).
+4. Save the report body to `<repo>\.code-review\last-report.md` with the trailing `VERDICT:` line.
+5. Save the diff hash from the prompt to `<repo>\.code-review\last-report.hash`. The prompt (in `<repo>\.code-review\invoke.txt`) contains a `Diff hash:` line; the LLM extracts that hash and writes it.
+6. Emit the one-liner above in a fenced code block at the END of the chat reply. The block is the LAST thing the user sees; the user pastes it once and both the JSON-driven report and the 39-box checklist HTML are on disk.
 
 ### What the LLM does NOT do
 
-- The LLM never executes the renderer itself. The user runs the one-liner in a terminal. The skill stays LLM-driven; the renderer is deterministic.
+- The LLM never executes the renderer itself. The user runs the one-liner. The skill stays LLM-driven; the renderer is deterministic.
 - The LLM never edits the markdown templates by hand. The renderer is the single source of truth for the HTML shape.
 - The LLM never reads the produced HTML back into the conversation. The user opens it in a browser.
+- The LLM never leaves `<repo>` as a literal in the chat. The one-liner is emitted with the real path substituted.
 - The LLM never asks the user to type the one-liner from memory. The one-liner is always emitted in the chat reply, in full, with paths substituted.
+- The LLM never tells the user to "save the report somewhere." The LLM writes the report itself; the user only pastes the renderer line.
 
 ### Files this section creates or expects
 
-- `<repo>\skills\code-review-policy\templates\checklist-report.html` - the rendered report, overwritten on every render.
-- `<repo>\.code-review\last-checklist-data.json` - the JSON the LLM writes when a review is produced. Optional; absent when the user only wants the blank template.
+- `<repo>\.code-review\last-report.md` - the chat-shaped report with trailing `VERDICT:` line. The pre-push hook reads this.
+- `<repo>\.code-review\last-report.hash` - the diff hash from the prompt. The pre-push hook reads this.
+- `<repo>\.code-review\last-checklist-data.json` - the JSON data the LLM writes. The renderer reads this.
+- `<repo>\.code-review\checklist-report.html` - the rendered checklist. The user opens this in a browser.
 
-### Verify before rendering
+### Verify before emitting the one-liner
 
 Before the LLM emits the one-liner, it should:
 
-1. Confirm the JSON it wrote to `last-checklist-data.json` is valid (no trailing commas, all keys quoted).
-2. Confirm the one-liner it is about to emit has the correct absolute paths (no `<repo>` placeholder left in).
-3. Re-state the one-liner in the chat so the user can copy-paste it without scrolling back.
+1. Confirm the JSON it wrote to `last-checklist-data.json` is valid (no trailing commas, all keys quoted, no raw newlines inside string values).
+2. Confirm every section of the JSON is populated. Empty lists are acceptable only if the LLM also writes a one-line summary in `finalNotes` explaining why.
+3. Confirm the one-liner it is about to emit has the correct relative paths anchored with `.\` (no `<repo>` placeholder, no absolute paths that PowerShell will mis-parse).
+4. Re-state the one-liner in the chat so the user can copy-paste it without scrolling back.
 
-### One-liner as part of the chat response
+### One-liner as the closing of every chat response
 
-The LLM always ends its chat response with the one-liner, on its own line, in a fenced code block so the user can copy it cleanly. Example closing of a chat response:
+The LLM always ends its chat response with the one-liner, on its own line, in a fenced code block. Example closing of a chat response:
 
 ```
 [review body here]
@@ -335,8 +364,7 @@ VERDICT: Approve with Suggestions
 Run this one-liner to populate `checklist-report.html` from the JSON above:
 
 ```powershell
-& "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Scripts\python.exe" "D:\trigyn\trigyn project\AI-recruiter-screening-system-\skills\code-review-policy\render_checklist.py" --structured "D:\trigyn\trigyn project\AI-recruiter-screening-system-\skills\code-review-policy\templates\checklist-structured.md" --detailed "D:\trigyn\trigyn project\AI-recruiter-screening-system-\skills\code-review-policy\templates\checklist-detailed.md" --data "D:\trigyn\trigyn project\AI-recruiter-screening-system-\.code-review\last-checklist-data.json" --output "D:\trigyn\trigyn project\AI-recruiter-screening-system-\skills\code-review-policy\templates\checklist-report.html"
-```
+& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" --structured ".\skills\code-review-policy\templates\checklist-structured.md" --detailed ".\skills\code-review-policy\templates\checklist-detailed.md" --data ".\.code-review\last-checklist-data.json" --output ".\.code-review\checklist-report.html"
 ```
 
 The user pastes the line, the HTML is regenerated, the push proceeds.
@@ -394,3 +422,65 @@ Without the hash check, the developer can save a report once, then push any numb
 ```
 
 
+
+
+
+
+## LLM-only checking contract
+
+The detailed checklist (39 boxes across 6 sections) is ticked by the LLM, not by the user. The user opens the rendered HTML to review the LLM's work, not to do the review themselves.
+
+### What the LLM does
+
+After producing the chat report and the JSON data file, the LLM walks the 39 checklist items in `skills/code-review-policy/templates/checklist-detailed.md` (or the canonical SECTIONS list in `render_checklist.py`) and decides for each item: did the LLM verify this during the review? If yes, the LLM adds the exact `checkItem` string to a `checkedItems` array in the JSON data file. The renderer pre-ticks those boxes in the printable HTML and adds a small green `verified by LLM` badge next to each ticked item.
+
+The renderer's matching is forgiving: it normalizes whitespace, lowercases, strips trailing punctuation, and also matches by 40-character prefix. So a checkedItems list with slightly different wording still ticks the right boxes.
+
+### What the LLM does NOT do
+
+- The LLM does not ask the user to tick boxes manually. The HTML checkboxes are present so the user can override an LLM tick (uncheck a box if they disagree), not so the user can do the review.
+- The LLM does not produce an empty `checkedItems` list. If the LLM did not actually walk the checklist, it should say so in the chat reply and ask the developer to re-run the skill.
+- The LLM does not include `checkItem` strings the LLM did not actually verify. A dishonest tick is worse than a missing one.
+
+### What the user does
+
+The user opens the rendered HTML and reviews the LLM's ticks. If the user disagrees with a tick, they uncheck the box in the browser. The user does not start from an empty checklist.
+
+### Field in the JSON data file
+
+```json
+{
+  "checkedItems": [
+    "Does the code do what the PR description says it does?",
+    "Are edge cases handled? (empty input, null values, boundary conditions)",
+    "..."
+  ]
+}
+```
+
+Items not in this list render as unticked. The LLM's responsibility is to walk the 39 items and decide which ones it actually verified.
+
+### What the user sees in the HTML
+
+A ticked box looks like this in the rendered output:
+
+```html
+<li class="checklist-item">
+  <label class="checkbox-row">
+    <input type="checkbox" checked disabled />
+    Does the code do what the PR description says it does?
+    <span class="llm-tick">verified by LLM</span>
+  </label>
+</li>
+```
+
+The `disabled` attribute means the user cannot accidentally re-tick a box the LLM has marked as verified. The user CAN uncheck a box in the browser's developer tools, but the canonical record is the JSON the LLM wrote. The renderer does not read the HTML back; it always re-renders from the JSON.
+
+### Verify before emitting the one-liner
+
+Before the LLM emits the renderer one-liner, it should:
+
+1. Walk all 39 items in the detailed checklist. For each, decide: did I actually verify this during the review?
+2. Add every verified item to `checkedItems` in the JSON data file. Use the exact `checkItem` string from the SECTIONS list when possible; the renderer's normalization handles minor wording differences.
+3. Confirm the JSON it wrote to `last-checklist-data.json` is valid.
+4. Confirm the one-liner it is about to emit has the correct relative paths anchored with `.\`.

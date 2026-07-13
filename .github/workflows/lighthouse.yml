@@ -1,0 +1,31 @@
+name: lighthouse
+on: [pull_request]
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '18' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install -r requirements.txt
+      - run: cd backend && npm install
+      - run: cd ../frontend && npm install
+      - name: Boot stack
+        run: |
+          ollama serve &
+          sleep 3
+          uvicorn api:api --host 127.0.0.1 --port 8000 &
+          (cd backend && npm run dev) &
+          (cd frontend && npm run dev) &
+          sleep 20
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:5173/
+            http://localhost:5173/login
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          budgetPath: .github/lighthouse/budget.json

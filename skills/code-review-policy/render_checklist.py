@@ -59,6 +59,8 @@ CSS = """\
   .checkbox-row { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 2px 0; }
   .checkbox-row input { margin-top: 5px; flex-shrink: 0; cursor: pointer; }
   .checkbox-row:hover { background: #f9fafb; }
+  .llm-tick { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #dcfce7; color: var(--pass); }
+  .llm-tick { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #dcfce7; color: var(--pass); }
 \
   .red-flag { background: #fef2f2; border-left: 3px solid var(--fail); padding: 6px 10px; margin: 6px 0; font-size: 13px; }\
   .heuristic { background: #ecfeff; border-left: 3px solid var(--accent); padding: 6px 10px; margin: 6px 0; font-size: 13px; }\
@@ -194,13 +196,25 @@ N1 = ("# Bad: N+1 queries\nfor user_id in user_ids:\n"
        "for user in users:\n"
        "    send_email(user)")
 
-def render_detailed():
+def render_detailed(data=None):
     out = ['<h1 style="margin-top:32px">The Complete Code Review Checklist</h1>']
     out.append('<p class="meta">Tick each box. Leave a one-line note for anything unchecked. Link to a follow-up issue if the fix is out of scope for this PR.</p>')
+    import re as _re
+    raw_checked = (data or {}).get('checkedItems') or []
+    def _norm(s):
+        return _re.sub(r'\s+', ' ', s.lower().strip()).rstrip('.?!')
+    norm_checked = {_norm(c) for c in raw_checked}
+    prefix_checked = {c[:40].lower() for c in raw_checked}
     for name, items in SECTIONS:
         out.append('<div class="checklist-section"><h2>' + html.escape(name) + '</h2><ul>')
-        for it in items: out.append('<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" />' + html.escape(it) + '</label></li>')
-        out.append("</ul></div>")
+        for it in items:
+            n = _norm(it)
+            p_ = it[:40].lower()
+            checked = (n in norm_checked) or (p_ in prefix_checked)
+            box = '<input type="checkbox" checked />' if checked else '<input type="checkbox" />'
+            note = ' <span class="llm-tick">verified by LLM</span>' if checked else ''
+            out.append('<li class="checklist-item"><label class="checkbox-row">' + box + html.escape(it) + note + '</label></li>')
+        out.append('</ul></div>')
     out.append("<h3>Red flag patterns to check</h3>")
     out.append('<div class="red-flag">catch(e) {} - swallowed exceptions</div>')
     out.append('<div class="red-flag">Unchecked array access without bounds validation</div>')
@@ -227,7 +241,7 @@ def main():
     data = {}
     if args.data and args.data.exists(): data = json.loads(args.data.read_text(encoding="utf-8"))
     structured_html = render_structured(data)
-    detailed_html = render_detailed()
+    detailed_html = render_detailed(data)
     stamp = args.stamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     doc = "\n".join([
         "<!doctype html>",
