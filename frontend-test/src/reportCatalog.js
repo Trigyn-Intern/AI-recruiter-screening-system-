@@ -40,7 +40,6 @@ export const REPORT_CATALOG = [
     cwd: ROOT,
     description: "OWASP ZAP baseline security scan against the running FastAPI backend",
   },
-
   {
     id: "performance",
     title: "Lighthouse Performance",
@@ -48,7 +47,7 @@ export const REPORT_CATALOG = [
     filename: "lighthouse-report.html",
     path: "reports/lighthouse-report.html",
     command:
-      'npx --yes lighthouse http://localhost:5173 --output html --output-path "reports/lighthouse-report.html" --chrome-flags="--headless=new --no-sandbox --disable-gpu"',
+      'npx --yes lighthouse http://localhost:5173 --output html --output-path "reports/lighthouse-report.html" --chrome-flags="--headless --no-sandbox"',
     cwd: ROOT,
     description:
       "Lighthouse audit: performance, accessibility, best practices, SEO. Frontend must be running on port 5173.",
