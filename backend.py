@@ -2,6 +2,7 @@ import json
 import hashlib
 import os
 import re
+import sqlite3
 import time
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -17,6 +18,16 @@ from jsonschema import ValidationError, validate
 from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+
+from default_prompts import (
+    DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE,
+    DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE,
+    DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE,
+    DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE,
+    DEFAULT_JD_PROMPT_TEMPLATE,
+    DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE,
+    DEFAULT_SKILL_GAP_PROMPT_TEMPLATE,
+)
 
 try:
     from google import genai
@@ -51,6 +62,7 @@ FAISS_INDEX_PATH = VECTOR_STORE_DIR / "resume_embeddings.faiss"
 FAISS_METADATA_PATH = VECTOR_STORE_DIR / "resume_metadata.json"
 RESUME_SKILLS_PATH = VECTOR_STORE_DIR / "resume_skills.json"
 PROMPT_CONFIG_PATH = VECTOR_STORE_DIR / "prompt_config.json"
+PROMPT_DB_PATH = VECTOR_STORE_DIR / "prompt_templates.db"
 CANDIDATE_GRADING_CACHE_PATH = VECTOR_STORE_DIR / "candidate_grading_cache.json"
 
 AI_PROVIDER_OPTIONS = [
@@ -109,210 +121,6 @@ CLAUDE_TRANSIENT_ERROR_CODES = [
     "rate_limit_error",
 ]
 
-DEFAULT_JD_PROMPT_TEMPLATE = """You are an HR Recruitment Expert.
-
-Read the Job Description carefully.
-
-Extract:
-
-1. Years of Experience Required
-2. Primary Skills
-3. Secondary Skills
-4. Educational Qualifications
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "experience": "",
-    "primary_skills": "",
-    "secondary_skills": "",
-    "education": "",
-    "additional_insights": {}
-}
-
-If the developer asks for extra fields, put them inside additional_insights
-without changing the core JSON keys above.
-
-JOB DESCRIPTION:
-
-{job_text}
-"""
-
-DEFAULT_SKILL_GAP_PROMPT_TEMPLATE = """You are an ATS and Technical Recruiter.
-
-Compare the candidate profile against the job requirements.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "matching_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "missing_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "additional_insights": {}
-}
-
-Rules:
-- Maximum 10 matching skills.
-- Maximum 10 missing skills.
-- No explanations.
-- No markdown.
-- No code blocks.
-- No text before or after JSON.
-- If the developer asks for extra fields, put them inside additional_insights
-  without changing the core JSON keys above.
-
-RESUME:
-{resume_text}
-
-JOB DESCRIPTION:
-{job_text}
-"""
-
-DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE = """You are an ATS and Technical Recruiter.
-
-Compare the provided candidate resume context against the job requirements and
-explain the resume-job match score.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "matching_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "missing_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "justification": "",
-    "additional_insights": {}
-}
-
-Rules:
-- Maximum 10 matching skills.
-- Maximum 10 missing skills.
-- Write the justification in 2 to 3 short lines.
-- Mention the strongest matching evidence.
-- Mention the most important gaps if any.
-- The RESUME section below is the candidate resume context. It may contain raw
-  resume text, indexed resume JSON, or both.
-- Never say that no resume was provided when the RESUME section has content.
-- No explanations outside JSON.
-- No markdown.
-- No code blocks.
-- If the developer asks for extra fields, put them inside additional_insights
-  without changing the core JSON keys above.
-
-MATCH SCORE:
-{score}%
-
-RESUME:
-{resume_text}
-
-JOB DESCRIPTION:
-{job_text}
-"""
-
-DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE = """You are a senior technical recruiter.
-
-Grade the candidate's fit for the job using only these weighted criteria:
-
-1. Skill gap: {skill_gap_weight}%
-2. Years of experience: {years_experience_weight}%
-3. Hands-on project experience: {project_experience_weight}%
-4. Educational qualification: {education_weight}%
-5. Seniority: {seniority_weight}%
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "grade_percentage": 0,
-    "criteria_scores": {
-        "skill_gap": 0,
-        "years_experience": 0,
-        "project_experience": 0,
-        "education": 0,
-        "seniority": 0
-    },
-    "summary": "",
-    "strengths": [
-        "strength1",
-        "strength2"
-    ],
-    "concerns": [
-        "concern1",
-        "concern2"
-    ],
-    "additional_insights": {}
-}
-
-Rules:
-- Do not use or mention the existing match score.
-- Score each item inside criteria_scores from 0 to 100.
-- Calculate the final weighted grade_percentage yourself using
-  criteria_scores and GRADING WEIGHTS.
-- grade_percentage must change when GRADING WEIGHTS change, even if the same
-  resume and job description are used.
-- Skill gap means the balance of matching skills versus missing skills, with
-  extra importance for mandatory or repeated job-description skills.
-- Years of experience means whether the resume shows enough relevant total and
-  role-specific experience for the job description.
-- Hands-on project experience means whether the resume proves practical project
-  usage of the important skills through implementations, products, client work,
-  responsibilities, or measurable outcomes.
-- Educational qualification means whether the resume's degrees,
-  certifications, or formal education satisfy explicit or implied
-  job-description education requirements.
-- Seniority means whether role titles, responsibility level, leadership scope,
-  and years of experience align with the job's expected seniority.
-- Do not grade based on domain fit, location, education, company brand, role
-  seniority, or general presentation unless that evidence directly supports one
-  of the weighted criteria above.
-- 90 to 100 means excellent fit with strong evidence across required skills,
-  relevant experience, and hands-on project usage.
-- 75 to 89 means strong fit with a few manageable gaps.
-- 55 to 74 means partial fit with meaningful missing skills or unclear hands-on
-  evidence.
-- 35 to 54 means weak fit with major required-skill or experience gaps.
-- 0 to 34 means very low fit with little relevant evidence for the job.
-- Write the summary in 2 to 3 short lines.
-- Use strengths for evidence-backed positives.
-- Use concerns for missing skills, weak experience, or unclear project evidence.
-- No explanations outside JSON.
-- No markdown.
-- No code blocks.
-- If the developer asks for extra grading observations or custom rubric notes,
-  put them inside additional_insights without changing the core JSON keys above.
-
-RESUME CONTEXT:
-{resume_text}
-
-JOB DESCRIPTION:
-{job_text}
-
-MATCHING SKILLS:
-{matching_skills}
-
-MISSING SKILLS:
-{missing_skills}
-
-GRADING WEIGHTS:
-{grading_weights}
-"""
-
 DEFAULT_CANDIDATE_GRADING_WEIGHTS = {
     "skill_gap": 50,
     "years_experience": 20,
@@ -320,172 +128,6 @@ DEFAULT_CANDIDATE_GRADING_WEIGHTS = {
     "education": 5,
     "seniority": 10,
 }
-
-DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE = """You are a senior ATS resume parser and technical recruiter.
-
-Extract the candidate's professional experience timeline from the resume with
-high accuracy. Focus only on work experience, internships, apprenticeships,
-freelance/contract roles, and clearly dated project-based professional work.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "total_experience": "",
-    "timeline": [
-        {
-            "role": "",
-            "company": "",
-            "start_date": "",
-            "end_date": "",
-            "duration": "",
-            "location": "",
-            "summary": "",
-            "technologies": [
-                "technology1",
-                "technology2"
-            ],
-            "projects": [
-                "project or product name"
-            ],
-            "relevance": ""
-        }
-    ],
-    "additional_insights": {}
-}
-
-Rules:
-- Read the full resume before deciding the timeline.
-- Sort timeline entries from most recent to oldest.
-- Extract a maximum of 8 timeline entries.
-- Use the role/title exactly as written when possible.
-- Use the company/client/organization exactly as written when possible.
-- start_date and end_date must preserve the resume wording, such as
-  "Jan 2022", "2021", "Present", or "Not Found".
-- duration should be calculated only when dates are clear. Otherwise return
-  "Not Found".
-- summary must be 1 concise sentence describing the candidate's work in that
-  role using evidence from the resume.
-- technologies must include only tools, programming languages, platforms,
-  frameworks, methods, or domain systems explicitly connected to that role.
-- projects must include only project/product names explicitly connected to
-  that role. Return an empty list if none are clear.
-- relevance must explain in 1 short sentence how this role supports or does
-  not support the job description.
-- Do not invent dates, companies, roles, skills, projects, or responsibilities.
-- If the resume has no clear dated experience, return total_experience as
-  "Not Found" and timeline as an empty list.
-- No markdown.
-- No code blocks.
-- No text before or after JSON.
-- If the developer asks for extra timeline fields, put them inside
-  additional_insights without changing the core JSON keys above.
-
-RESUME:
-{resume_text}
-
-JOB DESCRIPTION:
-{job_text}
-"""
-
-DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE = """You are a senior ATS resume parser and recruiter.
-
-Extract a concise candidate snapshot from the resume. The snapshot will appear
-at the top of a recruiter-facing detailed analysis page, so prefer short,
-high-confidence values that help identify the candidate quickly.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "candidate_name": "",
-    "likely_role": "",
-    "current_title": "",
-    "current_company": "",
-    "location": "",
-    "total_experience": "",
-    "additional_insights": {}
-}
-
-Rules:
-- Use only information explicitly present in the resume.
-- candidate_name should be the person's name if it is clearly visible near the
-  top/header of the resume. If unclear, return "Not Found".
-- likely_role should summarize the candidate's professional identity using
-  the strongest repeated role signals, such as "Senior Business Consultant",
-  "Frontend Developer", or "Data Analyst".
-- current_title and current_company should come from the most recent role or
-  current employment entry. If dates are unclear, use the first clearly listed
-  professional role/company.
-- location should be the candidate's city/state/country if clearly present.
-- total_experience should preserve explicit wording such as "8+ years" or
-  "14 years". If not explicit, infer only when the resume dates are clear;
-  otherwise return "Not Found".
-- Keep every field concise. Do not write paragraphs.
-- Do not invent names, companies, locations, dates, or experience.
-- No markdown.
-- No code blocks.
-- No text before or after JSON.
-- If the developer asks for extra snapshot fields, put them inside
-  additional_insights without changing the core JSON keys above.
-
-RESUME:
-{resume_text}
-"""
-
-DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE = """You are an ATS resume parser.
-
-Extract the candidate's skills, role signals, and evidence from the resume.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-    "technical_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "soft_skills": [
-        "skill1",
-        "skill2"
-    ],
-    "tools": [
-        "tool1",
-        "tool2"
-    ],
-    "domains": [
-        "domain1",
-        "domain2"
-    ],
-    "experience_summary": "",
-    "skill_evidence": [
-        {
-            "skill": "skill name",
-            "evidence": "exact resume phrase, sentence, or project line",
-            "source": "project, role, company, or section name if available"
-        }
-    ],
-    "additional_insights": {}
-}
-
-Rules:
-- Keep each list to a maximum of 15 items.
-- skill_evidence is optional. Include up to 10 evidence-backed skills when
-  the resume has clear evidence, otherwise return an empty list.
-- evidence must be copied or closely paraphrased from the resume, not invented.
-- If a field is not found, return an empty list or "Not Found".
-- Use concise skill names.
-- Do not include markdown.
-- Do not include text before or after JSON.
-- If the developer asks for extra extracted fields, put them inside
-  additional_insights without changing the core JSON keys above.
-
-RESUME:
-{resume_text}
-"""
 
 JD_SCHEMA = {
     "type": "object",
@@ -884,6 +526,7 @@ RUNTIME_STATE = {
     "last_resume_skill_status": "",
     "timeline_diagnostics": [],
     "skip_gemini_grading": False,
+    "prefer_indexed_candidate_detail": False,
 }
 
 
@@ -1533,7 +1176,12 @@ def initialize_project_storage_files():
         write_json_file(RESUME_SKILLS_PATH, {})
 
     if not PROMPT_CONFIG_PATH.exists():
-        write_json_file(PROMPT_CONFIG_PATH, get_default_configuration())
+        write_json_file(
+            PROMPT_CONFIG_PATH,
+            get_non_prompt_configuration(get_default_configuration()),
+        )
+
+    initialize_prompt_database()
 
     if not CANDIDATE_GRADING_CACHE_PATH.exists():
         write_json_file(CANDIDATE_GRADING_CACHE_PATH, {})
@@ -1749,6 +1397,122 @@ def get_default_configuration():
     }
 
 
+PROMPT_TEMPLATE_KEYS = tuple(
+    key
+    for key in get_default_configuration()
+    if key.endswith("_prompt_template")
+)
+
+
+def get_non_prompt_configuration(config):
+    return {
+        key: value
+        for key, value in config.items()
+        if key not in PROMPT_TEMPLATE_KEYS
+    }
+
+
+def get_prompt_configuration(config):
+    return {
+        key: value
+        for key, value in config.items()
+        if key in PROMPT_TEMPLATE_KEYS
+    }
+
+
+def prompt_has_required_terms(prompt, required_terms):
+    if not isinstance(prompt, str) or not prompt.strip():
+        return False
+
+    return all(term in prompt for term in required_terms)
+
+
+def prompt_uses_controlled_schema(prompt):
+    return "additional_insights" not in str(prompt)
+
+
+def get_prompt_db_connection():
+    ensure_vector_store_dir()
+    return sqlite3.connect(PROMPT_DB_PATH)
+
+
+def initialize_prompt_database():
+    default_config = get_default_configuration()
+    existing_json_config = read_json_file(PROMPT_CONFIG_PATH, {})
+
+    with get_prompt_db_connection() as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS prompt_templates (
+                prompt_name TEXT PRIMARY KEY,
+                prompt_text TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        for prompt_name in PROMPT_TEMPLATE_KEYS:
+            saved_prompt = existing_json_config.get(prompt_name)
+            prompt_text = (
+                saved_prompt
+                if isinstance(saved_prompt, str) and saved_prompt.strip()
+                else default_config[prompt_name]
+            )
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO prompt_templates
+                    (prompt_name, prompt_text, updated_at)
+                VALUES (?, ?, ?)
+                """,
+                (prompt_name, prompt_text, get_current_timestamp()),
+            )
+
+
+def load_prompt_templates_from_db():
+    initialize_prompt_database()
+
+    with get_prompt_db_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT prompt_name, prompt_text
+            FROM prompt_templates
+            """
+        ).fetchall()
+
+    return {
+        prompt_name: prompt_text
+        for prompt_name, prompt_text in rows
+        if prompt_name in PROMPT_TEMPLATE_KEYS
+    }
+
+
+def save_prompt_templates_to_db(config):
+    prompt_config = get_prompt_configuration(config)
+    if not prompt_config:
+        return
+
+    with get_prompt_db_connection() as connection:
+        for prompt_name, prompt_text in prompt_config.items():
+            if not isinstance(prompt_text, str) or not prompt_text.strip():
+                continue
+
+            connection.execute(
+                """
+                INSERT INTO prompt_templates
+                    (prompt_name, prompt_text, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(prompt_name) DO UPDATE SET
+                    prompt_text = excluded.prompt_text,
+                    updated_at = excluded.updated_at
+                """,
+                (prompt_name, prompt_text, get_current_timestamp()),
+            )
+
+
+def reset_prompt_templates_db():
+    save_prompt_templates_to_db(get_default_configuration())
+
+
 def normalize_configuration(config):
     default_config = get_default_configuration()
     normalized_config = default_config.copy()
@@ -1791,17 +1555,45 @@ def normalize_configuration(config):
     candidate_snapshot_prompt = str(
         normalized_config.get("candidate_snapshot_prompt_template", "")
     )
-    if "additional_insights" not in jd_prompt:
+    if not prompt_has_required_terms(
+        jd_prompt,
+        [
+            "{job_text}",
+            '"experience"',
+            '"primary_skills"',
+            '"secondary_skills"',
+            '"education"',
+        ],
+    ) or not prompt_uses_controlled_schema(jd_prompt):
         normalized_config["jd_prompt_template"] = DEFAULT_JD_PROMPT_TEMPLATE
 
-    if "additional_insights" not in skill_gap_prompt:
+    if not prompt_has_required_terms(
+        skill_gap_prompt,
+        [
+            "{resume_text}",
+            "{job_text}",
+            '"matching_skills"',
+            '"missing_skills"',
+        ],
+    ) or not prompt_uses_controlled_schema(skill_gap_prompt):
         normalized_config["skill_gap_prompt_template"] = (
             DEFAULT_SKILL_GAP_PROMPT_TEMPLATE
         )
 
     if (
         "candidate resume context" not in candidate_detail_prompt
-        or "additional_insights" not in candidate_detail_prompt
+        or not prompt_has_required_terms(
+            candidate_detail_prompt,
+            [
+                "{resume_text}",
+                "{job_text}",
+                "{score}",
+                '"matching_skills"',
+                '"missing_skills"',
+                '"justification"',
+            ],
+        )
+        or not prompt_uses_controlled_schema(candidate_detail_prompt)
     ):
         normalized_config["candidate_detail_prompt_template"] = (
             DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
@@ -1810,14 +1602,31 @@ def normalize_configuration(config):
     if (
         "Do not use or mention the existing match score"
         not in candidate_grading_prompt
-        or "grade_percentage" not in candidate_grading_prompt
-        or "{skill_gap_weight}" not in candidate_grading_prompt
-        or "{education_weight}" not in candidate_grading_prompt
-        or "{seniority_weight}" not in candidate_grading_prompt
-        or "criteria_scores" not in candidate_grading_prompt
+        or not prompt_has_required_terms(
+            candidate_grading_prompt,
+            [
+                "{resume_text}",
+                "{job_text}",
+                "{matching_skills}",
+                "{missing_skills}",
+                "{grading_weights}",
+                "{skill_gap_weight}",
+                "{years_experience_weight}",
+                "{project_experience_weight}",
+                "{education_weight}",
+                "{seniority_weight}",
+                '"grade_percentage"',
+                '"criteria_scores"',
+                '"skill_gap"',
+                '"years_experience"',
+                '"project_experience"',
+                '"education"',
+                '"seniority"',
+            ],
+        )
         or "Calculate the final weighted grade_percentage yourself"
         not in candidate_grading_prompt
-        or "additional_insights" not in candidate_grading_prompt
+        or not prompt_uses_controlled_schema(candidate_grading_prompt)
     ):
         normalized_config["candidate_grading_prompt_template"] = (
             DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
@@ -1825,9 +1634,18 @@ def normalize_configuration(config):
 
     if (
         "professional experience timeline" not in experience_timeline_prompt
-        or "{resume_text}" not in experience_timeline_prompt
-        or "{job_text}" not in experience_timeline_prompt
-        or "additional_insights" not in experience_timeline_prompt
+        or not prompt_has_required_terms(
+            experience_timeline_prompt,
+            [
+                "{resume_text}",
+                "{job_text}",
+                '"total_experience"',
+                '"timeline"',
+                '"role"',
+                '"company"',
+            ],
+        )
+        or not prompt_uses_controlled_schema(experience_timeline_prompt)
     ):
         normalized_config["experience_timeline_prompt_template"] = (
             DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE
@@ -1835,18 +1653,40 @@ def normalize_configuration(config):
 
     if (
         "candidate snapshot" not in candidate_snapshot_prompt.lower()
-        or "{resume_text}" not in candidate_snapshot_prompt
-        or "additional_insights" not in candidate_snapshot_prompt
+        or not prompt_has_required_terms(
+            candidate_snapshot_prompt,
+            [
+                "{resume_text}",
+                '"candidate_name"',
+                '"likely_role"',
+                '"current_title"',
+                '"current_company"',
+                '"location"',
+                '"total_experience"',
+            ],
+        )
+        or not prompt_uses_controlled_schema(candidate_snapshot_prompt)
     ):
         normalized_config["candidate_snapshot_prompt_template"] = (
             DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE
         )
 
     if (
-        "skill_evidence" not in resume_skill_prompt
+        not prompt_has_required_terms(
+            resume_skill_prompt,
+            [
+                "{resume_text}",
+                '"technical_skills"',
+                '"soft_skills"',
+                '"tools"',
+                '"domains"',
+                '"experience_summary"',
+                '"skill_evidence"',
+            ],
+        )
         or "experience_timeline" in resume_skill_prompt
         or "resume_last_updated" in resume_skill_prompt
-        or "additional_insights" not in resume_skill_prompt
+        or not prompt_uses_controlled_schema(resume_skill_prompt)
     ):
         normalized_config["resume_skill_extraction_prompt_template"] = (
             DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
@@ -1857,7 +1697,19 @@ def normalize_configuration(config):
 
 def load_configuration():
     saved_config = read_json_file(PROMPT_CONFIG_PATH, {})
-    config = normalize_configuration(saved_config)
+    prompt_config = load_prompt_templates_from_db()
+    config = normalize_configuration(
+        {
+            **saved_config,
+            **prompt_config,
+        }
+    )
+    normalized_prompt_config = get_prompt_configuration(config)
+    if any(
+        prompt_config.get(key) != normalized_prompt_config.get(key)
+        for key in PROMPT_TEMPLATE_KEYS
+    ):
+        save_prompt_templates_to_db(config)
 
     RUNTIME_STATE["ai_provider"] = config["ai_provider"]
     RUNTIME_STATE["ollama_model"] = config["ollama_model"]
@@ -1902,7 +1754,11 @@ def update_configuration(config):
             **config,
         }
     )
-    write_json_file(PROMPT_CONFIG_PATH, updated_config)
+    save_prompt_templates_to_db(updated_config)
+    write_json_file(
+        PROMPT_CONFIG_PATH,
+        get_non_prompt_configuration(updated_config),
+    )
     load_configuration()
     RUNTIME_STATE["ai_analysis_cache"] = {}
     return updated_config
@@ -1910,7 +1766,11 @@ def update_configuration(config):
 
 def reset_configuration():
     default_config = get_default_configuration()
-    write_json_file(PROMPT_CONFIG_PATH, default_config)
+    reset_prompt_templates_db()
+    write_json_file(
+        PROMPT_CONFIG_PATH,
+        get_non_prompt_configuration(default_config),
+    )
     load_configuration()
     RUNTIME_STATE["ai_analysis_cache"] = {}
     return default_config
@@ -3468,6 +3328,65 @@ def build_indexed_candidate_detail(
     }
 
 
+def build_fast_candidate_detail(
+    indexed_detail,
+    resume_context,
+    resume_skill_profile,
+    job_text,
+    resume_name="",
+    grading_weights=None,
+):
+    result = {
+        **indexed_detail,
+        "experience_timeline": EXPERIENCE_TIMELINE_FALLBACK,
+        "experience_timeline_debug": {
+            "resume_name": resume_name,
+            "source": "indexed_fast_path",
+            "error": "",
+        },
+        "candidate_snapshot": build_local_candidate_snapshot(
+            resume_context,
+            resume_name=resume_name,
+        ),
+    }
+
+    if isinstance(resume_skill_profile, dict):
+        timeline = normalize_experience_timeline(
+            resume_skill_profile.get("experience_timeline", {})
+        )
+        if timeline.get("timeline"):
+            result["experience_timeline"] = timeline
+            result["experience_timeline_debug"] = (
+                resume_skill_profile.get("experience_timeline_debug", {})
+                if isinstance(
+                    resume_skill_profile.get("experience_timeline_debug", {}),
+                    dict,
+                )
+                else result["experience_timeline_debug"]
+            )
+
+        snapshot = normalize_candidate_snapshot(
+            resume_skill_profile.get("candidate_snapshot", {})
+        )
+        if candidate_snapshot_has_signal(snapshot):
+            result["candidate_snapshot"] = snapshot
+        elif resume_context:
+            result["candidate_snapshot"] = build_local_candidate_snapshot(
+                resume_context,
+                resume_name=resume_name,
+                timeline=result["experience_timeline"],
+            )
+
+    result["candidate_grading"] = build_candidate_grading_fallback(
+        resume_context,
+        result.get("matching_skills", []),
+        result.get("missing_skills", []),
+        grading_weights,
+    )
+    result["candidate_grading"]["source"] = "indexed_fast_path"
+    return result
+
+
 def normalize_key(key):
     return "".join(
         character
@@ -3662,6 +3581,7 @@ def analyze_job_description_cached(job_text, model_name=None, provider=None):
     result = analyze_job_description(job_text, model_name=model_name, provider=provider)
     _JD_ANALYSIS_CACHE[key] = result
     return result
+
 
 def analyze_job_description(
     job_text,
@@ -4696,6 +4616,20 @@ def analyze_candidate_detail(
         score,
         job_skill_requirements=job_skill_requirements,
     )
+    if (
+        RUNTIME_STATE.get("prefer_indexed_candidate_detail", True)
+        and isinstance(resume_skill_profile, dict)
+        and bool(resume_skill_profile)
+    ):
+        return build_fast_candidate_detail(
+            indexed_detail,
+            resume_context,
+            resume_skill_profile,
+            job_text,
+            resume_name=resume_name,
+            grading_weights=grading_weights,
+        )
+
     cache_key = get_ai_cache_key(
         "candidate_detail_with_grading_v12",
         provider,

@@ -5,7 +5,8 @@
 const bcrypt = require("bcryptjs");
 const User = require("../src/store/userStore");
 
-const SEED_EMAIL = (process.env.SEED_MANAGER_EMAIL || "manager@local")
+const LEGACY_SEED_EMAIL = "manager@local";
+const SEED_EMAIL = (process.env.SEED_MANAGER_EMAIL || "manager@local.dev")
   .trim()
   .toLowerCase();
 const SEED_PASSWORD = process.env.SEED_MANAGER_PASSWORD || "Manager@123";
@@ -17,6 +18,16 @@ async function seedManager() {
   const existing = await User.findOne({ email: SEED_EMAIL });
   if (existing && existing.id) {
     console.log(`[seed] manager already present (${SEED_EMAIL}); skipping.`);
+    return { created: false, email: SEED_EMAIL };
+  }
+
+  const legacy = await User.findOne({ email: LEGACY_SEED_EMAIL });
+  if (legacy && legacy.id) {
+    await User.updateOne(
+      { email: LEGACY_SEED_EMAIL },
+      { email: SEED_EMAIL },
+    );
+    console.log(`[seed] migrated ${LEGACY_SEED_EMAIL} to ${SEED_EMAIL}.`);
     return { created: false, email: SEED_EMAIL };
   }
 

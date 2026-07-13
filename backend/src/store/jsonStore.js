@@ -72,6 +72,21 @@ class JsonCollection {
     return this._cache.find((doc) => doc._id === id) || null;
   }
 
+  async updateOne(predicate, updates) {
+    await this._ensureLoaded();
+    return this._enqueue(async () => {
+      const index = this._cache.findIndex((doc) => matchDoc(doc, predicate));
+      if (index === -1) return null;
+
+      this._cache[index] = {
+        ...this._cache[index],
+        ...updates,
+      };
+      await this._flush();
+      return this._cache[index];
+    });
+  }
+
   async count() {
     await this._ensureLoaded();
     return this._cache.length;

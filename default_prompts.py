@@ -1,5 +1,4 @@
-export const defaultPrompts = {
-  jd_prompt_template: `You are an HR Recruitment Expert.
+DEFAULT_JD_PROMPT_TEMPLATE = """You are an HR Recruitment Expert.
 
 Read the Job Description carefully.
 
@@ -18,19 +17,19 @@ Format:
     "experience": "",
     "primary_skills": "",
     "secondary_skills": "",
-    "education": "",
-    "additional_insights": {}
+    "education": ""
 }
 
-If the developer asks for extra fields, put them inside additional_insights
-without changing the core JSON keys above.
+Rules:
+- Return only the keys shown above.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 JOB DESCRIPTION:
 
 {job_text}
-`,
+"""
 
-  skill_gap_prompt_template: `You are an ATS and Technical Recruiter.
+DEFAULT_SKILL_GAP_PROMPT_TEMPLATE = """You are an ATS and Technical Recruiter.
 
 Compare the candidate profile against the job requirements.
 
@@ -46,8 +45,7 @@ Format:
     "missing_skills": [
         "skill1",
         "skill2"
-    ],
-    "additional_insights": {}
+    ]
 }
 
 Rules:
@@ -57,17 +55,17 @@ Rules:
 - No markdown.
 - No code blocks.
 - No text before or after JSON.
-- If the developer asks for extra fields, put them inside additional_insights
-  without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 RESUME:
 {resume_text}
 
 JOB DESCRIPTION:
 {job_text}
-`,
+"""
 
-  candidate_detail_prompt_template: `You are an ATS and Technical Recruiter.
+DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE = """You are an ATS and Technical Recruiter.
 
 Compare the provided candidate resume context against the job requirements and
 explain the resume-job match score.
@@ -85,8 +83,7 @@ Format:
         "skill1",
         "skill2"
     ],
-    "justification": "",
-    "additional_insights": {}
+    "justification": ""
 }
 
 Rules:
@@ -101,8 +98,8 @@ Rules:
 - No explanations outside JSON.
 - No markdown.
 - No code blocks.
-- If the developer asks for extra fields, put them inside additional_insights
-  without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 MATCH SCORE:
 {score}%
@@ -112,9 +109,9 @@ RESUME:
 
 JOB DESCRIPTION:
 {job_text}
-`,
+"""
 
-  candidate_grading_prompt_template: `You are a senior technical recruiter.
+DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE = """You are a senior technical recruiter.
 
 Grade the candidate's fit for the job using only these weighted criteria:
 
@@ -145,8 +142,7 @@ Format:
     "concerns": [
         "concern1",
         "concern2"
-    ],
-    "additional_insights": {}
+    ]
 }
 
 Rules:
@@ -184,8 +180,8 @@ Rules:
 - No explanations outside JSON.
 - No markdown.
 - No code blocks.
-- If the developer asks for extra grading observations or custom rubric notes,
-  put them inside additional_insights without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 RESUME CONTEXT:
 {resume_text}
@@ -201,9 +197,9 @@ MISSING SKILLS:
 
 GRADING WEIGHTS:
 {grading_weights}
-`,
+"""
 
-  experience_timeline_prompt_template: `You are a senior ATS resume parser and technical recruiter.
+DEFAULT_EXPERIENCE_TIMELINE_PROMPT_TEMPLATE = """You are a senior ATS resume parser and technical recruiter.
 
 Extract the candidate's professional experience timeline from the resume with
 high accuracy. Focus only on work experience, internships, apprenticeships,
@@ -233,8 +229,7 @@ Format:
             ],
             "relevance": ""
         }
-    ],
-    "additional_insights": {}
+    ]
 }
 
 Rules:
@@ -261,17 +256,17 @@ Rules:
 - No markdown.
 - No code blocks.
 - No text before or after JSON.
-- If the developer asks for extra timeline fields, put them inside
-  additional_insights without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 RESUME:
 {resume_text}
 
 JOB DESCRIPTION:
 {job_text}
-`,
+"""
 
-  candidate_snapshot_prompt_template: `You are a senior ATS resume parser and recruiter.
+DEFAULT_CANDIDATE_SNAPSHOT_PROMPT_TEMPLATE = """You are a senior ATS resume parser and recruiter.
 
 Extract a concise candidate snapshot from the resume. The snapshot will appear
 at the top of a recruiter-facing detailed analysis page, so prefer short,
@@ -287,8 +282,7 @@ Format:
     "current_title": "",
     "current_company": "",
     "location": "",
-    "total_experience": "",
-    "additional_insights": {}
+    "total_experience": ""
 }
 
 Rules:
@@ -310,14 +304,14 @@ Rules:
 - No markdown.
 - No code blocks.
 - No text before or after JSON.
-- If the developer asks for extra snapshot fields, put them inside
-  additional_insights without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 RESUME:
 {resume_text}
-`,
+"""
 
-  resume_skill_extraction_prompt_template: `You are an ATS resume parser.
+DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE = """You are an ATS resume parser.
 
 Extract the candidate's skills, role signals, and evidence from the resume.
 
@@ -349,8 +343,7 @@ Format:
             "evidence": "exact resume phrase, sentence, or project line",
             "source": "project, role, company, or section name if available"
         }
-    ],
-    "additional_insights": {}
+    ]
 }
 
 Rules:
@@ -362,10 +355,9 @@ Rules:
 - Use concise skill names.
 - Do not include markdown.
 - Do not include text before or after JSON.
-- If the developer asks for extra extracted fields, put them inside
-  additional_insights without changing the core JSON keys above.
+- Return only the keys shown in the JSON format.
+- Do not add extra fields unless the backend schema is updated to support them.
 
 RESUME:
 {resume_text}
-`,
-};
+"""

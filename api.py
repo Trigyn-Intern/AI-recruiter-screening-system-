@@ -57,7 +57,7 @@ initialize_project_storage_files()
 # call can't starve the rest. ANALYZE_MAX_INFLIGHT is read from env in
 # start-app.ps1 (default 4) and ANALYZE_TIMEOUT_S caps each call.
 ANALYZE_MAX_INFLIGHT = int(os.environ.get("ANALYZE_MAX_INFLIGHT", "4"))
-ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "90"))
+ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "900"))
 _analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
 
 

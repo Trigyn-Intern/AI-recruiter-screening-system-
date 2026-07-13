@@ -24,7 +24,13 @@ const envOrigins = (process.env.CLIENT_ORIGIN || "")
   .map((o) => o.trim())
   .filter(Boolean);
 const allowedOrigins = Array.from(
-  new Set([...envOrigins, "http://localhost:5174"])
+  new Set([
+    ...envOrigins,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+  ])
 );
 
 app.use(

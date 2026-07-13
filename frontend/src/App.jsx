@@ -23,7 +23,6 @@ import {
   defaultOllamaModels,
   defaultProviders,
 } from "./defaultModels";
-import { defaultPrompts } from "./defaultPrompts";
 import SkillsPage from "./pages/dashboard/SkillsPage";
 import "./styles.css";
 
@@ -37,13 +36,27 @@ const defaultGradingWeights = {
   seniority: 10,
 };
 
+const promptConfigKeys = [
+  "jd_prompt_template",
+  "skill_gap_prompt_template",
+  "candidate_detail_prompt_template",
+  "candidate_grading_prompt_template",
+  "experience_timeline_prompt_template",
+  "candidate_snapshot_prompt_template",
+  "resume_skill_extraction_prompt_template",
+];
+
+const emptyPromptConfig = Object.fromEntries(
+  promptConfigKeys.map((key) => [key, ""]),
+);
+
 const emptyConfig = {
   ai_provider: "Gemini",
   ollama_model: defaultOllamaModels[0],
   gemini_model: defaultGeminiModels[0],
   claude_model: defaultClaudeModels[0],
   candidate_grading_weights: defaultGradingWeights,
-  ...defaultPrompts,
+  ...emptyPromptConfig,
 };
 
 function normalizeGradingWeights(weights) {
@@ -89,10 +102,8 @@ function normalizeConfig(config) {
     normalizedConfig.candidate_grading_weights,
   );
 
-  for (const key of Object.keys(defaultPrompts)) {
-    if (!String(normalizedConfig[key] || "").trim()) {
-      normalizedConfig[key] = defaultPrompts[key];
-    }
+  for (const key of promptConfigKeys) {
+    normalizedConfig[key] = String(normalizedConfig[key] || "");
   }
 
   return normalizedConfig;
@@ -153,44 +164,6 @@ function cleanList(items) {
   return items
     .map((item) => formatDisplayValue(item, ""))
     .filter((item) => item && item.toLowerCase() !== "not found");
-}
-
-function formatInsightLabel(key) {
-  return String(key)
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function cleanAdditionalInsights(...sources) {
-  const insights = [];
-
-  for (const source of sources) {
-    if (
-      !source ||
-      typeof source !== "object" ||
-      Array.isArray(source)
-    ) {
-      continue;
-    }
-
-    for (const [key, value] of Object.entries(source)) {
-      const displayValue = formatDisplayValue(value, "");
-
-      if (!displayValue || displayValue === "Not Found") {
-        continue;
-      }
-
-      insights.push({
-        label: formatInsightLabel(key),
-        value: displayValue,
-      });
-    }
-  }
-
-  return insights;
 }
 
 function cleanTimeline(timeline) {
@@ -1222,11 +1195,12 @@ function Results({ result }) {
   const runtimeStatus = result.runtime_status || {};
   const [selectedDetail, setSelectedDetail] = useState(null);
   const jdInfo = result.job_description || {};
+  const ranking = Array.isArray(result.ranking) ? result.ranking : [];
+  const invalidResumes = Array.isArray(result.invalid_resumes)
+    ? result.invalid_resumes
+    : [];
   const jdCoreEntries = Object.entries(jdInfo).filter(
     ([key]) => key !== "additional_insights",
-  );
-  const jdAdditionalInsights = cleanAdditionalInsights(
-    jdInfo.additional_insights,
   );
   const detailMap = useMemo(() => {
     return new Map(
@@ -1258,6 +1232,13 @@ function Results({ result }) {
         </div>
       ) : null}
 
+      {invalidResumes.length ? (
+        <div className="notice">
+          {invalidResumes.length} resume
+          {invalidResumes.length === 1 ? "" : "s"} could not be analyzed.
+        </div>
+      ) : null}
+
       <section>
         <h2>Job Description</h2>
         <div className="jd-grid">
@@ -1268,59 +1249,53 @@ function Results({ result }) {
             </div>
           ))}
         </div>
-        {jdAdditionalInsights.length ? (
-          <div className="additional-insights-grid jd-insights-grid">
-            {jdAdditionalInsights.map((item) => (
-              <article
-                className="additional-insight-card"
-                key={`${item.label}-${item.value}`}
-              >
-                <span>{item.label}</span>
-                <p>{item.value}</p>
-              </article>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <section>
         <h2>Ranking</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Resume</th>
-              <th>Score</th>
-              <th>Fit</th>
-              <th>Detailed Analysis</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.ranking.map((row) => {
-              const detail = detailMap.get(row.resume_id);
+        {ranking.length ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Resume</th>
+                <th>Score</th>
+                <th>Fit</th>
+                <th>Detailed Analysis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map((row) => {
+                const detail = detailMap.get(row.resume_id);
 
-              return (
-                <tr key={row.resume_id}>
-                  <td>{row.resume_name}</td>
-                  <td>{row.match_score}%</td>
-                  <td>{row.fit}</td>
-                  <td>
-                    {detail ? (
-                      <button
-                        className="table-action"
-                        onClick={() => setSelectedDetail(detail)}
-                        type="button"
-                      >
-                        View
-                      </button>
-                    ) : (
-                      <span className="muted-text">Not available</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={row.resume_id || row.resume_name}>
+                    <td>{formatDisplayValue(row.resume_name)}</td>
+                    <td>{formatDisplayValue(row.match_score)}%</td>
+                    <td>{formatDisplayValue(row.fit)}</td>
+                    <td>
+                      {detail ? (
+                        <button
+                          className="table-action"
+                          onClick={() => setSelectedDetail(detail)}
+                          type="button"
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <span className="muted-text">Not available</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="empty-state">
+            No ranked resumes were returned. Check the Resume DB page to confirm
+            resumes are indexed, then run analysis again.
+          </div>
+        )}
       </section>
 
     </div>
@@ -1347,12 +1322,6 @@ function DetailPage({ detail, onBack }) {
     grading.criteria_scores,
   );
   const appliedGradingWeights = normalizeGradingWeights(grading.weights);
-  const additionalInsights = cleanAdditionalInsights(
-    detail.additional_insights,
-    grading.additional_insights,
-    detail.experience_timeline?.additional_insights,
-    detail.candidate_snapshot?.additional_insights,
-  );
   const gradeMeterStyle = {
     "--grade-percent": `${gradingPercentage ?? 0}%`,
   };
@@ -1531,27 +1500,6 @@ function DetailPage({ detail, onBack }) {
               </div>
             </section>
 
-            {additionalInsights.length ? (
-              <section className="detail-section">
-                <div className="section-title-row">
-                  <h3>Additional Insights</h3>
-                  <span className="section-pill">
-                    {additionalInsights.length}
-                  </span>
-                </div>
-                <div className="additional-insights-grid">
-                  {additionalInsights.map((item) => (
-                    <article
-                      className="additional-insight-card"
-                      key={`${item.label}-${item.value}`}
-                    >
-                      <span>{item.label}</span>
-                      <p>{item.value}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : null}
           </div>
 
           <div className="detail-right-column">

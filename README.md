@@ -145,7 +145,8 @@ The vector store lives in `vector_store/` and contains three persistent files pl
 | `resume_embeddings.faiss` | 1024-dim BGE-large index, one vector per resume. |
 | `resume_metadata.json` | Resume name, id, raw text, and timestamps. |
 | `resume_skills.json` | Cached structured skill profile per resume. |
-| `prompt_config.json` | The current editable prompt templates. |
+| `prompt_templates.db` | SQLite table for editable prompt names and prompt text. |
+| `prompt_config.json` | Non-prompt analyzer configuration such as provider, model, and grading weights. |
 | `analysis_sessions.json` | Append-only log of past screening runs. |
 
 A resume record is intentionally small: id, name, text, embedding, and skill profile. This keeps reruns fast, lets the UI show cached results for previously uploaded resumes, and makes the on-disk format easy to inspect.
@@ -375,6 +376,7 @@ reports/
 AI-recruiter-screening-system-/
 |-- api.py                    # FastAPI analyzer entry point
 |-- backend.py                # Analyzer logic: extraction, embeddings, scoring, LLM calls
+|-- default_prompts.py        # Seed/reset/fallback prompt templates for the prompt DB
 |-- app.py                    # Legacy Streamlit entry point (kept for reference)
 |-- start-app.ps1             # One-click stack launcher
 |-- requirements.txt
@@ -394,7 +396,6 @@ AI-recruiter-screening-system-/
 |       |-- main.jsx          # React Router entry (login, signup, dashboard)
 |       |-- App.jsx           # Analyzer + Configurations dashboard
 |       |-- defaultModels.js
-|       |-- defaultPrompts.js
 |       |-- styles.css
 |       |-- api/client.js
 |       |-- assets/

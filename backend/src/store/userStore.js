@@ -96,6 +96,12 @@ const User = {
     return applySelect(stored, []);
   },
 
+  async updateOne(query, updates) {
+    await _readyNow();
+    const stored = await collection.updateOne(query, updates);
+    return stored ? applySelect(stored, []) : null;
+  },
+
   async _clear() {
     await _readyNow();
     return collection.clear();
