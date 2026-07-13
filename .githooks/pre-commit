@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Pre-commit hook: formatting, linting, and a Python syntax check on staged
+# files. The AI code review runs at pre-push, not pre-commit, so this hook
+# is intentionally fast and does not call any LLM.
+#
+# Each step is wrapped so a missing script (no `lint` block, no
+# `format:check` block, no Python on PATH) is a no-op rather than a hard
+# failure. The hook only blocks the commit when a check actually runs
+# and returns non-zero.
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# --- 1. Block direct commits to the main branch. ---------------------------
+# All work should go through a feature branch and a pull request.
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "[pre-commit] branch: $BRANCH (OK)"
+
+# --- 2. Run the backend's lint and format check, if defined. ---------------
+# We check package.json for the script first; missing scripts are skipped.
+if [ -f backend/package.json ]; then
+  cd backend
+
+  if grep -q '"lint"' package.json 2>/dev/null; then
+    echo "[pre-commit] backend: running 'npm run lint'..."
+    if ! npm run --silent lint; then
+      echo "[pre-commit] FAIL: backend lint reported errors."
+      cd ..
+      exit 1
+    fi
+    echo "[pre-commit] backend: lint OK"
+  else
+    echo "[pre-commit] backend: no 'lint' script, skipping"
+  fi
+
+  if grep -q '"format:check"' package.json 2>/dev/null; then
+    echo "[pre-commit] backend: running 'npm run format:check'..."
+    if ! npm run --silent format:check; then
+      echo "[pre-commit] FAIL: backend formatting check failed."
+      echo "[pre-commit] run 'npm run format' to fix."
+      cd ..
+      exit 1
+    fi
+    echo "[pre-commit] backend: format OK"
+  else
+    echo "[pre-commit] backend: no 'format:check' script, skipping"
+  fi
+
+  cd ..
+fi
+
+# --- 3. Run the frontend's lint and format check, if defined. --------------
+if [ -f frontend/package.json ]; then
+  cd frontend
+
+  if grep -q '"lint"' package.json 2>/dev/null; then
+    echo "[pre-commit] frontend: running 'npm run lint'..."
+    if ! npm run --silent lint; then
+      echo "[pre-commit] FAIL: frontend lint reported errors."
+      cd ..
+      exit 1
+    fi
+    echo "[pre-commit] frontend: lint OK"
+  else
+    echo "[pre-commit] frontend: no 'lint' script, skipping"
+  fi
+
+  if grep -q '"format:check"' package.json 2>/dev/null; then
+    echo "[pre-commit] frontend: running 'npm run format:check'..."
+    if ! npm run --silent format:check; then
+      echo "[pre-commit] FAIL: frontend formatting check failed."
+      echo "[pre-commit] run 'npm run format' to fix."
+      cd ..
+      exit 1
+    fi
+    echo "[pre-commit] frontend: format OK"
+  else
+    echo "[pre-commit] frontend: no 'format:check' script, skipping"
+  fi
+
+  cd ..
+fi
+
+# --- 4. Byte-compile every staged .py file. --------------------------------
+# py_compile is fast and catches syntax errors before the CI does.
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.py$' || true)
+if [ -n "$STAGED_PY" ]; then
+  if ! command -v python >/dev/null 2>&1; then
+    echo "[pre-commit] python not on PATH; skipping syntax check on staged .py files"
+  else
+    echo "[pre-commit] python: syntax check on staged files"
+    PY_FAIL=0
+    for f in $STAGED_PY; do
+      if [ -f "$f" ]; then
+        if ! python -m py_compile "$f"; then
+          echo "[pre-commit] FAIL: python syntax error in $f"
+          PY_FAIL=1
+        fi
+      fi
+    done
+    if [ "$PY_FAIL" -ne 0 ]; then
+      exit 1
+    fi
+    echo "[pre-commit] python: syntax OK"
+  fi
+fi
+
+echo ""
+echo "[pre-commit] PASS - commit allowed."
+exit 0
