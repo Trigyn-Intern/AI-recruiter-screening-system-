@@ -1,6 +1,6 @@
 ---
 name: code-review-policy
-description: LLM-driven code review policy for the AI Recruiter Screening System. Reviews backend (Node/Express), frontend (React/Vite), Python AI services, GitHub workflow files, configuration, and tests. Invoked manually in chat or by the pre-push Git hook. Never executes scanners and never modifies code automatically.
+description: LLM-driven code review policy for the AI Recruiter Screening System. Reviews backend (Node/Express), frontend (React/Vite), Python AI services, GitHub workflow files, configuration, and tests. Invoked manually in chat or by the pre-push Git hook. Never executes scanners and never modifies code automatically. Always produces three artifacts in one LLM pass (chat report, JSON data file, checklist HTML) and ends the chat reply with the renderer one-liner.
 modes: [all, backend, frontend, python, github, changed-files]
 default_mode: all
 safe_mode: true
@@ -54,6 +54,7 @@ Invoke the Code Review Policy skill in mode=changed-files.
 5. Apply the **Safe review rules** — never echo secrets, never fabricate issues.
 6. End the report with a **Code Quality Summary** and a **Verdict** in GitHub-style terminology.
 7. When invoked by the pre-push hook, append a final `VERDICT:` line so the hook can read it.
+8. After saving the report and the JSON, emit the renderer one-liner as the last block of the chat reply. The user pastes it once and `checklist-report.html` is regenerated from the JSON.
 
 ## Review categories
 
@@ -84,193 +85,158 @@ The skill checks nine categories. For every category, the LLM looks for the list
 - Weak authentication logic (no rate limit, weak password floor, plaintext password compare)
 - Missing authorization on protected routes
 - Missing input validation (no schema, no length cap, no type check)
-- Unsafe APIs (`eval`, `new Function`, `child_process` with user input, `dangerouslySetInnerHTML` without sanitization, `pickle.loads` on untrusted data)
-- XSS risks (un-escaped user input rendered as HTML, missing CSP)
-- Prompt injection risks (user input concatenated into system-bearing prompts, user-editable prompt templates)
-- Insecure file handling (`path.join` with user input passed to a shell, path traversal, world-writable temp files)
+- Unsafe APIs (`eval`, `new Function`, `child_process` with user input, `dangerouslySetInnerHTML` without escaping)
+- Logging passwords, tokens, PII
+- File-system paths that are not normalized or sandboxed (path-traversal)
+- CORS misconfiguration (wildcard origin with credentials, allow-list missing entries)
+- Cookies missing `httpOnly` / `secure` / `sameSite` when they hold session data
 
 ### 4. Performance
 
-- Unnecessary loops or nested loops over the same collection
-- Duplicate database or API calls when one would do
-- Expensive operations inside loops (file I/O, regex compile, embedding calls)
-- Large object creation that could be lazy
-- Missing caching opportunities for repeated identical requests
+- N+1 query patterns
+- Synchronous file I/O on a request path
+- Unbounded loops or recursion
+- Missing pagination on list endpoints
+- Missing database indexes for the queries the code runs
+- Redundant re-renders or re-computations in React (missing memoization, unstable props)
+- Unbounded data structures in memory (large lists loaded whole)
 
 ### 5. Error Handling
 
-- Missing try/catch around calls that can throw (network, disk, JSON parse)
-- Poor exception handling (bare `except:` or `except Exception:` that swallows context)
-- Stack traces exposed in HTTP responses
-- Generic error responses that hide the real cause from operators
-- Missing logging for errors that need to be diagnosable post-hoc
+- Swallowed exceptions (`catch(e) {}` with no log and no rethrow)
+- Unhandled rejections
+- Timeouts missing on external calls
+- 5xx responses leaking stack traces or `err.message` from unexpected exceptions
+- Default fallbacks that hide real errors
 
 ### 6. Maintainability
 
-- Readability (consistent indentation, sensible line length, no nested ternaries)
-- Modular code (small files, single responsibility, named exports)
-- Consistent formatting (matches the surrounding code; no mix of tabs and spaces)
-- Consistent naming (camelCase in JS, snake_case in Python, PascalCase for React components)
-- Documentation updates when behavior or APIs change
+- Hardcoded paths that should be config (absolute Windows paths in JS, for example)
+- Magic numbers without named constants
+- Inconsistent error response shape across endpoints
+- Comments that narrate the code instead of explaining intent
+- Public API surface that breaks without a deprecation note
 
 ### 7. Project Compliance
 
-- Matches the conventions of the AI Recruiter Screening System (Express on Node, FastAPI on Python, Vite + React, pytest for tests)
-- Does not break the existing architecture (no new top-level framework, no new build tool, no new package manager)
-- Does not introduce a parallel way to do something the codebase already does (two HTTP clients, two config loaders, two logger setups)
-- Updates `.gitignore` when introducing a new artifact directory
-- Adds or updates tests when changing behavior
+- `.gitignore` does not exclude runtime artifacts (log files, `__pycache__`, `node_modules`, `.benchmarks`)
+- Duplicated source-of-truth files (prompt templates in four places, default fixtures in two)
+- Secrets in version control
+- Large committed binaries (PDFs of resumes, screenshots, recorded video)
+- Commit messages that do not name the changed area
 
 ### 8. Testing
 
-- Missing unit tests for new or changed logic
-- Missing integration tests for new endpoints, hooks, or service boundaries
-- Missing regression tests for bug fixes
-- Existing tests that should be updated to reflect the change
-- Tests that do not actually assert the behavior they claim to
-- Test fixtures that drift from production behavior
+- New behavior without a test
+- Tests that only cover the happy path
+- Tests that test implementation (private helpers, internal store names) instead of behavior
+- Test data that only works with `id = 1`
+- Missing regression test for a bug fix
+- Flaky tests (time-based, network-dependent) without markers
 
 ### 9. Documentation
 
-- README updates when public-facing behavior, setup, or usage changes
-- API documentation for new endpoints, request/response shapes, or error codes
-- Environment setup (`.env.example`, required env vars, dependency installation)
-- Developer documentation (architecture, decisions, contributor guidance)
-- Changelog entries when the project maintains one
+- New public function without a one-line docstring or JSDoc
+- README sections that drift from the code (e.g. commands that no longer exist)
+- API endpoints added without a request/response example
+- Setup steps that assume pre-installed tools the README never lists
+- Internal helpers exported with no usage guide
 
 ## Severity rules
 
-Every finding gets one of three severities:
+- **High** - the bug is reachable today, has user-facing impact, and the fix is small. Block the push.
+- **Medium** - the bug is reachable today, but the blast radius is limited; or the bug is a real risk for a future refactor. Document and ship behind a follow-up issue.
+- **Low** - the bug is a style/maintenance issue with no current user impact. Note it; do not block the push.
 
-- **High** - must fix before merge. Security issues, broken functionality, missing validation on user input, anything that lets a user reach a state the system cannot recover from.
-- **Medium** - should fix before merge. Performance problems, missing error handling on a known failure mode, an architectural rule violation that will hurt later.
-- **Low** - nice to fix. Naming, minor duplication, missing comments, formatting drift.
-
-If the LLM is not sure whether something is a real issue, it is **not** a finding. The skill marks it as `Needs Manual Verification` in the report and stops there. Fabricating issues to look thorough is worse than missing a finding.
+A finding must be reachable from the code paths in this push. Do not flag patterns that exist elsewhere in the repo but are not part of this diff unless they are in the explicitly listed files (e.g. `mode=changed-files`).
 
 ## Findings
 
 Each finding uses this shape:
 
-- **[Severity] Category** - `path/to/file.js:lineRange`
-  - Explanation: <one or two sentences describing what is wrong>
-  - Why it matters: <one sentence on the real-world consequence>
-  - Recommended fix: <one or two sentences describing how to address it>
+```
+- **[Severity] Category** — `path/to/file.js:lineRange`
+  - Issue: one sentence describing what is wrong.
+  - Why it matters: one sentence on impact.
+  - Suggested fix: one or two sentences describing how to address it.
+  - Status: present | absent | needs verification
+```
 
-Findings are grouped by severity: **High Priority Issues**, **Medium Priority Issues**, **Low Priority Suggestions**. Inside each group, findings are ordered by file path, then by line number.
+Severity is one of `High`, `Medium`, `Low`. If a category has no findings, return `No findings.` under that heading.
 
 ## Safe review rules
 
-The model must:
-
-- Never echo a secret value. Cite the file:line and the category; do not quote the secret itself.
-- Never output a password, API key, JWT, or DB URI in the report. Use placeholders like `[REDACTED: high-entropy hex string]`.
-- Never output PII found in test fixtures. Cite the file:line and the category; do not quote the value.
-- Never fabricate findings. If the inspected code does not show a problem, do not write one.
-- Clearly label uncertain observations as **Needs Manual Verification**. The user will check them.
-- Never modify source code automatically. Recommendations only.
-- Only provide recommendations. The developer decides what to do.
+- The skill never echoes secrets, tokens, JWT secrets, or bcrypt hashes in chat.
+- The skill never fabricates findings. If you are not sure, label `Needs Manual Verification` and explain what to check.
+- The skill never outputs PII. If a finding requires quoting user input, redact it (`[REDACTED]`).
+- The skill never modifies code, runs tests, or executes external commands. The renderer one-liner is the only command the LLM suggests, and it is deterministic.
+- The skill never edits the markdown templates by hand. The renderer is the single source of truth for the HTML shape.
 
 ## Code Quality Summary
 
-Replace numeric scoring with one of four qualitative ratings:
+The summary uses one of four qualitative ratings, with no numeric score:
 
 - **Excellent** - zero High, zero Medium, zero or one Low.
-- **Good** - zero High, one or two Medium, any number of Low.
-- **Fair** - zero High, three or more Medium, any number of Low.
+- **Good** - zero High, one or two Medium.
+- **Fair** - zero High, three or more Medium.
 - **Poor** - one or more High.
-
-The rating is independent of the Verdict. A `Poor` rating forces `Request Changes`; the other three are compatible with either `Approve` or `Approve with Suggestions`.
 
 ## Verdict
 
 The Verdict uses GitHub-style review terminology:
 
-- **Approve** - the change is safe to merge as-is.
-- **Approve with Suggestions** - safe to merge; the developer should look at the findings but is not blocked.
-- **Request Changes** - the change is not safe to merge; one or more High findings must be fixed first.
+- **Approve** - safe to merge as-is.
+- **Approve with Suggestions** - safe to merge; developer should look at findings.
+- **Request Changes** - not safe to merge; one or more High findings must be fixed first.
 
-The Verdict rule:
-
-- `Request Changes` - one or more High findings.
-- `Approve with Suggestions` - one or more Medium findings, zero High.
-- `Approve` - zero High, zero Medium.
-
-The pre-push hook blocks the push only when the Verdict is `Request Changes`. The other two are non-blocking.
+The Verdict is independent of the Code Quality Summary. A `Poor` summary forces `Request Changes`; the other three ratings are compatible with either of the other two verdicts.
 
 ## Output format
 
-```
-# Code Review Report
+The chat report uses this layout, in this order:
 
-## Executive Summary
-<one paragraph: what was reviewed, the Code Quality Summary, the Verdict,
-and the top 1-3 things the developer should look at first>
+1. **Title** - `# Code Review Report (mode=<mode>)`
+2. **Executive Summary** - one paragraph, 3-5 sentences.
+3. **Files Reviewed** - bullet list of paths, grouped into source/config vs review-artifact.
+4. **High Priority Issues** - bullet list, ordered by severity and file.
+5. **Medium Priority Issues** - bullet list.
+6. **Low Priority Suggestions** - bullet list.
+7. **Best Practice Recommendations** - 2-4 bullets.
+8. **Items Needing Manual Verification** - bullet list.
+9. **Code Quality Summary** - one of the four ratings, with a one-line justification.
+10. **Verdict** - one of the three verdicts.
+11. Trailing line: `VERDICT: <verdict>` - read by the pre-push hook.
 
-## Files Reviewed
-<bulleted list of every file inspected; mark "binary, skipped" if applicable>
-
-## High Priority Issues
-- **[High] Category** - `path/to/file.js:lineRange`
-  - Explanation: ...
-  - Why it matters: ...
-  - Recommended fix: ...
-
-## Medium Priority Issues
-- (same shape)
-
-## Low Priority Suggestions
-- (same shape)
-
-## Best Practice Recommendations
-<bulleted list, no specific file:line, no severity. Style and convention
-observations that apply project-wide.>
-
-## Items Needing Manual Verification
-<bulleted list of uncertain observations. Each line cites the file:line
-and what the LLM was not sure about. Empty section if nothing is
-uncertain.>
-
-## Code Quality Summary
-<Excellent | Good | Fair | Poor>
-
-```
+The report ends with `VERDICT: <verdict>` on the last line. The renderer one-liner follows in a separate fenced PowerShell block.
 
 ## Hook integration
 
-When invoked by the pre-push hook, the LLM also writes one extra line at the end of the report:
+The pre-push hook (`.githooks/pre-push`) gates every push:
 
-```
-VERDICT: <Approve|Approve with Suggestions|Request Changes>
-```
-
-The hook reads the **last** line of `.code-review/last-report.md`, strips the `VERDICT:` prefix, and exits non-zero only on `Request Changes`. On `Approve` or `Approve with Suggestions`, the push proceeds and the report is the developer's record.
+- It computes the diff hash from `git diff` against the upstream.
+- It writes `.code-review/last-changed-files.txt` and `.code-review/invoke.txt`.
+- It blocks the push until a fresh report is written to `.code-review/last-report.md` ending with a `VERDICT:` line.
+- It reads the `VERDICT:` line and exits non-zero only on `Request Changes`. On `Approve` or `Approve with Suggestions`, the push proceeds and the report is the developer's record.
+- `AI_SKIP_PRE_PUSH=1` overrides the hook in emergencies.
 
 ## Verify before acting
 
 The skill produces findings; the developer decides what to fix. Before merging:
 
-1. Open every High and Medium finding's cited file and line.
-2. Confirm the issue exists as described.
-3. Test the recommended fix in a non-production environment.
-4. For any finding marked `Needs Manual Verification`, decide manually.
-
+1. Open the cited file and line. Confirm the issue exists.
+2. Test the suggested fix in a non-production environment.
+3. For Medium findings, open a follow-up issue so the work is not lost.
 
 ## Templates
 
-The skill ships with two reference templates in `skills/code-review-policy/templates/`. The LLM does not need to read them to follow the manifest, but they are the canonical shapes for a structured checklist report.
+The renderer reads from two markdown templates in `skills/code-review-policy/templates/`:
 
-- `checklist-structured.md` - templated report with placeholders for project name, reviewer, code quality rows, security checks, performance checks, style and best practices, test coverage, additional reviewer feedback, and approval. Use this when a single reviewer wants a printable, table-shaped record of a pass over a PR.
-- `checklist-detailed.md` - exhaustive category-by-category checklist covering Correctness, Security, Performance, Testing, Readability and Maintainability, and API and Interface Design. Use this when the developer wants a "tick every box" pass before opening a PR, or when a junior reviewer needs the full list in front of them.
+- `checklist-structured.md` - the structured summary table (Code Quality, Security, Performance, etc.).
+- `checklist-detailed.md` - the 39-item detailed checklist with `<input type="checkbox">` elements.
 
-When the user asks for a "checklist report" or a "Code Review Checklist," produce both: the structured template filled in with concrete findings, plus the detailed checklist with the boxes checked based on the same review.
+The renderer pre-ticks every box the LLM added to the `checkedItems` array in the JSON data file. The HTML output is `checklist-report.html`.
 
-
-
-
-
-
-## Auto-render: report + checklist in one LLM call
+## Auto-render: report + JSON + checklist in one LLM call
 
 Every invocation of the skill produces three artifacts in a single LLM pass. The user pastes exactly one PowerShell line at the end of the chat reply, and the report plus the tickable checklist HTML are both on disk before the push.
 
@@ -282,13 +248,19 @@ Every invocation of the skill produces three artifacts in a single LLM pass. The
 
 ### The single one-liner the LLM emits at the end of every chat reply
 
-The LLM ALWAYS ends its chat response with this fenced PowerShell block, with `<repo>` replaced by the absolute path of the project root:
+The LLM ALWAYS ends its chat response with this fenced PowerShell block, with `<repo>` replaced by the absolute path of the project root. The one-liner is the LAST block of the chat reply, after the trailing `VERDICT:` line.
 
 ```powershell
-& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" --structured ".\skills\code-review-policy\templates\checklist-structured.md" --detailed ".\skills\code-review-policy\templates\checklist-detailed.md" --data ".\.code-review\last-checklist-data.json" --output ".\.code-review\checklist-report.html"
+& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" `
+  --structured ".\skills\code-review-policy\templates\checklist-structured.md" `
+  --detailed   ".\skills\code-review-policy\templates\checklist-detailed.md" `
+  --data       ".\.code-review\last-checklist-data.json" `
+  --output     ".\.code-review\checklist-report.html"
 ```
 
 The user pastes it once, from inside `<repo>`. The relative paths are anchored with `.\` so PowerShell's parser does not see the trailing dash on the project folder as a parameter. The renderer reads the JSON, populates the structured section, renders the 39 checkboxes, and writes `checklist-report.html`.
+
+For a blank printable template (no review, just the boxes), drop the `--data` argument.
 
 ### What the LLM does, every review, in one pass
 
@@ -297,24 +269,29 @@ The user pastes it once, from inside `<repo>`. The relative paths are anchored w
 
    ```json
    {
-     "projectName": "...",
-     "repositoryBranch": "...",
-     "reviewerName": "...",
-     "reviewDate": "...",
+     "projectName": "AI Recruiter Screening System",
+     "repositoryBranch": "origin/main",
+     "reviewerName": "Code Review Policy (mode=changed-files)",
+     "reviewDate": "YYYY-MM-DD",
      "hasTests": "Yes | No | Manual smoke-tested",
-     "coveragePercent": "...",
+     "coveragePercent": "Manual",
      "manualTestNotes": "...",
      "generalChecklist": [{"item": "...", "comment": "..."}],
      "codeQuality": [{"checkItem": "...", "status": "Pass|Fail|Warn", "notes": "..."}],
      "hasSecuritySection": true,
-     "securityChecks": [{"checkItem": "...", "status": "...", "comments": "..."}],
+     "securityChecks": [{"checkItem": "...", "status": "Pass|Fail|Warn", "comments": "..."}],
      "performanceChecks": [{"title": "...", "details": "..."}],
      "stylePractices": [{"practice": "...", "issuesFound": "..."}],
      "reviewerFeedbacks": [{"reviewerName": "...", "comment": "..."}],
      "finalNotes": "...",
-     "approvedBy": "...",
-     "approvalDate": "...",
-     "mergeStatus": "Approve | Approve with Suggestions | Request Changes"
+     "approvedBy": "Code Review Policy (mode=<mode>)",
+     "approvalDate": "YYYY-MM-DD",
+     "mergeStatus": "Approve | Approve with Suggestions | Request Changes",
+     "checkedItems": [
+       "Does the code do what the PR description says it does?",
+       "Are edge cases handled? (empty input, null values, boundary conditions)",
+       "..."
+     ]
    }
    ```
 
@@ -331,6 +308,7 @@ The user pastes it once, from inside `<repo>`. The relative paths are anchored w
 - The LLM never leaves `<repo>` as a literal in the chat. The one-liner is emitted with the real path substituted.
 - The LLM never asks the user to type the one-liner from memory. The one-liner is always emitted in the chat reply, in full, with paths substituted.
 - The LLM never tells the user to "save the report somewhere." The LLM writes the report itself; the user only pastes the renderer line.
+- The LLM never produces a chat reply without the trailing `VERDICT:` line. The pre-push hook reads that line and would otherwise fail.
 
 ### Files this section creates or expects
 
@@ -343,10 +321,11 @@ The user pastes it once, from inside `<repo>`. The relative paths are anchored w
 
 Before the LLM emits the one-liner, it should:
 
-1. Confirm the JSON it wrote to `last-checklist-data.json` is valid (no trailing commas, all keys quoted, no raw newlines inside string values).
-2. Confirm every section of the JSON is populated. Empty lists are acceptable only if the LLM also writes a one-line summary in `finalNotes` explaining why.
-3. Confirm the one-liner it is about to emit has the correct relative paths anchored with `.\` (no `<repo>` placeholder, no absolute paths that PowerShell will mis-parse).
-4. Re-state the one-liner in the chat so the user can copy-paste it without scrolling back.
+1. Walk all 39 items in the detailed checklist. For each, decide: did I actually verify this during the review?
+2. Add every verified item to `checkedItems` in the JSON data file. Use the exact `checkItem` string from the SECTIONS list in `render_checklist.py` when possible; the renderer's normalization handles minor wording differences.
+3. Confirm the JSON it wrote to `last-checklist-data.json` is valid (no trailing commas, all keys quoted, no raw newlines inside string values).
+4. Confirm the one-liner it is about to emit has the correct relative paths anchored with `.\` (no `<repo>` placeholder, no absolute paths that PowerShell will mis-parse).
+5. Re-state the one-liner in the chat so the user can copy-paste it without scrolling back.
 
 ### One-liner as the closing of every chat response
 
@@ -355,16 +334,18 @@ The LLM always ends its chat response with the one-liner, on its own line, in a 
 ```
 [review body here]
 
-
-
-VERDICT: Approve with Suggestions
+[trailing VERDICT: line]
 
 ## Render the checklist report
 
 Run this one-liner to populate `checklist-report.html` from the JSON above:
 
 ```powershell
-& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" --structured ".\skills\code-review-policy\templates\checklist-structured.md" --detailed ".\skills\code-review-policy\templates\checklist-detailed.md" --data ".\.code-review\last-checklist-data.json" --output ".\.code-review\checklist-report.html"
+& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" `
+  --structured ".\skills\code-review-policy\templates\checklist-structured.md" `
+  --detailed   ".\skills\code-review-policy\templates\checklist-detailed.md" `
+  --data       ".\.code-review\last-checklist-data.json" `
+  --output     ".\.code-review\checklist-report.html"
 ```
 
 The user pastes the line, the HTML is regenerated, the push proceeds.
@@ -420,11 +401,6 @@ Without the hash check, the developer can save a report once, then push any numb
 ├── last-checklist-data.json          <-- the LLM writes the JSON for the renderer
 └── last-report.<oldhash>.md          <-- archives from previous pushes
 ```
-
-
-
-
-
 
 ## LLM-only checking contract
 
@@ -484,3 +460,16 @@ Before the LLM emits the renderer one-liner, it should:
 2. Add every verified item to `checkedItems` in the JSON data file. Use the exact `checkItem` string from the SECTIONS list when possible; the renderer's normalization handles minor wording differences.
 3. Confirm the JSON it wrote to `last-checklist-data.json` is valid.
 4. Confirm the one-liner it is about to emit has the correct relative paths anchored with `.\`.
+
+## Reports catalog (single source of truth, two views)
+
+The recruiter-side dashboard and the testing dashboard each render a "Reports & test runs" panel. They share the same shape but live in two files; both are derived from this skill manifest, not invented by each side.
+
+- **Recruiter-side static catalog**: `frontend/public/reports.json` (consumed by `frontend/src/pages/dashboard/ReportsPanel.jsx`).
+- **Testing-side catalog**: `frontend-test/src/reportCatalog.js` (consumed by the testing dashboard on :5174). This catalog also carries the `command` and `cwd` for the "Run" button; the testing dashboard derives the project root from `import.meta.url` so the catalog is portable across machines.
+
+When you add or remove a report, update both files in the same push, and call out the cross-file change in the code-review report so a reviewer can confirm they are still in sync.
+
+## Renderer script
+
+`skills/code-review-policy/render_checklist.py` is stdlib-only Python (no external deps). It reads `--data` (the JSON the LLM wrote), substitutes placeholders in the two markdown templates, and writes the HTML. It accepts the four template paths shown in the one-liner above. Drop `--data` to print a blank printable template.

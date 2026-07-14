@@ -2,8 +2,26 @@ import io
 import os
 import asyncio
 import time
+import json
+import urllib.request
+import urllib.error
+from typing import Any, Dict, List, Optional
+
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+try:
+    from google import genai
+except ImportError:
+    genai = None
+
+
+class CodeReviewRequest(BaseModel):
+    code: str
+    provider: Optional[str] = "Gemini"
+    model_name: Optional[str] = "gemini-2.5-flash"
+
 
 from backend import (
     AI_PROVIDER_OPTIONS,
@@ -55,6 +73,10 @@ ANALYZE_MAX_INFLIGHT = int(os.environ.get("ANALYZE_MAX_INFLIGHT", "4"))
 ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "90"))
 _analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
 
+class CodeReviewRequest(BaseModel):
+    code: str
+    provider: Optional[str] = "Gemini"
+    model_name: Optional[str] = "gemini-2.5-flash"
 
 class InMemoryUpload(io.BytesIO):
     def __init__(self, content, name):
@@ -352,3 +374,54 @@ def _run_analyze_blocking(
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
     }
+
+@api.post("/api/review")
+async def review_code(payload: CodeReviewRequest):
+    # 1. Load your local skill files
+    try:
+        with open("skills/code-review-policy/SKILL.md", "r", encoding="utf-8") as f:
+            code_review_rules = f.read()
+    except FileNotFoundError:
+        code_review_rules = "Perform a general code review."
+
+    try:
+        with open("skills/SECURITY_REPORT.md", "r", encoding="utf-8") as f:
+            security_rules = f.read()
+    except FileNotFoundError:
+        security_rules = "Perform a general security review."
+
+    # 2. Construct the prompt with rules
+    system_prompt = f"""
+    You are an expert software engineer and security auditor.
+    Your task is to review the code submitted by the user.
+    
+    Adhere strictly to these policies and guidelines:
+    
+    === CODE REVIEW POLICY ===
+    {code_review_rules}
+    
+    === SECURITY REVIEW POLICY ===
+    {security_rules}
+    """
+
+    user_prompt = f"Please review the following code:\n\n```\n{payload.code}\n```"
+
+    # 3. Call the Gemini API directly
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(
+            status_code=500,
+            detail="GEMINI_API_KEY environment variable is not configured on the server."
+        )
+
+    try:
+        client = genai.Client()
+        response = client.models.generate_content(
+            model=payload.model_name,
+            contents=[system_prompt, user_prompt]
+        )
+        return {"review": response.text}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate review from LLM: {str(exc)}"
+        )

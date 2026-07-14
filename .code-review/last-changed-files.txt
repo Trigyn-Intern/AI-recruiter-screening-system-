@@ -1,0 +1,17 @@
+.github/workflows/lighthouse.yml
+.github/workflows/perf.yml
+README.md
+backend/seeders/seedManager.js
+frontend-test/src/reportCatalog.js
+frontend/public/reports.json
+frontend/src/pages/auth/Login.jsx
+frontend/src/pages/dashboard/Dashboard.jsx
+frontend/src/pages/dashboard/ReportsPanel.jsx
+frontend/src/pages/dashboard/reportsPanel.css
+reports/junit.json
+reports/lighthouse-report.html
+requirements.txt
+scripts/run-zap.ps1
+skills/code-review-policy/templates/checklist-report.html
+skills/reports/index.html
+start-app.ps1

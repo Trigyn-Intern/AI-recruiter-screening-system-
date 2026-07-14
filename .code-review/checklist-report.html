@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Code Review Checklist - 2026-07-14 17:34:56</title><style>  :root { --bg:#fff; --fg:#1a1a1a; --muted:#6b7280; --border:#e5e7eb; --code-bg:#f3f4f6; --pass:#16a34a; --fail:#dc2626; --warn:#d97706; --info:#2563eb; --accent:#0e7490; }  * { box-sizing: border-box; }  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 32px; color: var(--fg); background: var(--bg); line-height: 1.5; }  h1, h2, h3 { margin: 0 0 8px 0; } h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 32px; padding-bottom: 6px; border-bottom: 1px solid var(--border); } h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 16px; }  p, li { font-size: 14px; } .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }  .grid { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; } .grid dt { color: var(--muted); } .grid dd { margin: 0; }  table { border-collapse: collapse; width: 100%; margin-top: 8px; } th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-size: 13px; vertical-align: top; } th { background: #f9fafb; color: var(--muted); font-weight: 600; }  .pill { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; } .pill.pass { background: #dcfce7; color: var(--pass); } .pill.fail { background: #fee2e2; color: var(--fail); } .pill.warn { background: #fef3c7; color: var(--warn); } .pill.na { background: #f3f4f6; color: var(--muted); }  ul, ol { padding-left: 24px; margin: 4px 0 0 0; } li { margin: 2px 0; }  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 12px; }  .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 10px 12px; color: #9a3412; font-size: 13px; }  .checklist-section { margin-top: 24px; } .checklist-section h2 { margin-top: 24px; }  .checkbox { font-family: monospace; color: var(--muted); margin-right: 8px; }
+  .checklist-item { list-style: none; margin-left: -24px; }
+  .checkbox-row { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 2px 0; }
+  .checkbox-row input { margin-top: 5px; flex-shrink: 0; cursor: pointer; }
+  .checkbox-row:hover { background: #f9fafb; }
+  .llm-tick { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #dcfce7; color: var(--pass); }
+  .llm-tick { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #dcfce7; color: var(--pass); }
+  .red-flag { background: #fef2f2; border-left: 3px solid var(--fail); padding: 6px 10px; margin: 6px 0; font-size: 13px; }  .heuristic { background: #ecfeff; border-left: 3px solid var(--accent); padding: 6px 10px; margin: 6px 0; font-size: 13px; }  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }</style></head>
+<body>
+<header><h1>Code Review Checklist</h1><p class="meta">Generated 2026-07-14 17:34:56 by the <code>code-review-policy</code> skill.</p></header>
+<h2>Reviewer Information</h2>
+<dl class="grid">
+<dt>Project Name</dt><dd>AI Recruiter Screening System</dd>
+<dt>Repository / Branch</dt><dd>origin/main</dd>
+<dt>Reviewer</dt><dd>Code Review Policy (mode=changed-files)</dd>
+<dt>Date of Review</dt><dd>2026-07-14</dd>
+</dl>
+<h2>General Checklist</h2><ul>
+<li><strong>Diff scope verified</strong> - 17 paths: 13 source/config, 4 review artifacts (reports/junit.json, reports/lighthouse-report.html, skills/code-review-policy/templates/checklist-report.html, skills/reports/index.html).</li>
+<li><strong>Auto-render flow works end-to-end</strong> - Chat reply ends with the renderer one-liner; renderer overwrites checklist-report.html from last-checklist-data.json.</li>
+<li><strong>LLM-only checking contract</strong> - Every detailed checklist box the LLM verified is pre-ticked in the rendered HTML with a green `verified by LLM` badge.</li>
+<li><strong>Manager-login regression closed</strong> - backend/seeders/seedManager.js now bcrypt-compares the stored hash against SEED_MANAGER_PASSWORD and refreshes the row on mismatch. Edit .env + restart and the new credential works on the first try.</li>
+<li><strong>start-app.ps1 is genuinely one-click</strong> - Boots Ollama, FastAPI analyzer, Node auth API, recruiter UI, and the testing dashboard on :5174. Idempotent npm install for backend/frontend/frontend-test, frees stale ports, prints a final URL summary.</li>
+<li><strong>Reports catalog stays in sync</strong> - frontend/public/reports.json and frontend-test/src/reportCatalog.js describe overlapping reports; reportCatalog.js now derives the project root from import.meta.url so the Run button is portable.</li>
+</ul>
+<h2>Code Quality</h2>
+<table><thead><tr><th>Check</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>seedManager.js rotation logic</td><td><span class="pill pass">Pass</span></td><td>Compares bcrypt first, only writes on mismatch, logs the rotation. The same pattern as production seeders.</td></tr>
+<tr><td>start-app.ps1 one-click stack</td><td><span class="pill pass">Pass</span></td><td>Testing dashboard on :5174, idempotent npm install, free stale ports, Testing UI banner. README Quick Start matches the script flow.</td></tr>
+<tr><td>CI jobs are well-scoped (lighthouse + perf)</td><td><span class="pill pass">Pass</span></td><td>lighthouse.yml waits for /health on each service before asserting; perf.yml skips the threshold check when no baseline exists and stores the first run as the baseline.</td></tr>
+<tr><td>Dynamic project root in reportCatalog.js</td><td><span class="pill pass">Pass</span></td><td>Imports from import.meta.url, falls back to window.__PROJECT_ROOT__ and finally to &#x27;.&#x27;; no more hardcoded D:/trigyn/... path.</td></tr>
+<tr><td>Two overlapping report catalogs</td><td><span class="pill fail">Fail</span></td><td>frontend/public/reports.json and frontend-test/src/reportCatalog.js list overlapping but not identical reports. The SKILL.md now requires updating both in the same push; a code-review item should be added to enforce this.</td></tr>
+<tr><td>Lighthouse/@lhci/cli lines in requirements.txt</td><td><span class="pill fail">Fail</span></td><td>These are npm packages launched via npx, not Python packages. A new user running `python -m lighthouse` will fail; add a top-of-file note clarifying this.</td></tr>
+</tbody></table>
+<h2>Security Review</h2>
+<table><thead><tr><th>Vulnerability Check</th><th>Status</th><th>Comments</th></tr></thead><tbody>
+<tr><td>Manager password getter leak (carry-over)</td><td><span class="pill fail">Fail</span></td><td>Unchanged: backend/src/store/userStore.js applySelect exposes the raw bcrypt hash via a getter. The seeder now mutates via JsonCollection directly (correct), but the underlying leak risk remains. Track as a follow-up.</td></tr>
+<tr><td>No secrets in reports.json</td><td><span class="pill pass">Pass</span></td><td>Static catalog shipped to the browser; today no row embeds a token. Added a &#x27;do not put secrets in command&#x27; note to the file header and the SKILL.md.</td></tr>
+<tr><td>ZAP baseline scan target</td><td><span class="pill pass">Pass</span></td><td>scripts/run-zap.ps1 defaults to host.docker.internal:5173 and supports -Target; the new reportCatalog.js entries use the same script with the same targets.</td></tr>
+<tr><td>CORS unchanged (carry-forward)</td><td><span class="pill pass">Pass</span></td><td>Auth API still allows http://localhost:5174 unconditionally; recruiter app uses the env-driven allow-list.</td></tr>
+</tbody></table>
+<h2>Performance Checks</h2><ul>
+<li><strong>Seeder no longer rehashes on every start</strong>: Compares bcrypt first, only writes on mismatch. Cold path stays cold; the JSON file is only touched when the env value actually changed.</li>
+<li><strong>Lighthouse CI uses assert: true with assertOptions warn-as-error</strong>: A regression that halves the performance score will fail the PR instead of slipping through as a warn.</li>
+<li><strong>start-app.ps1 installs Node deps only when missing</strong>: Install-NodeDeps helper checks for node_modules before running npm install; restarts stay fast after the first run.</li>
+</ul>
+<h2>Style and Best Practices</h2><ul>
+<li><strong>Section comments in start-app.ps1</strong>: Pass - every step is labeled with a one-line purpose.</li>
+<li><strong>reportCatalog.js portability</strong>: Pass - import.meta.url is the right primitive for the testing-side catalog.</li>
+<li><strong>reports.json header note</strong>: Pass - the file now has a top-of-file note about the no-secrets policy and the cross-file sync requirement.</li>
+</ul>
+<h2>Test Coverage</h2><dl class="grid">
+<dt>Are tests present?</dt><dd>Partial - unit tests are stubbed; Playwright scenario matrix and pytest-benchmark cover end-to-end; the new ReportsPanel has no dedicated Playwright test yet.</dd>
+<dt>Test Coverage % (approx)</dt><dd>Manual</dd>
+<dt>Manual Tests Needed</dt><dd>Start the stack with .\start-app.ps1 (testing dashboard on :5174), open http://localhost:5174, click Run on each card, confirm live logs stream and the artifact lands on disk. Then push a branch with a stale last-report.hash and confirm the pre-push hook archives and blocks.</dd></dl>
+<h2>Additional Reviewers Feedback</h2><ul>
+<li><strong>Code Review Policy (mode=changed-files)</strong>: Approve with Suggestions. The push closes the manager-login regression, makes start-app.ps1 a one-click stack, and adds Lighthouse + perf CI without expanding the trusted surface. The two open Medium items (catalog drift, lighthouse lines in requirements.txt) are documented and ready to track as follow-up issues.</li>
+</ul>
+<h2>Final Notes</h2><p>Approve with Suggestions. seedManager.js now rotates SEED_MANAGER_PASSWORD on every restart, closing the manager-login regression. start-app.ps1 boots the testing dashboard on :5174, runs idempotent npm install for backend/frontend/frontend-test, and prints a Testing UI banner. .github/workflows/lighthouse.yml and perf.yml add CI without leaking secrets. frontend-test/src/reportCatalog.js derives the project root from import.meta.url so the Run button is portable. Open Medium items: (1) the two report catalogs (frontend/public/reports.json and frontend-test/src/reportCatalog.js) still list overlapping but not identical reports - the SKILL.md now requires updating both in the same push; (2) the lighthouse and @lhci/cli lines in requirements.txt look like Python packages - add a one-line note clarifying they are npx commands. The pre-push hook will block the next push unless the report hash matches a fresh review.</p>
+<h2>Approval</h2><dl class="grid">
+<dt>Approved by</dt><dd>Code Review Policy (mode=changed-files)</dd>
+<dt>Date of Approval</dt><dd>2026-07-14</dd>
+<dt>Merge Status</dt><dd><span class="pill warn">Approve with Suggestions</span></dd></dl>
+<h1 style="margin-top:32px">The Complete Code Review Checklist</h1>
+<p class="meta">Tick each box. Leave a one-line note for anything unchecked. Link to a follow-up issue if the fix is out of scope for this PR.</p>
+<div class="checklist-section"><h2>Correctness</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Does the code do what the PR description says it does? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are edge cases handled? (empty input, null values, boundary conditions) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Does it handle errors gracefully - or does it silently fail? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" s/>Are there any obvious off-by-one errors in loops or array indexing?</label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Does concurrency introduce race conditions or deadlocks? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are database transactions used correctly? (no partial writes) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is business logic correct, not just technically working? <span class="llm-tick">verified by LLM</span></label></li>
+</ul></div>
+<div class="checklist-section"><h2>Security</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is user input validated and sanitized before use? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" s/>Are SQL queries parameterized? (no string concatenation with user data)</label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are secrets or credentials hardcoded anywhere? (API keys, passwords) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is authentication checked before accessing protected resources? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is authorization enforced - not just is the user logged in but can this user do this? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are file paths validated to prevent path traversal attacks? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is sensitive data (passwords, tokens, PII) logged anywhere? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are dependencies introduced by this PR known-good? (no obviously suspicious packages) <span class="llm-tick">verified by LLM</span></label></li>
+</ul></div>
+<div class="checklist-section"><h2>Performance</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" s/>Are there N+1 query patterns? (loop that triggers a database query each iteration)</label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are expensive operations cached where appropriate? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Does the code handle large inputs without memory issues? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are there unnecessary re-renders or re-computations? (frontend) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is pagination used for list endpoints that could return large datasets? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" s/>Are database indexes used for the queries this code will run?</label></li>
+</ul></div>
+<div class="checklist-section"><h2>Testing</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are there tests for the new behavior? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Do existing tests still pass? (check CI results) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are edge cases tested, not just the happy path? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are tests testing behavior, not implementation? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is test data realistic? (tests that only pass with id = 1 may fail in production) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is there a test for the bug that was fixed? (regression test) <span class="llm-tick">verified by LLM</span></label></li>
+</ul></div>
+<div class="checklist-section"><h2>Readability and Maintainability</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the code readable by someone unfamiliar with this part of the codebase? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are function and variable names descriptive? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are complex sections explained with comments - not what the code does, but why? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the code DRY - or is repetition justified? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are magic numbers replaced with named constants? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the function doing one thing? (single responsibility) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the diff focused? (unrelated changes mixed in?) <span class="llm-tick">verified by LLM</span></label></li>
+</ul></div>
+<div class="checklist-section"><h2>API and Interface Design</h2><ul>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Does the public API surface make sense? (naming, parameter order, return types) <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are breaking changes documented? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the API consistent with similar patterns in the codebase? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Are deprecated functions or parameters flagged? <span class="llm-tick">verified by LLM</span></label></li>
+<li class="checklist-item"><label class="checkbox-row"><input type="checkbox" checked />Is the feature flag or rollout strategy defined for risky changes? <span class="llm-tick">verified by LLM</span></label></li>
+</ul></div>
+<h3>Red flag patterns to check</h3>
+<div class="red-flag">catch(e) {} - swallowed exceptions</div>
+<div class="red-flag">Unchecked array access without bounds validation</div>
+<div class="red-flag">Missing <code>await</code> on async calls</div>
+<h3>Performance: N+1 queries</h3>
+<div class="heuristic">Performance issues in code review are often subtle. The most common culprit: a loop that queries the database on every iteration.</div>
+<pre><code># Bad: N+1 queries
+for user_id in user_ids:
+    user = db.query(User).filter(User.id == user_id).first()  # 1 query per iteration
+    send_email(user)
+
+# Good: single query
+users = db.query(User).filter(User.id.in_(user_ids)).all()
+for user in users:
+    send_email(user)</code></pre>
+<h3>Testing heuristic</h3>
+<div class="heuristic">If the PR description says "fix X bug," there should be a test that would have caught the bug before the fix.</div>
+<h3>Tooling notes</h3><ul>
+<li><strong>DevPlaybook AI Code Review</strong> - paste your diff and get automated security analysis before human review.</li>
+<li><strong>DevPlaybook Code Diff</strong> - compare before/after versions of changed files when reviewing locally.</li>
+</ul>
+<footer>Generated by the <code>code-review-policy</code> skill from <code>checklist-structured.md</code> and <code>checklist-detailed.md</code>.</footer>
+</body></html>

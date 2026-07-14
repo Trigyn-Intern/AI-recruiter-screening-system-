@@ -29,7 +29,7 @@ Safe-mode runs (`secrets-hygiene`, `test-data-pii`) use redacted input data in t
 
 ## code-review-policy
 
-`skills/code-review-policy/SKILL.md` is the AI Code Review Policy. It reviews backend, frontend, Python, GitHub workflow, and changed files. Invoked manually in chat or by the pre-push Git hook. Produces two artifacts: a chat report and a self-contained HTML checklist.
+`skills/code-review-policy/SKILL.md` is the AI Code Review Policy. It reviews backend, frontend, Python, GitHub workflow, and changed files. Invoked manually in chat or by the pre-push Git hook. Produces a chat report, a JSON data file, and a self-contained HTML checklist. The HTML is rendered by a deterministic Python script that the LLM never runs itself; the LLM emits one PowerShell one-liner at the end of every chat reply.
 
 ### Purpose
 
@@ -77,24 +77,29 @@ Invoke the Code Review Policy skill in mode=backend.
 Invoke the Code Review Policy skill in mode=changed-files.
 ```
 
-### Output: chat + HTML (no manual run)
+### Output: chat + JSON + HTML (no manual run of the renderer)
 
-The skill produces two artifacts per invocation. The LLM does not run the renderer itself; it gives the user one PowerShell line to paste.
+Every invocation produces three artifacts in a single LLM pass. The LLM does not run the renderer itself; it gives the user one PowerShell one-liner to paste.
 
 1. **Chat report** - the full review inline in the conversation, ending with `VERDICT: <verdict>` on the last line.
-2. **HTML checklist report** - written to `skills/code-review-policy/templates/checklist-report.html`. Self-contained, no external assets, no JS, opens offline in a browser. 39 checkboxes in 6 sections, plus the structured table from the review.
+2. **JSON data file** - `<repo>\.code-review\last-checklist-data.json`. The LLM writes this from the same review that appears in chat. Every section of the JSON is populated; the renderer does not need to invent any data.
+3. **HTML checklist report** - written to `<repo>\.code-review\checklist-report.html`. Self-contained, no external assets, no JS, opens offline in a browser. 39 checkboxes in 6 sections, plus the structured table from the review.
 
-The LLM also writes a JSON file at `.code-review/last-checklist-data.json` (gitignored) so the HTML reflects the actual review rather than the blank template. Then it tells the user to run one PowerShell line:
+The renderer one-liner, emitted verbatim at the end of the chat reply, is:
 
 ```powershell
-& "<repo>\venv\Scripts\python.exe" "<repo>\skills\code-review-policy\render_checklist.py" `
-  --structured "<repo>\skills\code-review-policy\templates\checklist-structured.md" `
-  --detailed   "<repo>\skills\code-review-policy\templates\checklist-detailed.md" `
-  --data       "<repo>\.code-review\last-checklist-data.json" `
-  --output     "<repo>\skills\code-review-policy\templates\checklist-report.html"
+& ".\venv\Scripts\python.exe" ".\skills\code-review-policy\render_checklist.py" `
+  --structured ".\skills\code-review-policy\templates\checklist-structured.md" `
+  --detailed   ".\skills\code-review-policy\templates\checklist-detailed.md" `
+  --data       ".\.code-review\last-checklist-data.json" `
+  --output     ".\.code-review\checklist-report.html"
 ```
 
-For a blank printable template (no review, just the boxes), drop the `--data` argument.
+Run it from inside the repo root. The relative paths are anchored with `.\` so PowerShell's parser does not see the trailing dash on the project folder as a parameter. For a blank printable template (no review, just the boxes), drop the `--data` argument.
+
+### LLM-only checking contract
+
+The detailed checklist (39 boxes across 6 sections) is ticked by the LLM, not by the user. The user opens the rendered HTML to review the LLM's work, not to do the review themselves. The renderer pre-ticks every box the LLM added to the `checkedItems` array in the JSON data file and adds a small green `verified by LLM` badge next to each ticked item.
 
 ### Safe review rules
 
@@ -153,6 +158,21 @@ To install the hooks for this repo:
 ```bash
 git config core.hooksPath .githooks
 ```
+
+### Reports catalog (single source of truth)
+
+The recruiter-side dashboard and the testing dashboard each render a "Reports & test runs" panel. They share the same shape but live in two files; keep them in sync by editing this README, not the JSON.
+
+- **Recruiter-side static catalog**: `frontend/public/reports.json` (consumed by `frontend/src/pages/dashboard/ReportsPanel.jsx`).
+- **Testing-side catalog**: `frontend-test/src/reportCatalog.js` (consumed by the testing dashboard on :5174). This catalog also carries the `command` and `cwd` for the "Run" button; the testing dashboard derives the project root from `import.meta.url` so the catalog is portable across machines.
+
+The two catalogs must agree on:
+
+- Report `id`, `name`, `category`, `prerequisites`, and `expectedOutput`.
+- The `command` string (must not embed secrets; reference env vars instead).
+- The artifact path (relative to the repo root).
+
+When you add a new report, update **both** files in the same push, or note the divergence in the code-review report.
 
 ## Verify before acting
 

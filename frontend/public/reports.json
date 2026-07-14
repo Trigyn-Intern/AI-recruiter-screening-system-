@@ -1,9 +1,12 @@
 {
-  "updated": "2026-07-13T00:00:00Z",
+  "updated": "2026-07-14T00:00:00Z",
+  "schemaVersion": 1,
+  "source": "Generated from skills/code-review-policy and skills/reports/ inventory. Edit there, not here. This file is the static recruiter-side view; frontend-test/src/reportCatalog.js is the testing-side view; both share the same shape so they can be generated from one source.",
+  "notes": "Do not put secrets in `command`. If a command needs a token, name the env var in `prerequisites` and reference $VAR in `command`.",
   "reports": [
     {
       "id": "zap-baseline",
-      "name": "OWASP ZAP Baseline",
+      "name": "OWASP ZAP Baseline - Recruiter UI",
       "category": "security",
       "command": "pwsh scripts/run-zap.ps1 -Target http://host.docker.internal:5173 -ReportName zap-baseline-report",
       "artifacts": [
@@ -27,7 +30,7 @@
     },
     {
       "id": "zap-auth",
-      "name": "ZAP Baseline - Auth API",
+      "name": "OWASP ZAP Baseline - Auth API",
       "category": "security",
       "command": "pwsh scripts/run-zap.ps1 -Target http://host.docker.internal:4000 -ReportName zap-baseline-report-auth",
       "artifacts": [
@@ -112,11 +115,12 @@
       ],
       "prerequisites": [
         "Python venv exists at venv/ with requirements installed (python -m pip install -r requirements.txt)",
-        "Node deps installed in backend/ and frontend/ (npm install in each)",
+        "Node deps installed in backend/, frontend/, and frontend-test/ (npm install in each)",
         "Ollama is running on :11434 with llama3.2 pulled",
         "The FastAPI analyzer is reachable on :8000",
         "The Express auth API is reachable on :4000",
-        "The React dev server is reachable on :5173"
+        "The React dev server is reachable on :5173",
+        "The React testing dashboard is reachable on :5174 (optional, for the live log stream)"
       ],
       "expectedOutput": [
         "Three scenarios pass with their expected top-ranked resume and minimum score:",
@@ -129,6 +133,26 @@
         "artifact": "skills/reports/scenario-report/index.html",
         "exists": true,
         "lastModified": "see working tree"
+      }
+    },
+    {
+      "id": "html-report",
+      "name": "HTML Report (spreadsheet view)",
+      "category": "integration",
+      "command": "pwsh tests/run.ps1",
+      "artifacts": [
+        "reports/report.html"
+      ],
+      "prerequisites": [
+        "Same as the scenario-matrix report; tests/render_report.py converts the JUnit XML into the spreadsheet view"
+      ],
+      "expectedOutput": [
+        "reports/report.html with one row per scenario and pass/fail per assertion"
+      ],
+      "actualLastRun": {
+        "artifact": "reports/report.html",
+        "exists": true,
+        "lastModified": "regenerated every tests/run.ps1 invocation"
       }
     },
     {
