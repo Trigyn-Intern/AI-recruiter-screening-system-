@@ -9,11 +9,11 @@ $env:HF_HUB_OFFLINE = "1"
 $projectRoot = $PSScriptRoot
 $backendRoot = Join-Path $projectRoot "backend"
 $frontendRoot = Join-Path $projectRoot "frontend"
+$testingRoot = Join-Path $projectRoot "frontend-test"
 $venvActivate = Join-Path $projectRoot "venv\Scripts\Activate.ps1"
 
 function Stop-IfUsingPort {
     param([int]$Port)
-
     $lines = netstat -ano -p tcp | findstr ":$Port"
     if ($LASTEXITCODE -eq 0 -and $lines) {
         $targetPid = ($lines -split "\s+") | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1
@@ -21,6 +21,39 @@ function Stop-IfUsingPort {
             Write-Host "Stopping process $targetPid using port $Port..."
             taskkill /PID $targetPid /F | Out-Null
         }
+    }
+}
+
+function Test-PortOpen($port) {
+    try {
+        $c = New-Object System.Net.Sockets.TcpClient
+        $c.BeginConnect("127.0.0.1", $port, $null, $null) | Out-Null
+        Start-Sleep -Milliseconds 200
+        return $c.Connected
+    } catch {
+        return $false
+    }
+}
+
+function Install-NodeDeps {
+    param([string]$Name, [string]$Dir)
+    if (-not (Test-Path (Join-Path $Dir "package.json"))) {
+        Write-Host "[npm] skipping $Name (no package.json at $Dir)."
+        return
+    }
+    if (Test-Path (Join-Path $Dir "node_modules")) {
+        Write-Host "[npm] $Name dependencies already installed; skipping."
+        return
+    }
+    Write-Host "[npm] installing $Name dependencies in $Dir..."
+    Push-Location $Dir
+    try {
+        npm install
+        if ($LASTEXITCODE -ne 0) {
+            throw "npm install failed for $Name (exit $LASTEXITCODE)."
+        }
+    } finally {
+        Pop-Location
     }
 }
 
@@ -40,11 +73,11 @@ Write-Host "[db] in-process auth store at $usersFile (no external Mongo)."
 
 # 2. Clear stale processes from common app ports.
 Stop-IfUsingPort -Port 4000
-Stop-IfUsingPort -Port 8000
 Stop-IfUsingPort -Port 5173
+Stop-IfUsingPort -Port 5174
+Stop-IfUsingPort -Port 8000
 
 # 3. Start Ollama on the original default port unless it is already up.
-function Test-PortOpen($port) { try { $c = New-Object System.Net.Sockets.TcpClient; $c.BeginConnect("127.0.0.1",$port,$null,$null) | Out-Null; Start-Sleep -Milliseconds 200; return $c.Connected } catch { return $false } }
 if (-not (Test-PortOpen 11434)) {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "ollama serve" -WindowStyle Normal
 } else {
@@ -76,23 +109,29 @@ if ($currentHash -ne $storedHash) {
     Write-Host "[pip] requirements.txt unchanged; skipping install."
 }
 
+# 5b. Install Node dependencies for auth API, recruiter app, and testing dashboard.
+Install-NodeDeps -Name "auth API"          -Dir $backendRoot
+Install-NodeDeps -Name "recruiter frontend" -Dir $frontendRoot
+Install-NodeDeps -Name "testing dashboard"  -Dir $testingRoot
+
 # 6. Start the Python FastAPI analyzer on :8000.
-# New: 4 workers, bounded in-flight analyzes, 90s hard timeout
+# 4 workers, bounded in-flight analyzes, 90s hard timeout.
 $uvicornCmd = ". '$venvActivate'; `$env:ANALYZE_MAX_INFLIGHT='4'; `$env:ANALYZE_TIMEOUT_S='90'; uvicorn api:api --host 127.0.0.1 --port 8000 --workers 4"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $uvicornCmd -WorkingDirectory $projectRoot
 
 # 7. Start the Node auth API (Express + in-process JSON store) on :4000.
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$backendRoot'; npm run dev" -WorkingDirectory $projectRoot
 
-# 8. Start the React frontend on :5173.
+# 8. Start the React recruiter frontend on :5173.
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$frontendRoot'; npm run dev" -WorkingDirectory $projectRoot
+
+# 9. Start the React testing dashboard on :5174.
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$testingRoot'; npm run dev" -WorkingDirectory $projectRoot
 
 Write-Host ""
 Write-Host "Stack starting. Wait ~10s for each window to settle."
 Write-Host "  FastAPI (Ollama): http://127.0.0.1:8000"
 Write-Host "  Auth API:         http://localhost:4000"
-Write-Host "  React UI:         http://localhost:5173"
+Write-Host "  Recruiter UI:     http://localhost:5173"
+Write-Host "  Testing UI:       http://localhost:5174"
 Write-Host "  Ollama:           http://127.0.0.1:11434"
-
-
-
