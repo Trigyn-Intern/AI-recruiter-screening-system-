@@ -8,6 +8,7 @@ import request, {
   getStoredUser,
 } from "../../api/client";
 import "./dashboard.css";
+import ReportsPanel from "./ReportsPanel";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ function Dashboard() {
         </div>
       </header>
       <App />
+      <ReportsPanel />
     </div>
   );
 }

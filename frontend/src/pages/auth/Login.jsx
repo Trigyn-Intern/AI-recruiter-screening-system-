@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import request, {
@@ -49,12 +49,6 @@ function Login() {
 
       const role = (data.user && data.user.role) || "recruiter";
       if (role === "manager") {
-        window.location.href = `http://localhost:5174/?token=${encodeURIComponent(data.token)}`;
-        return;
-      }
-      navigate("/dashboard");
-
-      if (data.user && data.user.role === "manager") {
         const target = new URL(TESTING_APP_URL);
         target.searchParams.set("token", data.token);
         if (data.user && data.user.id) {
@@ -130,7 +124,7 @@ function Login() {
         </form>
 
         <div className="auth-footer">
-          Don't have an account? <Link to="/signup">Sign up</Link>
+          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
         </div>
       </div>
     </div>

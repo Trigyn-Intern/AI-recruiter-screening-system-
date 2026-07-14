@@ -52,4 +52,15 @@ export const REPORT_CATALOG = [
     description:
       "Lighthouse audit: performance, accessibility, best practices, SEO. Frontend must be running on port 5173.",
   },
+  {
+    id: "code-review",
+    title: "Code Review",
+    kind: "code",
+    filename: "checklist-report.html",
+    path: ".code-review/checklist-report.html",
+    command: "npm run lint",
+    cwd: ROOT,
+    description: "Static code analysis and review",
+  },
 ];
+   
