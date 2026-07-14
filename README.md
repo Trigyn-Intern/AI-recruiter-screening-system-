@@ -327,7 +327,7 @@ cd frontend-test; npm run dev
 | Account   | Email                    | Password      | Where it is set                                  |
 | --------- | ------------------------ | ------------- | ------------------------------------------------ |
 | Recruiter | any (sign up on screen)  | your choice   | n/a - sign up at http://localhost:5173/signup    |
-| Manager   | `SEED_MANAGER_EMAIL`     | `SEED_MANAGER_PASSWORD` | `backend/.env` (defaults: `manager@local.test` / `Manager@resume`) |
+| Manager   | `SEED_MANAGER_EMAIL`     | `SEED_MANAGER_PASSWORD` | `backend/.env`  |
 
 The seeded manager account is created or rotated on every backend restart using `backend/seeders/seedManager.js`, so editing the env and restarting the auth API is the supported way to change the manager password.
 
@@ -455,8 +455,8 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 | `JWT_EXPIRES_IN`         | Token lifetime.                                                      | `7d`                  |
 | `CLIENT_ORIGIN`          | CORS allow-list for the React apps.                                  | `http://localhost:5173` |
 | `MONGO_URI`              | Reserved for a future MongoDB swap.                                 | unused with JSON store |
-| `SEED_MANAGER_EMAIL`     | Email used by `seedManager.js` to create the manager account.        | `manager@local.test`  |
-| `SEED_MANAGER_PASSWORD`  | Password for the seeded manager account. Edit + restart to rotate.   | `Manager@123`         |
+| `SEED_MANAGER_EMAIL`     | Email used by `seedManager.js` to create the manager account.        |  |
+| `SEED_MANAGER_PASSWORD`  | Password for the seeded manager account. Edit + restart to rotate.   |          |
 | `SEED_MANAGER_NAME`      | Display name for the seeded manager.                                | `Test Manager`        |
 
 ### Frontend environment (`frontend/.env`)

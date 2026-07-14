@@ -169,6 +169,9 @@ function App() {
   const [resumes, setResumes] = useState([]);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [codeText, setCodeText] = useState("");
+  const [reviewResult, setReviewResult] = useState("");
+  const [isReviewLoading, setIsReviewLoading] = useState(false); 
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -320,6 +323,38 @@ function App() {
     }
   }
 
+  async function handleReview() {
+    if (!codeText.trim()) {
+      alert("Please enter some code to review first!");
+      return;
+    }
+    setIsReviewLoading(true);
+    setReviewResult("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: codeText,
+          provider: provider,
+          model_name: model,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "Review failed.");
+      }
+      setReviewResult(data.review);
+    } catch (err) {
+      console.error(err);
+      setReviewResult(`Error: ${err.message}`);
+    } finally {
+      setIsReviewLoading(false);
+    }
+  }
+
   async function saveConfiguration(event) {
     event.preventDefault();
     setError("");
@@ -462,6 +497,13 @@ function App() {
           >
             Resume DB
           </button>
+          <button
+            className={activePage === "code-review" ? "tab active" : "tab"}
+            onClick={() => setActivePage("code-review")}
+            type="button"
+          >
+            Code Review
+          </button>
         </div>
       </section>
 
@@ -500,6 +542,14 @@ function App() {
           resetConfiguration={resetConfiguration}
           saveConfiguration={saveConfiguration}
           setConfig={setConfig}
+        />
+      ) : activePage === "code-review" ? (
+        <CodeReviewPage
+          codeText={codeText}
+          setCodeText={setCodeText}
+          handleReview={handleReview}
+          isReviewLoading={isReviewLoading}
+          reviewResult={reviewResult}
         />
       ) : (
         <ResumeDbPage
@@ -1166,6 +1216,80 @@ function SkillColumn({ title, items }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function CodeReviewPage({
+  codeText,
+  setCodeText,
+  handleReview,
+  isReviewLoading,
+  reviewResult,
+}) {
+  return (
+    <section className="config-layout">
+      <div className="panel config-panel">
+        <div className="config-header">
+          <div>
+            <h2>Code & Security Review</h2>
+            <p>Paste your source code to run automated AI code and security reviews based on your team policies.</p>
+          </div>
+        </div>
+        <div className="config-form" style={{ marginTop: "16px" }}>
+          <div className="input-group">
+            <textarea
+              className="prompt-textarea"
+              style={{
+                fontFamily: "Courier New, monospace",
+                fontSize: "14px",
+                minHeight: "350px",
+                width: "100%",
+                padding: "12px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                boxSizing: "border-box"
+              }}
+              placeholder="Paste your source code here..."
+              value={codeText}
+              onChange={(e) => setCodeText(e.target.value)}
+            />
+          </div>
+          <div className="actions" style={{ marginTop: "16px" }}>
+            <button
+              className="primary"
+              disabled={isReviewLoading}
+              onClick={handleReview}
+              type="button"
+            >
+              {isReviewLoading ? (
+                <>
+                  <Loader2 className="spin" size={18} />
+                  Reviewing...
+                </>
+              ) : (
+                "Run Review"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      {reviewResult && (
+        <div className="panel response-panel" style={{ marginTop: "24px" }}>
+          <h3>Review Summary</h3>
+          <div style={{
+            backgroundColor: "#fafafa",
+            border: "1px solid #ddd",
+            padding: "16px",
+            borderRadius: "6px",
+            whiteSpace: "pre-wrap",
+            fontFamily: "sans-serif",
+            marginTop: "12px"
+          }}>
+            {reviewResult}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

@@ -65,7 +65,6 @@ backend/uvicorn-smoke.err
 backend/uvicorn-test.err
 /.benchmarks
 /.lighthouseci
-/.code-review
-.code-review
+
 
 tests/performance/load/run-4workers.log

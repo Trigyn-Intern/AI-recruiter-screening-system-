@@ -69,12 +69,45 @@ export default defineConfig({
                 }
                 try {
                   const info = await stat(targetPath);
+                  let exists = info.isFile();
+                  let size = info.size;
+                  let mtime = info.mtime.toISOString();
+                  let finalPath = relativePath;
+
+                  if (info.isDirectory() && report.filename && report.filename.includes("*")) {
+                    const fs = await import("fs");
+                    if (fs.existsSync(targetPath)) {
+                      const files = fs.readdirSync(targetPath);
+                      const regex = new RegExp("^" + report.filename.replace(/\*/g, ".*") + "$");
+                      const matchingFiles = files
+                        .filter(f => regex.test(f))
+                        .map(f => {
+                          const filePath = path.resolve(targetPath, f);
+                          const fileStat = fs.statSync(filePath);
+                          return {
+                            name: f,
+                            path: path.join(relativePath, f),
+                            size: fileStat.size,
+                            mtime: fileStat.mtime
+                          };
+                        })
+                        .sort((a, b) => b.mtime - a.mtime); // latest first
+
+                      if (matchingFiles.length > 0) {
+                        exists = true;
+                        size = matchingFiles[0].size;
+                        mtime = matchingFiles[0].mtime.toISOString();
+                        finalPath = matchingFiles[0].path;
+                      }
+                    }
+                  }
+
                   return {
                     ...report,
-                    exists: info.isFile(),
-                    size: info.size,
-                    mtime: info.mtime.toISOString(),
-                    path: relativePath,
+                    exists,
+                    size,
+                    mtime,
+                    path: finalPath,
                   };
                 } catch (error) {
                   return { ...report, exists: false, path: relativePath };
@@ -147,6 +180,132 @@ export default defineConfig({
               const resolvedCwd = cwd && path.isAbsolute(cwd) ? cwd : path.resolve(projectRoot, cwd || ".");
               const normalizedCommand = normalizeCommand(command || "");
               
+              if (command && command.includes("security-review")) {
+                res.writeHead(200, {
+                  "Content-Type": "text/event-stream",
+                  "Cache-Control": "no-cache",
+                  "Connection": "keep-alive",
+                });
+                
+                res.write(`data: ${JSON.stringify({ type: "stdout", text: "Starting API-driven Security Review...\n" })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: "stdout", text: "Reading code files...\n" })}\n\n`);
+                
+                const fs = require("fs");
+                const codeToReview = fs.readFileSync(path.resolve(projectRoot, "api.py"), "utf8");
+                
+                res.write(`data: ${JSON.stringify({ type: "stdout", text: "Calling FastAPI /api/review endpoint...\n" })}\n\n`);
+                
+                const http = require("http");
+                const postData = JSON.stringify({
+                  code: codeToReview,
+                  provider: "Gemini",
+                  model_name: "gemini-2.5-flash"
+                });
+                
+                const apiReq = http.request({
+                  hostname: "localhost",
+                  port: 8000,
+                  path: "/api/review",
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Content-Length": Buffer.byteLength(postData)
+                  }
+                }, (apiRes) => {
+                  let resBody = "";
+                  apiRes.on("data", (chunk) => { resBody += chunk; });
+                  apiRes.on("end", () => {
+                    try {
+                      const data = JSON.parse(resBody);
+                      const reviewText = data.review || "No review returned.";
+                      res.write(`data: ${JSON.stringify({ type: "stdout", text: "Generating Security Review Report...\n" })}\n\n`);
+                      
+                      // Save the output HTML file
+                      const today = new Date().toISOString().split("T")[0];
+                      const reportFilename = `security-review-all-${today}.html`;
+                      const reportsDir = path.resolve(projectRoot, "skills", "reports");
+                      if (!fs.existsSync(reportsDir)) {
+                        fs.mkdirSync(reportsDir, { recursive: true });
+                      }
+                      
+                      const templatePath = path.resolve(reportsDir, "_template.html");
+                      let htmlContent = "";
+                      if (fs.existsSync(templatePath)) {
+                        const template = fs.readFileSync(templatePath, "utf8");
+                        htmlContent = template
+                          .replace(/__MODE__/g, "all")
+                          .replace(/__DATE__/g, today)
+                          .replace(/__TIMESTAMP__/g, new Date().toLocaleString())
+                          .replace(/__SCOPE__/g, "api.py")
+                          .replace(/__PASS_COUNT__/g, "0")
+                          .replace(/__FAIL_COUNT__/g, "0")
+                          .replace(/__WARNING_COUNT__/g, "1")
+                          .replace(/__FINDINGS__/g, `<tr><td colspan="13"><pre style="white-space: pre-wrap; font-family: monospace; font-size: 13px; color: #1e293b; padding: 12px; background: #f8fafc;">${reviewText}</pre></td></tr>`);
+                      } else {
+                        htmlContent = `<html><head><title>Security Review</title></head><body><h1>Security Review - ${today}</h1><pre>${reviewText}</pre></body></html>`;
+                      }
+                      
+                      fs.writeFileSync(path.resolve(reportsDir, reportFilename), htmlContent);
+                      res.write(`data: ${JSON.stringify({ type: "stdout", text: `Report saved to skills/reports/${reportFilename}\n` })}\n\n`);
+                      
+                      res.write(`data: ${JSON.stringify({ type: "close", code: 0 })}\n\n`);
+                      res.end();
+                    } catch (err) {
+                      res.write(`data: ${JSON.stringify({ type: "stderr", text: `Error processing review: ${err.message}\n` })}\n\n`);
+                      res.write(`data: ${JSON.stringify({ type: "close", code: 1 })}\n\n`);
+                      res.end();
+                    }
+                  });
+                });
+                
+                apiReq.on("error", (err) => {
+                  res.write(`data: ${JSON.stringify({ type: "stderr", text: `Error calling API: ${err.message}\nMake sure your FastAPI server is running on port 8000.\n` })}\n\n`);
+                  res.write(`data: ${JSON.stringify({ type: "close", code: 1 })}\n\n`);
+                  res.end();
+                });
+                
+                apiReq.write(postData);
+                apiReq.end();
+                return;
+              }
+
+              if (command.includes("render_checklist.py")) {
+                const fs = require("fs");
+                const pythonExe = process.platform === "win32" ? "python.exe" : "python";
+                const scriptPath = path.resolve(projectRoot, "skills", "code-review-policy", "render_checklist.py");
+                const args = [
+                  scriptPath,
+                  "--structured", path.resolve(projectRoot, "skills", "code-review-policy", "templates", "checklist-structured.md"),
+                  "--detailed", path.resolve(projectRoot, "skills", "code-review-policy", "templates", "checklist-detailed.md"),
+                  "--data", path.resolve(projectRoot, ".code-review", "last-checklist-data.json"),
+                  "--output", path.resolve(projectRoot, ".code-review", "checklist-report.html")
+                ];
+                
+                res.writeHead(200, {
+                  "Content-Type": "text/event-stream",
+                  "Cache-Control": "no-cache",
+                  "Connection": "keep-alive",
+                });
+                res.write(`data: ${JSON.stringify({ type: "stdout", text: `Running checklist generator...\n` })}\n\n`);
+                
+                const child = spawn(pythonExe, args, { cwd: projectRoot });
+                child.stdout.on("data", (chunk) => {
+                  res.write(`data: ${JSON.stringify({ type: "stdout", text: chunk.toString() })}\n\n`);
+                });
+                child.stderr.on("data", (chunk) => {
+                  res.write(`data: ${JSON.stringify({ type: "stderr", text: chunk.toString() })}\n\n`);
+                });
+                child.on("close", (code) => {
+                  res.write(`data: ${JSON.stringify({ type: "close", code })}\n\n`);
+                  res.end();
+                });
+                child.on("error", (err) => {
+                  res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+                  res.end();
+                });
+                return;
+              }
+
               res.writeHead(200, {
                 "Content-Type": "text/event-stream",
                 "Cache-Control": "no-cache",
