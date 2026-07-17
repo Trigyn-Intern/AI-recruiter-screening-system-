@@ -329,7 +329,7 @@ function App() {
       return;
     }
     setIsReviewLoading(true);
-    setReviewResult("");
+    setReviewResult("Review in Progress...");
     try {
       const response = await fetch(`${API_BASE_URL}/api/review`, {
         method: "POST",
@@ -340,17 +340,40 @@ function App() {
           code: codeText,
           provider: provider,
           model_name: model,
+          background: true,
         }),
       });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.detail || "Review failed.");
       }
-      setReviewResult(data.review);
+      
+      const jobId = data.job_id;
+      const intervalId = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${API_BASE_URL}/api/review/status/${jobId}`);
+          const statusData = await statusRes.json();
+          if (!statusRes.ok) {
+            throw new Error(statusData.detail || "Failed to fetch status.");
+          }
+          if (statusData.status === "completed") {
+            clearInterval(intervalId);
+            setReviewResult(statusData.review);
+            setIsReviewLoading(false);
+          } else if (statusData.status === "failed") {
+            clearInterval(intervalId);
+            setReviewResult(`Error: ${statusData.error || "Review failed."}`);
+            setIsReviewLoading(false);
+          }
+        } catch (pollErr) {
+          clearInterval(intervalId);
+          setReviewResult(`Error: ${pollErr.message}`);
+          setIsReviewLoading(false);
+        }
+      }, 3000);
     } catch (err) {
       console.error(err);
       setReviewResult(`Error: ${err.message}`);
-    } finally {
       setIsReviewLoading(false);
     }
   }
