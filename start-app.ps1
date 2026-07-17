@@ -135,3 +135,7 @@ Write-Host "  Auth API:         http://localhost:4000"
 Write-Host "  Recruiter UI:     http://localhost:5173"
 Write-Host "  Testing UI:       http://localhost:5174"
 Write-Host "  Ollama:           http://127.0.0.1:11434"
+
+
+#uvicorn api:api --reload --host 0.0.0.0 --port 8000
+#for reload

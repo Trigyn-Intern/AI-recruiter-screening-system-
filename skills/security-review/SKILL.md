@@ -200,9 +200,28 @@ When invoked, this skill MUST also produce a structured HTML report, in addition
 - Per-run report: `skills/reports/security-review-<mode>-<YYYY-MM-DD>.html`
   - `mode` is the mode flag value, lowercased (e.g. `all`, `auth-review`, `secrets-hygiene`).
   - For `all`, the per-run report covers every mode in one file.
-- Index: `skills/reports/index.html` is regenerated on every run and lists all reports newest-first.
+## Report Generation
 
-The skill must create `skills/reports/` if it does not exist.
+After completing the security review:
+
+1. Load the HTML template from:
+
+   skills/security-review/template.html
+
+2. Populate every row with the review findings.
+
+3. Save the generated report to:
+
+   skills/reports/security-review-<mode>-<YYYY-MM-DD-HHMM>.html
+
+4. If the reports folder does not exist, create it.
+
+5. Never modify template.html.
+   Use it only as the base template.
+
+6. Generate one report per execution.
+
+7. Review the entire project (or the selected mode scope) before generating the report.
 
 ### Report structure
 
@@ -221,7 +240,7 @@ Each finding becomes one `<article class="test-case">` block. Every block has th
    - `warning` — needs human review (LLM was not sure).
 9. **Enhancement notes** — `<section class="notes">`. The suggested fix, expanded into a short paragraph.
 10. **Codex prompt suggestion** — `<section class="codex-prompt">` containing a `<pre><code>` block. A copy-paste prompt the user can run in a fresh Codex chat to act on this one finding. The prompt must reference the file:line and the exact change requested.
-
+11. **Reference** — `<section class="reference">`. A link or citation to the relevant documentation or source.
 ### Report header
 
 Above all `<article>` blocks, the HTML must include:
@@ -250,4 +269,219 @@ A reference template lives at `skills/reports/_template.html`. The skill must us
 ### Regeneration
 
 The skill must NOT delete or modify historical reports. Each run adds a new timestamped file and rewrites `index.html` only.
+## Mode: dependency-security
 
+### Scope
+- `package.json`
+- `package-lock.json`
+- `requirements.txt`
+- `pyproject.toml`
+- `poetry.lock`
+- `Pipfile`
+- `Pipfile.lock`
+- `.github/workflows/*.yml`
+
+### Checklist
+- No dependency uses `"latest"` or wildcard (`*`) versions.
+- Lock files exist and are committed.
+- Unused dependencies are identified.
+- Vulnerable or deprecated packages are noted.
+- Third-party packages come from trusted registries.
+- Build workflows include dependency scanning (`npm audit`, `pip-audit`, `Dependabot`, etc.).
+
+---
+
+## Mode: backend-security
+
+### Scope
+- `backend/**/*.js`
+- `backend/**/*.ts`
+- `backend/config/**`
+- `backend/routes/**`
+- `backend/controllers/**`
+- `backend/middleware/**`
+- `backend/models/**`
+
+### Checklist
+- Authentication and authorization are enforced.
+- User input is validated.
+- Database queries are safe.
+- No hardcoded credentials.
+- Proper error handling.
+- File uploads validated.
+- Path traversal prevented.
+- Command execution is safe.
+- Security headers enabled.
+- CORS configured correctly.
+- Rate limiting exists.
+- Sensitive logging avoided.
+
+---
+
+## Mode: frontend-security
+
+### Scope
+- `frontend/src/**/*`
+- `frontend/public/**/*`
+- `frontend/package.json`
+- `frontend/index.html`
+
+### Checklist
+- No XSS sinks.
+- No unsafe HTML rendering.
+- No eval/new Function.
+- Safe URL handling.
+- Safe external links.
+- Secure localStorage/sessionStorage usage.
+- API tokens not exposed.
+- Sensitive data not stored in frontend.
+- Dependencies pinned.
+- CSP-friendly implementation.
+
+---
+
+## Mode: python-security
+
+### Scope
+- `api.py`
+- `backend.py`
+- `tests/**/*.py`
+- `scripts/**/*.py`
+
+### Checklist
+- Safe subprocess usage.
+- No unsafe pickle/yaml loading.
+- Requests have timeouts.
+- Exception handling is correct.
+- Secrets loaded from environment.
+- Temporary files handled securely.
+- Proper input validation.
+- Logging avoids sensitive data.
+
+---
+
+## Mode: github-security
+
+### Scope
+- `.github/workflows/*.yml`
+- `.github/dependabot.yml`
+- `.gitignore`
+
+### Checklist
+- Secrets never hardcoded.
+- Workflow permissions use least privilege.
+- Third-party GitHub Actions pinned by SHA/version.
+- Dependabot configured.
+- Artifacts cleaned after runs.
+- Logs avoid secrets.
+- Branch protection assumptions documented.
+
+---
+
+## Mode: project-security
+
+### Scope
+Entire repository.
+
+### Checklist
+Review the entire repository for:
+
+- Authentication & Authorization
+- Input Validation
+- Session Management
+- Secret Management
+- API Security
+- File Upload Security
+- Dependency Risks
+- Prompt Injection Risks
+- Database Security
+- Logging & Monitoring
+- Error Handling
+- Configuration Issues
+- CI/CD Security
+- Git Hygiene
+- Infrastructure Misconfiguration
+- Docker/Kubernetes files (if present)
+- Environment Configuration
+- Security Headers
+- HTTPS Enforcement
+- Access Control
+- Business Logic Vulnerabilities
+
+---
+
+# Finding Format
+
+Every finding MUST use:
+
+**Severity:** High | Medium | Low | Info
+
+**Category:** Authentication | Authorization | Secrets | Validation | XSS | Dependency | Performance | Configuration | Logging | Business Logic | Other
+
+**Module:** Backend | Frontend | Python | GitHub | Database | Configuration | AI | Tests
+
+**File**
+
+**Line**
+
+**Description**
+
+**Impact**
+
+**Recommendation**
+
+---
+
+# Report Summary
+
+At the end include:
+
+## Executive Summary
+
+- Files Reviewed
+- Modules Reviewed
+- High Findings
+- Medium Findings
+- Low Findings
+- Informational Findings
+
+## Module Summary
+
+| Module | Pass | Fail | Warning |
+|---------|------|------|---------|
+| Backend | | | |
+| Frontend | | | |
+| Python | | | |
+| GitHub | | | |
+| AI | | | |
+| Database | | | |
+| Tests | | | |
+| Configuration | | | |
+
+## Overall Risk
+
+- Critical
+- High
+- Medium
+- Low
+
+## Final Recommendation
+
+- Approve
+- Approve with Recommendations
+- Request Changes
+
+---
+
+# Safe Rules
+
+The model MUST:
+
+- Never fabricate vulnerabilities.
+- Never output secret values.
+- Never output API keys or passwords.
+- Never expose PII.
+- Mark uncertain issues as **Needs Manual Verification**.
+- Review only files inside the selected scope.
+- Keep explanations concise to reduce token usage.
+- Prefer one finding per issue instead of repeating similar findings across files.

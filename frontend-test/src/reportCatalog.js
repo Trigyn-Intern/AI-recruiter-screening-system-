@@ -93,15 +93,14 @@ export const REPORT_CATALOG = [
  
   {
     id: "code-review",
-    title: "Code Review Checklist (regenerate)",
+    title: "Code Review Checklist (AI-driven)",
     kind: "code",
     filename: "checklist-report.html",
     path: ".code-review/checklist-report.html",
-    command:
-      "& \".\\venv\\Scripts\\python.exe\" \".\\skills\\code-review-policy\\render_checklist.py\" --structured \".\\skills\\code-review-policy\\templates\\checklist-structured.md\" --detailed \".\\skills\\code-review-policy\\templates\\checklist-detailed.md\" --data \".\\.code-review\\last-checklist-data.json\" --output \".\\.code-review\\checklist-report.html\"",
+    command: "run code-review",
     cwd: ROOT,
     description:
-      "Re-render the Code Review checklist HTML from the latest LLM-produced JSON data file (.code-review/last-checklist-data.json). Use this when the chat's renderer one-liner was not pasted in time and the HTML is stale.",
+      "Send .code-review/invoke.txt to Gemini using the Code Review Policy skill. The AI reviews the changed files and writes the checklist-report.html output.",
   },
   {
     id: "security-review",
@@ -112,6 +111,6 @@ export const REPORT_CATALOG = [
     command: "run security-review",
     cwd: ROOT,
     description:
-      "Invoke the Security Review skill in chat (run security-review). The LLM produces a chat report and a structured HTML file under skills/reports/.",
+      "Send api.py to Gemini using the Security Review skill. The AI produces a structured HTML report under skills/reports/.",
   },
 ];

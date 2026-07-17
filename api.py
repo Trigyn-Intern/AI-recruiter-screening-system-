@@ -3,11 +3,17 @@ import os
 import asyncio
 import time
 import json
+import uuid
+import threading
+import subprocess
+import sys
+import datetime
+import re
 import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -16,12 +22,11 @@ try:
 except ImportError:
     genai = None
 
-
-class CodeReviewRequest(BaseModel):
-    code: str
-    provider: Optional[str] = "Gemini"
-    model_name: Optional[str] = "gemini-2.5-flash"
-
+from dotenv import load_dotenv
+import pathlib
+_env_path = pathlib.Path(__file__).resolve().parent / "backend" / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
 
 from backend import (
     AI_PROVIDER_OPTIONS,
@@ -77,6 +82,7 @@ class CodeReviewRequest(BaseModel):
     code: str
     provider: Optional[str] = "Gemini"
     model_name: Optional[str] = "gemini-2.5-flash"
+    background: Optional[bool] = False
 
 class InMemoryUpload(io.BytesIO):
     def __init__(self, content, name):
@@ -374,9 +380,111 @@ def _run_analyze_blocking(
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
     }
+JOBS_FILE = "review_jobs.json"
+jobs_db = {}
+
+if os.path.exists(JOBS_FILE):
+    try:
+        with open(JOBS_FILE, "r", encoding="utf-8") as f:
+            jobs_db = json.load(f)
+    except Exception:
+        pass
+
+def save_jobs():
+
+    
+    try:
+        with open(JOBS_FILE, "w", encoding="utf-8") as f:
+            json.dump(jobs_db, f, indent=2)
+    except Exception:
+        pass
+
+def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system_prompt: str, invoke_path: str):
+    def call_llm(user_prompt_text):
+        # Try Gemini first (via direct REST API)
+        api_key = os.getenv("GEMINI_API_KEY")
+        if api_key:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+                payload_data = {
+                    "contents": [{"parts": [{"text": f"{system_prompt}\n\n{user_prompt_text}"}]}]
+                }
+                req = urllib.request.Request(
+                    url, 
+                    data=json.dumps(payload_data).encode("utf-8"), 
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=120) as response:
+                    result = json.loads(response.read().decode())
+                    return result["candidates"][0]["content"]["parts"][0]["text"]
+            except Exception as gemini_exc:
+                print(f"Gemini failed ({gemini_exc}), trying Ollama...")
+
+        # Fallback to Ollama
+        ollama_host = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+        try:
+            req = urllib.request.Request(
+                f"{ollama_host}/api/generate",
+                data=json.dumps({
+                    "model": "llama3.2",
+                    "prompt": f"{system_prompt}\n\n{user_prompt_text}",
+                    "stream": False
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=120) as response:
+                result = json.loads(response.read().decode())
+                return result.get("response", "")
+        except Exception as ollama_exc:
+            raise Exception(f"Both Gemini and Ollama failed. Ollama error: {ollama_exc}")
+
+    try:
+        files_to_review = []
+        if os.path.exists(invoke_path):
+            try:
+                with open(invoke_path, "r", encoding="utf-8") as f:
+                    invoke_lines = f.read().splitlines()
+                in_files = False
+                for line in invoke_lines:
+                    line = line.strip()
+                    if line.startswith("Files to review"):
+                        in_files = True
+                        continue
+                    if in_files:
+                        if not line or line.startswith("Diff hash:"):
+                            in_files = False
+                            break
+                        if os.path.exists(line) and os.path.isfile(line):
+                            files_to_review.append(line)
+            except Exception as e:
+                print(f"Failed to read invoke.txt: {e}")
+
+        if files_to_review:
+            full_review = ""
+            for file_path in files_to_review:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    file_content = f.read()
+                user_prompt_text = f"Please review the following file ({file_path}):\n\n```\n{file_content}\n```"
+                try:
+                    review_text = call_llm(user_prompt_text)
+                    full_review += f"### Review for {file_path}\n{review_text}\n\n---\n\n"
+                except Exception as e:
+                    full_review += f"### Review for {file_path}\nFailed to review: {str(e)}\n\n---\n\n"
+            jobs_db[job_id] = {"status": "completed", "review": full_review.strip(), "error": None}
+        else:
+            user_prompt_text = f"Please review the following code:\n\n```\n{code}\n```"
+            try:
+                review_text = call_llm(user_prompt_text)
+                jobs_db[job_id] = {"status": "completed", "review": review_text, "error": None}
+            except Exception as e:
+                jobs_db[job_id] = {"status": "failed", "review": None, "error": str(e)}
+    except Exception as e:
+        jobs_db[job_id] = {"status": "failed", "review": None, "error": str(e)}
+    save_jobs()
+
 
 @api.post("/api/review")
-async def review_code(payload: CodeReviewRequest):
+async def review_code(payload: CodeReviewRequest, background_tasks: BackgroundTasks):
     # 1. Load your local skill files
     try:
         with open("skills/code-review-policy/SKILL.md", "r", encoding="utf-8") as f:
@@ -404,24 +512,41 @@ async def review_code(payload: CodeReviewRequest):
     {security_rules}
     """
 
-    user_prompt = f"Please review the following code:\n\n```\n{payload.code}\n```"
+    job_id = str(uuid.uuid4())
+    jobs_db[job_id] = {"status": "processing", "review": None, "error": None}
+    save_jobs()
 
-    # 3. Call the Gemini API directly
-    if not os.getenv("GEMINI_API_KEY"):
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY environment variable is not configured on the server."
+    if payload.background:
+        background_tasks.add_task(
+            run_review_bg,
+            job_id,
+            payload.code,
+            payload.provider,
+            payload.model_name,
+            system_prompt,
+            ".code-review/invoke.txt"
         )
+        return {"job_id": job_id, "status": "processing"}
+    else:
+        # Run synchronously for CLI/test compatibility
+        run_review_bg(
+            job_id,
+            payload.code,
+            payload.provider,
+            payload.model_name,
+            system_prompt,
+            ".code-review/invoke.txt"
+        )
+        result = jobs_db.get(job_id)
+        if result and result["status"] == "completed":
+            return {"review": result["review"]}
+        else:
+            raise HTTPException(status_code=500, detail=(result["error"] if result else "Review failed"))
 
-    try:
-        client = genai.Client()
-        response = client.models.generate_content(
-            model=payload.model_name,
-            contents=[system_prompt, user_prompt]
-        )
-        return {"review": response.text}
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate review from LLM: {str(exc)}"
-        )
+
+@api.get("/api/review/status/{job_id}")
+async def get_review_status(job_id: str):
+    job = jobs_db.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job

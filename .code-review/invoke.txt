@@ -1,29 +1,12 @@
 Invoke the Code Review Policy skill in mode=changed-files.
 
 Files to review (one per line, from D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-changed-files.txt):
-.github/workflows/lighthouse.yml
-.github/workflows/perf.yml
-README.md
-backend/seeders/seedManager.js
-frontend-test/src/reportCatalog.js
-frontend/public/reports.json
-frontend/src/pages/auth/Login.jsx
-frontend/src/pages/dashboard/Dashboard.jsx
-frontend/src/pages/dashboard/ReportsPanel.jsx
-frontend/src/pages/dashboard/reportsPanel.css
-reports/junit.json
-reports/lighthouse-report.html
-requirements.txt
-scripts/run-zap.ps1
-skills/code-review-policy/templates/checklist-report.html
-skills/reports/index.html
-start-app.ps1
-
-Diff hash: a112456613a3e2d5701dcbb64f4373c2210ce827a7d6b0e8b3877de64e5c0446
+frontend/src/App.jsx
+Diff hash: c9afd9a5427c713a30ee5aaebef924f14ddd7c2ece7f1a60f24c610900598ca9
 
 Save the full report (with the trailing VERDICT: line) to:
 D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.md
 
 After saving the report, also write the diff hash to:
 D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.hash
-  (echo a112456613a3e2d5701dcbb64f4373c2210ce827a7d6b0e8b3877de64e5c0446 > D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.hash)
+  (echo c9afd9a5427c713a30ee5aaebef924f14ddd7c2ece7f1a60f24c610900598ca9 > D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.hash)

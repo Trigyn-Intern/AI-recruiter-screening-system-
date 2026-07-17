@@ -2,78 +2,519 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>security-review - __MODE__ - __DATE__</title>
+<title>Security Review Report - __MODE__ - __DATE__</title>
+
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
-  h1 { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-  .meta-line { font-size: 11px; color: #555; margin-bottom: 12px; }
-  .summary-bar { display: flex; gap: 20px; margin-bottom: 14px; font-size: 12px; font-weight: bold; }
-  .summary-bar .total { color: #333; }
-  .summary-bar .passed { color: #217346; }
-  .summary-bar .failed { color: #c00; }
-  .summary-bar .warning { color: #d97706; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
-  thead th { background: #4472C4; color: #fff; font-weight: bold; font-size: 11px; padding: 6px 5px; border: 1px solid #2F5496; text-align: center; vertical-align: middle; position: sticky; top: 0; z-index: 10; }
-  tbody td { border: 1px solid #B4C6E7; padding: 5px 6px; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
-  tbody tr:nth-child(even) { background: #D6E4F0; }
-  tbody tr:nth-child(odd) { background: #fff; }
-  tbody tr:hover { background: #FFF2CC; }
-  td.center { text-align: center; }
-  td.bold { font-weight: bold; }
-  td.pass { color: #217346; font-weight: bold; }
-  td.fail { color: #c00; font-weight: bold; }
-  td.warning { color: #d97706; font-weight: bold; }
-  td.email-cell { font-size: 10px; }
-  th:nth-child(1),td:nth-child(1){width:38px} th:nth-child(2),td:nth-child(2){width:60px} th:nth-child(3),td:nth-child(3){width:120px} th:nth-child(4),td:nth-child(4){width:180px} th:nth-child(5),td:nth-child(5){width:180px} th:nth-child(6),td:nth-child(6){width:220px} th:nth-child(7),td:nth-child(7){width:160px} th:nth-child(8),td:nth-child(8){width:160px} th:nth-child(9),td:nth-child(9){width:180px} th:nth-child(10),td:nth-child(10){width:55px} th:nth-child(11),td:nth-child(11){width:200px} th:nth-child(12),td:nth-child(12){width:220px} th:nth-child(13),td:nth-child(13){width:140px}
-  pre { background: #f3f4f6; padding: 4px; border: 1px solid #ccc; font-family: monospace; white-space: pre-wrap; font-size: 10px; }
-  code.redacted { color: #d97706; font-style: italic; }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Calibri,"Segoe UI",Arial,sans-serif;
+    font-size:11px;
+    color:#000;
+    background:#fff;
+    padding:20px;
+}
+
+h1{
+    font-size:18px;
+    margin-bottom:4px;
+}
+
+h2{
+    font-size:14px;
+    margin:15px 0 8px;
+    color:#1F4E79;
+}
+
+.meta-line{
+    color:#666;
+    margin-bottom:15px;
+}
+
+.summary-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin:12px 0 18px;
+    font-weight:bold;
+}
+
+.summary-box{
+    border:1px solid #B4C6E7;
+    padding:8px 12px;
+    border-radius:4px;
+    min-width:140px;
+    text-align:center;
+}
+
+.summary-box span{
+    display:block;
+    font-size:18px;
+    margin-top:3px;
+}
+
+.pass-box span{color:#217346;}
+.fail-box span{color:#C00000;}
+.warn-box span{color:#D97706;}
+.info-box span{color:#1F4E79;}
+
+.section{
+    margin-top:18px;
+}
+
+.section p{
+    margin:5px 0;
+    line-height:1.5;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    margin-top:15px;
+    font-size:11px;
+}
+
+thead th{
+    background:#4472C4;
+    color:white;
+    border:1px solid #2F5496;
+    padding:6px 5px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+tbody td{
+    border:1px solid #B4C6E7;
+    padding:5px;
+    vertical-align:top;
+    word-break:break-word;
+}
+
+tbody tr:nth-child(even){
+    background:#D9EAF7;
+}
+
+tbody tr:hover{
+    background:#FFF2CC;
+}
+
+.pass{
+    color:#217346;
+    font-weight:bold;
+}
+
+.fail{
+    color:#C00000;
+    font-weight:bold;
+}
+
+.warning{
+    color:#D97706;
+    font-weight:bold;
+}
+
+.info{
+    color:#1F4E79;
+    font-weight:bold;
+}
+
+pre{
+    background:#F5F5F5;
+    border:1px solid #DDD;
+    padding:6px;
+    white-space:pre-wrap;
+    font-size:10px;
+}
+
+code.redacted{
+    color:#D97706;
+    font-style:italic;
+}
+
+button{
+    margin:12px 0;
+    padding:6px 12px;
+    background:#4472C4;
+    color:white;
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#2F5496;
+}
+
+/* Column widths */
+
+th:nth-child(1),td:nth-child(1){width:40px;}
+th:nth-child(2),td:nth-child(2){width:70px;}
+th:nth-child(3),td:nth-child(3){width:95px;}      /* Module */
+th:nth-child(4),td:nth-child(4){width:120px;}
+th:nth-child(5),td:nth-child(5){width:210px;}
+th:nth-child(6),td:nth-child(6){width:180px;}
+th:nth-child(7),td:nth-child(7){width:220px;}
+th:nth-child(8),td:nth-child(8){width:170px;}
+th:nth-child(9),td:nth-child(9){width:170px;}
+th:nth-child(10),td:nth-child(10){width:220px;}
+th:nth-child(11),td:nth-child(11){width:70px;}
+th:nth-child(12),td:nth-child(12){width:220px;}
+th:nth-child(13),td:nth-child(13){width:240px;}
+th:nth-child(14),td:nth-child(14){width:150px;}
+
 </style>
 </head>
+
 <body>
-<h1>security-review &mdash; __MODE__ &mdash; __DATE__</h1>
-<div class="meta-line">Generated: __TIMESTAMP__ &nbsp;|&nbsp; Files in scope: __SCOPE__</div>
-<div class="summary-bar">
-  <span class="passed">Pass: __PASS_COUNT__</span>
-  <span class="failed">Fail: __FAIL_COUNT__</span>
-  <span class="warning">Warning: __WARNING_COUNT__</span>
+
+<h1>Project Security Review Report</h1>
+
+<div class="meta-line">
+Generated : __TIMESTAMP__
+&nbsp;&nbsp;|&nbsp;&nbsp;
+Mode : <b>__MODE__</b>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+Files Reviewed : <b>__SCOPE__</b>
 </div>
-<button onclick="exportTableToExcel('report-table', 'security-review-report')" style="margin-top: 10px; padding: 5px 10px; background: #4472C4; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Export to Excel</button>
+
+<div class="summary-bar">
+
+<div class="summary-box pass-box">
+Pass
+<span>__PASS_COUNT__</span>
+</div>
+
+<div class="summary-box fail-box">
+Fail
+<span>__FAIL_COUNT__</span>
+</div>
+
+<div class="summary-box warn-box">
+Warnings
+<span>__WARNING_COUNT__</span>
+</div>
+
+<div class="summary-box info-box">
+Modules
+<span>__MODULE_COUNT__</span>
+</div>
+
+</div>
+
+<div class="section">
+<h2>Executive Summary</h2>
+
+<p>
+__EXECUTIVE_SUMMARY__
+</p>
+
+<p>
+<b>Overall Security Posture :</b>
+__SECURITY_POSTURE__
+</p>
+
+<p>
+<b>Overall Verdict :</b>
+__VERDICT__
+</p>
+
+</div>
+
+<div class="section">
+
+<h2>Modules Reviewed</h2>
+
+<p>
+__MODULES__
+</p>
+
+</div>
+
+<button onclick="exportTableToExcel('report-table','security-review-report')">
+Export to Excel
+</button>
 
 <script>
-function exportTableToExcel(tableID, filename = ''){
-    var downloadLink;
-    var dataType = 'application/vnd.ms-excel';
-    var tableSelect = document.getElementById(tableID);
-    var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
-    
-    filename = filename?filename+'.xls':'excel_data.xls';
-    
-    downloadLink = document.createElement("a");
-    document.body.appendChild(downloadLink);
-    
-    if(navigator.msSaveOrOpenBlob){
-        var blob = new Blob(['\ufeff', tableHTML], {
-            type: dataType
-        });
-        navigator.msSaveOrOpenBlob( blob, filename);
-    }else{
-        downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-        downloadLink.download = filename;
-        downloadLink.click();
-    }
-}
-</script>
-<table id="report-table">
-  <thead>
-    <tr>
-      <th>Sr No</th><th>CR No</th><th>Name</th><th>Description</th><th>Pre-requisite</th><th>Test Steps</th><th>Input Data</th><th>Expected Result</th><th>Actual Result</th><th>Pass/Fail</th><th>New Enhancement</th><th>Codex Prompt</th><th>Reference</th>
-    </tr>
-  </thead>
-  <tbody>
-__FINDINGS__
-  </tbody>
-</table>
-</body>
-</html>
 
+function exportTableToExcel(tableID, filename=''){
+
+var dataType='application/vnd.ms-excel';
+var table=document.getElementById(tableID);
+
+var tableHTML=table.outerHTML.replace(/ /g,'%20');
+
+filename=filename?filename+'.xls':'security-review.xls';
+
+var downloadLink=document.createElement("a");
+
+document.body.appendChild(downloadLink);
+
+if(navigator.msSaveOrOpenBlob){
+
+var blob=new Blob(
+['\ufeff',tableHTML],
+{type:dataType}
+);
+
+navigator.msSaveOrOpenBlob(blob,filename);
+
+}
+else{
+
+downloadLink.href='data:'+dataType+', '+tableHTML;
+
+downloadLink.download=filename;
+
+downloadLink.click();
+
+}
+
+}
+
+</script>
+
+<table id="report-table">
+
+<thead>
+
+<tr>
+
+<th>Sr No</th>
+
+<th>CR No</th>
+
+<th>Module</th>
+
+<th>Name</th>
+
+<th>Description</th>
+
+<th>Pre-requisite</th>
+
+<th>Test Steps</th>
+
+<th>Input Data</th>
+
+<th>Expected Result</th>
+
+<th>Actual Result</th>
+
+<th>Pass/Fail</th>
+
+<th>New Enhancement</th>
+
+<th>Codex Prompt</th>
+
+<th>Reference</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+__FINDINGS__</tbody>
+
+</table>
+
+<div class="section">
+
+<h2>Risk Distribution</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Severity</th>
+<th>Description</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td class="fail"><b>Critical</b></td>
+<td>
+Immediate security issue that may allow compromise of the application,
+data leakage, privilege escalation or remote code execution.
+</td>
+<td>
+Must be fixed before deployment.
+</td>
+</tr>
+
+<tr>
+<td class="fail"><b>High</b></td>
+<td>
+High-impact vulnerability that significantly weakens the application's
+security posture.
+</td>
+<td>
+Fix before merging into the main branch.
+</td>
+</tr>
+
+<tr>
+<td class="warning"><b>Medium</b></td>
+<td>
+Security weakness that could become exploitable under certain
+conditions.
+</td>
+<td>
+Address in the current or next sprint.
+</td>
+</tr>
+
+<tr>
+<td class="warning"><b>Low</b></td>
+<td>
+Minor security improvement or best practice recommendation.
+</td>
+<td>
+Fix when convenient.
+</td>
+</tr>
+
+<tr>
+<td class="info"><b>Info</b></td>
+<td>
+Informational observation or recommendation.
+</td>
+<td>
+No immediate action required.
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="section">
+
+<h2>Security Coverage</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Area</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr><td>Authentication</td><td>__AUTH_STATUS__</td></tr>
+<tr><td>Authorization</td><td>__AUTHZ_STATUS__</td></tr>
+<tr><td>Input Validation</td><td>__INPUT_STATUS__</td></tr>
+<tr><td>Secrets Management</td><td>__SECRET_STATUS__</td></tr>
+<tr><td>Dependency Security</td><td>__DEPENDENCY_STATUS__</td></tr>
+<tr><td>Configuration Review</td><td>__CONFIG_STATUS__</td></tr>
+<tr><td>Logging</td><td>__LOGGING_STATUS__</td></tr>
+<tr><td>Error Handling</td><td>__ERROR_STATUS__</td></tr>
+<tr><td>Frontend Security</td><td>__FRONTEND_STATUS__</td></tr>
+<tr><td>Backend Security</td><td>__BACKEND_STATUS__</td></tr>
+<tr><td>Python / AI Security</td><td>__PYTHON_STATUS__</td></tr>
+<tr><td>GitHub Actions</td><td>__GITHUB_STATUS__</td></tr>
+<tr><td>Docker / Infrastructure</td><td>__DOCKER_STATUS__</td></tr>
+<tr><td>Tests & Test Data</td><td>__TEST_STATUS__</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="section">
+
+<h2>OWASP Top 10 Mapping</h2>
+
+<pre>
+
+A01 - Broken Access Control         : __OWASP_A01__
+
+A02 - Cryptographic Failures        : __OWASP_A02__
+
+A03 - Injection                     : __OWASP_A03__
+
+A04 - Insecure Design               : __OWASP_A04__
+
+A05 - Security Misconfiguration     : __OWASP_A05__
+
+A06 - Vulnerable Components         : __OWASP_A06__
+
+A07 - Authentication Failures       : __OWASP_A07__
+
+A08 - Software & Data Integrity     : __OWASP_A08__
+
+A09 - Logging & Monitoring          : __OWASP_A09__
+
+A10 - SSRF                          : __OWASP_A10__
+
+</pre>
+
+</div>
+
+<div class="section">
+
+<h2>Recommendations</h2>
+
+<pre>
+
+__RECOMMENDATIONS__
+
+</pre>
+
+</div>
+
+<div class="section">
+
+<h2>Final Security Verdict</h2>
+
+<p>
+
+<b>Overall Verdict :</b>
+
+__VERDICT__
+
+</p>
+
+<p>
+
+<b>Next Action :</b>
+
+__NEXT_ACTION__
+
+</p>
+
+</div>
+
+<hr style="margin-top:30px;">
+
+<p style="font-size:10px;color:#666;text-align:center;">
+
+Generated automatically by the <b>Security Review Skill</b>.
+
+This report is AI-assisted and should be manually validated before
+production deployment.
+
+Sensitive values, secrets and PII are intentionally redacted.
+
+</p>
+
+</body>
+
+</html>
