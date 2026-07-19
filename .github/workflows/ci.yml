@@ -7,6 +7,56 @@ on:
   workflow_dispatch:
 
 jobs:
+  test-and-build:
+    name: Tests and Frontend Builds
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            frontend-test/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest unit suite
+        run: pytest tests/unit
+
+      - name: Generate AI engineering reports
+        run: python scripts/ai_platform.py report
+
+      - name: Build recruiter frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build testing dashboard
+        working-directory: frontend-test
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload engineering reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-reports
+          path: reports/ai-*
+          if-no-files-found: warn
+
   security-scan:
     name: Bandit Security Scan
     runs-on: ubuntu-latest
@@ -18,13 +68,16 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Bandit
+      - name: Install security tools
         run: |
-          pip install bandit
+          pip install bandit safety
 
       - name: Run Bandit
         run: |
           bandit -r backend api.py -s B101 --severity-level high --confidence-level high
+
+      - name: Run Safety dependency scan
+        run: safety check --file requirements.txt --full-report
 
   dependency-check:
     name: Dependency Vulnerability Scan

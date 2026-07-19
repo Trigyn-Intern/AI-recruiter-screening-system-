@@ -57,6 +57,36 @@ const ROOT = detectRepoRoot();
 
 export const REPORT_CATALOG = [
   {
+    id: "ai-executive",
+    title: "Executive Engineering Report",
+    kind: "ci",
+    filename: "ai-executive-report.md",
+    path: "reports/ai-executive-report.md",
+    command: "python scripts/ai_platform.py report",
+    cwd: ROOT,
+    description: "Executive quality, delivery, and release-readiness snapshot generated locally.",
+  },
+  {
+    id: "ai-quality",
+    title: "Quality and Security Reports",
+    kind: "security",
+    filename: "ai-quality-report.md",
+    path: "reports/ai-quality-report.md",
+    command: "python scripts/ai_platform.py report",
+    cwd: ROOT,
+    description: "Repository-wide quality, technical-debt, dependency, architecture, and security reports.",
+  },
+  {
+    id: "technical-debt",
+    title: "Technical Debt Report",
+    kind: "code",
+    filename: "technical-debt-report.md",
+    path: "reports/technical-debt-report.md",
+    cwd: ROOT,
+    description:
+      "Repository-wide maintainability findings generated using .ai/analysis/technical-debt.md.",
+  },
+  {
     id: "html",
     title: "Scenario Matrix (HTML Report)",
     kind: "html",
