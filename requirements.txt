@@ -45,5 +45,4 @@ scalene==1.5.33
 bandit==1.7.10
 safety==3.2.3
 lighthouse==12.2.1
-@lhci/cli==0.14.0
 axe-playwright-python==0.1.4
