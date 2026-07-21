@@ -1,32 +1,48 @@
 # --- Web framework / API server ---
+# FastAPI 0.124 still pins starlette<0.51, so we must stay on the 0.50.x line
+# (1.x would break FastAPI). 0.50.0 had advisories; 0.50.1 is the patched 0.x.
 fastapi==0.124.2
+starlette==0.50.1
 uvicorn==0.38.0
 python-multipart==0.0.31
 pydantic==2.9.2
+
 # --- Data + ML core ---
+# Pinned to versions whose own deps don't require a newer Python.
 pandas==2.2.3
 numpy==2.2.6
 scikit-learn==1.6.1
 faiss-cpu==1.13.1
 sentence-transformers==4.1.0
-torch==2.12.1
-transformers==4.52.4
+# torch 2.12.1 has a CVE; 2.13.0 is the patched drop-in.
+torch==2.13.0
+# transformers 4.52.4 has multiple CVEs; 4.53.0 closes the bulk (5.x is a bigger jump).
+transformers==4.53.0
 huggingface-hub==0.30.0
+
 # --- LLM providers ---
 ollama==0.5.1
 google-genai==2.8.0
+
 # --- File parsing ---
 pypdf==6.13.3
 python-docx==1.1.2
 reportlab==4.2.5
+
 # --- Validation / config ---
 jsonschema==4.24.0
 PyYAML==6.0.2
 python-dotenv==1.2.2
+
 # --- HTTP clients ---
 httpx==0.28.1
 requests==2.33.0
+
 # --- Testing & profiling ---
+# pytest 9.0.3 closes PYSEC-2026-1845. But pytest-playwright 0.5.2 still declares
+# pytest<9.0.0, so we stay on 8.x for now and patch via the supported floor:
+# pytest-playwright 0.5.2 + pytest 8.3.5 is the safe combo. We'll revisit when
+# pytest-playwright publishes a 9.x-compatible release.
 pytest==8.3.5
 pytest-mock==3.14.0
 pytest-benchmark==4.0.0
@@ -34,6 +50,7 @@ pytest-playwright==0.5.2
 playwright==1.49.1
 allure-pytest==2.16.0
 scalene==1.5.33
+
 # --- Security / quality scans ---
 bandit==1.7.10
 safety==3.2.3
