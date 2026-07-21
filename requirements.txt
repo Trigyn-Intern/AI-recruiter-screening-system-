@@ -24,10 +24,10 @@ jsonschema==4.24.0
 PyYAML==6.0.2
 python-dotenv==1.2.2
 # --- HTTP clients ---
-httpx==0.26.0
+httpx==0.28.1
 requests==2.33.0
 # --- Testing & profiling ---
-pytest==9.0.3
+pytest==8.3.5
 pytest-mock==3.14.0
 pytest-benchmark==4.0.0
 pytest-playwright==0.5.2
