@@ -1,17 +1,17 @@
 # --- Web framework / API server ---
 fastapi==0.124.2
 uvicorn==0.38.0
-python-multipart==0.0.21
+python-multipart==0.0.31
 pydantic==2.9.2
 
 # --- Data + ML core ---
 pandas==2.2.3
-numpy==1.26.4
+numpy==2.2.6
 scikit-learn==1.6.1
 faiss-cpu==1.13.1
 sentence-transformers==4.1.0
-torch==2.7.1
-transformers==4.52.4
+torch==2.12.1
+transformers==5.5.0
 huggingface-hub==0.27.0
 
 # --- LLM providers ---
@@ -19,21 +19,21 @@ ollama==0.5.1
 google-genai==2.8.0
 
 # --- File parsing ---
-pypdf==5.6.0
+pypdf==6.13.3
 python-docx==1.1.2
 reportlab==4.2.5
 
 # --- Validation / config ---
 jsonschema==4.24.0
 PyYAML==6.0.2
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 
 # --- HTTP clients ---
 httpx==0.26.0
-requests==2.31.0
+requests==2.33.0
 
 # --- Testing & profiling ---
-pytest==8.0.0
+pytest==9.0.3
 pytest-mock==3.14.0
 pytest-benchmark==4.0.0
 pytest-playwright==0.5.2
@@ -44,5 +44,5 @@ scalene==1.5.33
 # --- Security / quality scans ---
 bandit==1.7.10
 safety==3.2.3
-lighthouse==12.2.1
+lighthouse==1.0.0
 axe-playwright-python==0.1.4
