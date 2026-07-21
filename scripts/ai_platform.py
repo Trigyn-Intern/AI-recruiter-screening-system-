@@ -1,228 +1,234 @@
-"""Local, privacy-safe operations for the repository AI framework.
-
-This script deliberately does not send source code, resumes, or secrets to an external
-service. It turns the policies in .ai into reproducible local reports and provides the
-same workflow routing used by the multi-agent platform documentation.
-"""
+"""Backward-compatible entrypoint for the Local AI Engineering Platform."""
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
+import shutil
+import sys
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
+AI = ROOT / ".ai"
 REPORTS = ROOT / "reports"
-LEARNING = ROOT / ".ai" / "learning"
-SKIP_PARTS = {".git", "node_modules", "venv", "dist", "build", "__pycache__", "reports", "vector_store"}
-SOURCE_SUFFIXES = {".py", ".js", ".jsx", ".ts", ".tsx", ".md", ".yml", ".yaml"}
+TEMP = AI / "temp"
+HISTORY = AI / "history"
+LEARNING = AI / "learning"
+
+LESSON_CATEGORIES = [
+    "Architecture", "Security", "Testing", "Documentation", "Performance",
+    "Refactoring", "Deployment", "General",
+]
+
+SECRET_PATTERN = re.compile(
+    r"(api[_ -]?key|secret|password|passwd|pwd|bearer\s+|jwt|token|resume|candidate|"
+    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|"
+    r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)",
+    re.IGNORECASE,
+)
 
 
-def source_files() -> list[Path]:
-    return [
-        path for path in ROOT.rglob("*")
-        if path.is_file() and path.suffix.lower() in SOURCE_SUFFIXES
-        and not any(part in SKIP_PARTS for part in path.relative_to(ROOT).parts)
-    ]
-
-
-def relative(path: Path) -> str:
-    return path.relative_to(ROOT).as_posix()
-
-
-def count_lines(path: Path) -> int:
+def _read_text(path: Path) -> str:
     try:
-        return len(path.read_text(encoding="utf-8", errors="ignore").splitlines())
+        return path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
+        return ""
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _timestamp() -> str:
+    return _utc_now().strftime("%Y-%m-%d %H:%M UTC")
+
+
+def _status() -> None:
+    from ai_platform_core import load_project_config
+    from ai_platform_core.reports import _scan_repo
+    from ai_platform_core.wizard_defaults import REPORTS as REPORTS_DIR
+
+    files, tests, _ = _scan_repo(ROOT)
+    history = sorted(HISTORY.glob("*/execution.json")) if HISTORY.exists() else []
+    reports = sorted(REPORTS_DIR.glob("*.md")) if REPORTS_DIR.exists() else []
+    config = load_project_config()
+    print("Status: healthy")
+    print("Project:", config.get("project", {}).get("name", "Unknown"))
+    print("Source files:", len(files))
+    print("Test modules:", len(tests))
+    print("Reports:", len(reports))
+    print("Executions:", len(history))
+    print("Privacy mode: local-only, no external APIs, no automatic source edits")
+
+
+def _dashboard() -> None:
+    from ai_platform_core.reports import _scan_repo
+    from ai_platform_core.wizard_defaults import REPORTS as REPORTS_DIR
+
+    files, tests, _ = _scan_repo(ROOT)
+    reports = sorted(REPORTS_DIR.glob("*.md")) if REPORTS_DIR.exists() else []
+    executions = sorted(HISTORY.glob("*/execution.json")) if HISTORY.exists() else []
+    print("Reports:", len(reports))
+    print("Source files:", len(files))
+    print("Test modules:", len(tests))
+    print("Executions:", len(executions))
+    for report in reports:
+        print("-", report.relative_to(ROOT).as_posix())
+
+
+def _list_history() -> None:
+    entries = sorted(HISTORY.glob("*/execution.json"), reverse=True) if HISTORY.exists() else []
+    if not entries:
+        print("No execution history found.")
+        return
+    for entry in entries:
+        data: dict = {}
+        try:
+            data = json.loads(_read_text(entry) or "{}")
+        except json.JSONDecodeError:
+            pass
+        print(f"- {data.get('timestamp_slug', entry.parent.name)} | {data.get('task', 'unknown')}")
+
+
+def _validate() -> int:
+    required = [
+        AI / "project-config.yaml",
+        AI / "workflows", AI / "skills", AI / "prompts",
+        AI / "knowledge", AI / "templates", AI / "checklists",
+        AI / "execution", AI / "learning", AI / "history",
+    ]
+    missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
+    if missing:
+        print("Missing:")
+        for item in missing:
+            print("-", item)
+        return 1
+    print("All required .ai folders and files present.")
+    return 0
+
+
+def _clean() -> None:
+    if TEMP.exists():
+        shutil.rmtree(TEMP)
+    TEMP.mkdir(parents=True, exist_ok=True)
+    print(f"Cleaned {TEMP.relative_to(ROOT).as_posix()}. Reports and history preserved.")
+
+
+def _lessons() -> None:
+    destination = LEARNING / "lessons-learned.md"
+    if not destination.exists():
+        print("No lessons recorded yet.")
+        return
+    pattern = re.compile(r"^- (?P<time>.*? UTC): \[(?P<category>[^\]]+)\] (?P<lesson>.*)$")
+    found: list[dict[str, str]] = []
+    for line in _read_text(destination).splitlines():
+        match = pattern.match(line.strip())
+        if match:
+            found.append(match.groupdict())
+    counts = Counter(item["category"] for item in found)
+    for category in LESSON_CATEGORIES:
+        print(f"- {category}: {counts.get(category, 0)}")
+
+
+def _record_lesson(note: str) -> None:
+    lower = note.lower()
+    keywords = {
+        "Architecture": ("architecture", "design", "boundary", "contract", "module"),
+        "Security": ("security", "auth", "jwt", "xss", "csrf", "secret", "prompt injection"),
+        "Testing": ("test", "pytest", "playwright", "coverage", "mock", "regression"),
+        "Documentation": ("doc", "readme", "adr", "comment", "guide"),
+        "Performance": ("performance", "latency", "speed", "cache", "timeout", "memory"),
+        "Refactoring": ("refactor", "cleanup", "duplicate", "complexity", "split"),
+        "Deployment": ("deploy", "release", "ci", "cd", "pipeline", "production", "staging"),
+    }
+    category = "General"
+    for name, words in keywords.items():
+        if any(word in lower for word in words):
+            category = name
+            break
+    cleaned = SECRET_PATTERN.sub("[REDACTED]", note)
+    destination = LEARNING / "lessons-learned.md"
+    line = f"- {_timestamp()}: [{category}] {cleaned}\n"
+    with destination.open("a", encoding="utf-8") as handle:
+        handle.write(line)
+    print(f"Recorded [{category}] lesson.")
+
+
+def _search(keyword: str) -> None:
+    folders = [AI / "workflows", AI / "prompts", AI / "knowledge", AI / "templates", LEARNING]
+    needle = keyword.lower()
+    found = False
+    for folder in folders:
+        if not folder.exists():
+            continue
+        for path in sorted(folder.rglob("*.md")):
+            for number, line in enumerate(_read_text(path).splitlines(), start=1):
+                if needle in line.lower():
+                    print(f"{path.relative_to(ROOT).as_posix()}:{number}: {line.strip()[:180]}")
+                    found = True
+    if not found:
+        print("No matches found.")
+
+
+def main() -> int:
+    from ai_platform_core.cli import build_parser as core_build_parser, main as core_main
+
+    if len(sys.argv) < 2:
+        core_build_parser().print_help()
         return 0
 
+    command = sys.argv[1]
+    if command in {"execute", "route", "config"}:
+        return core_main(sys.argv[1:])
 
-def markdown_report(title: str, body: str) -> str:
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    return f"# {title}\n\nGenerated locally: {timestamp}\n\n{body.rstrip()}\n"
+    if command == "report":
+        from ai_platform_core.reports import generate_execution_reports, update_dashboard
+        from ai_platform_core.wizard_defaults import HISTORY as HISTORY_DIR
+        last = sorted(HISTORY_DIR.glob("*"), reverse=True)
+        history_dir = last[0] if last else HISTORY_DIR
+        inventory = generate_execution_reports(
+            history_dir=history_dir,
+            final_prompt_path=history_dir / "final_prompt.md",
+            codex_result={"status": "not run"},
+            post_checks_result={"status": "skipped", "tools": []},
+            duration_seconds=0.0,
+        )
+        update_dashboard(
+            inventory, {"status": "not run"},
+            {"status": "skipped", "tools": []}, 0.0, history_dir,
+        )
+        return 0
+    if command == "status":
+        _status(); return 0
+    if command == "dashboard":
+        _dashboard(); return 0
+    if command == "history":
+        _list_history(); return 0
+    if command == "validate":
+        return _validate()
+    if command == "clean":
+        _clean(); return 0
+    if command == "lessons":
+        _lessons(); return 0
+    if command == "learn":
+        if len(sys.argv) < 3:
+            print("Usage: ai_platform.py learn <note>")
+            return 1
+        _record_lesson(" ".join(sys.argv[2:]))
+        return 0
+    if command == "search":
+        if len(sys.argv) < 3:
+            print("Usage: ai_platform.py search <keyword>")
+            return 1
+        _search(" ".join(sys.argv[2:]))
+        return 0
 
-
-def write_report(name: str, title: str, body: str) -> Path:
-    REPORTS.mkdir(exist_ok=True)
-    destination = REPORTS / name
-    destination.write_text(markdown_report(title, body), encoding="utf-8")
-    return destination
-
-
-def generate_reports() -> None:
-    files = source_files()
-    line_counts = {relative(path): count_lines(path) for path in files}
-    long_files = sorted(((name, count) for name, count in line_counts.items() if count > 400), key=lambda row: row[1], reverse=True)
-    marker_hits: list[str] = []
-    duplicate_lines: Counter[str] = Counter()
-    for path in files:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        for number, line in enumerate(text.splitlines(), start=1):
-            if re.search(r"\b(TODO|FIXME|HACK)\b", line, re.IGNORECASE):
-                marker_hits.append(f"- `{relative(path)}:{number}` — {line.strip()[:180]}")
-            normalized = line.strip()
-            if len(normalized) >= 80 and not normalized.startswith(("#", "//", "*")):
-                duplicate_lines[normalized] += 1
-
-    dependency_files = [path for path in (ROOT / "requirements.txt", ROOT / "frontend" / "package.json", ROOT / "backend" / "package.json", ROOT / "frontend-test" / "package.json") if path.exists()]
-    test_files = [path for path in files if "/tests/" in f"/{relative(path)}" and path.name.startswith("test_")]
-    test_names = "\n".join(f"- `{relative(path)}`" for path in test_files) or "- No test files found."
-    long_file_rows = "\n".join(f"- `{name}` — {count} lines" for name, count in long_files[:20]) or "- No files exceed the configured 400-line limit."
-    marker_rows = "\n".join(marker_hits[:50]) or "- No TODO/FIXME/HACK markers found in scanned source files."
-    duplicate_rows = "\n".join(f"- Appears {count} times: `{line[:150]}`" for line, count in duplicate_lines.most_common(15) if count > 1) or "- No repeated long source lines detected."
-
-    write_report("ai-technical-debt-report.md", "Technical Debt Report", f"""## Repository Inventory
-
-- Source and policy files scanned: **{len(files)}**
-- Test modules discovered: **{len(test_files)}**
-- Files above configured size limit: **{len(long_files)}**
-
-## Oversized Files
-
-{long_file_rows}
-
-## Maintenance Markers
-
-{marker_rows}
-
-## Recommended Actions
-
-1. Split oversized modules by responsibility before adding new features.
-2. Convert each marker into an owned issue with a target release.
-3. Keep the deleted scoring-cache test under review until its replacement is committed.
-""")
-
-    write_report("ai-architecture-report.md", "Architecture Report", """## Current Components
-
-```mermaid
-flowchart LR
-  UI[React recruiter UI] --> AUTH[Express auth API]
-  UI --> API[FastAPI analyzer]
-  API --> LLM[Ollama or Gemini]
-  API --> STORE[FAISS vector store]
-  QA[React testing dashboard] --> REPORTS[Local reports]
-```
-
-## Validation Focus
-
-- Maintain a documented contract between the React UI, Express auth API, and FastAPI analyzer.
-- Keep candidate data local unless a hosted provider is explicitly selected.
-- Version vector-store metadata before modifying persisted structures.
-- Use deterministic fallback behavior when an LLM provider is unavailable.
-""")
-
-    write_report("ai-dependency-report.md", "Dependency Analysis Report", "## Dependency Manifests\n\n" + "\n".join(f"- `{relative(path)}`" for path in dependency_files) + "\n\n## Required Follow-up\n\nRun the Safety dependency scan in CI and locally. Keep Node lockfiles committed and use `npm ci` in CI.")
-
-    write_report("ai-security-report.md", "Security Report", """## Required Controls
-
-- Validate file type, size, and parser errors for every upload.
-- Keep JWT signing material and AI-provider credentials only in environment variables.
-- Treat resume text and job descriptions as untrusted prompt input.
-- Prevent candidate PII from appearing in reports, logs, or external LLM requests without approval.
-- Run Bandit and Safety before pull-request approval.
-
-## Current Local Evidence
-
-Bandit is configured as a high-severity quality gate. Safety must be installed in the local virtual environment before its local gate can run.
-""")
-
-    write_report("ai-quality-report.md", "Quality Report", f"""## Inventory
-
-- Source/policy files scanned: **{len(files)}**
-- Test modules discovered: **{len(test_files)}**
-- Oversized files: **{len(long_files)}**
-
-## Test Modules
-
-{test_names}
-
-## Duplicate-Line Heuristic
-
-{duplicate_rows}
-
-## Gate Status
-
-Run `python scripts/ai_platform.py report` after changes, then run pytest, Bandit, Safety, frontend build, testing-dashboard build, and Lighthouse as applicable.
-""")
-
-    write_report("ai-executive-report.md", "Executive Engineering Report", f"""## Engineering Snapshot
-
-| Measure | Value |
-| --- | ---: |
-| Scanned source and policy files | {len(files)} |
-| Test modules | {len(test_files)} |
-| Files above size guideline | {len(long_files)} |
-| Dependency manifests | {len(dependency_files)} |
-
-## Management Decision
-
-Release readiness requires green automated tests, completed security scans, and an approved pull request. The dashboard provides local evidence; GitHub Actions remains the merge authority.
-""")
-
-    summary = {
-        "generated_at": datetime.now(UTC).isoformat(),
-        "source_files": len(files),
-        "test_modules": len(test_files),
-        "oversized_files": len(long_files),
-        "reports": [path.name for path in sorted(REPORTS.glob("ai-*-report.md"))],
-    }
-    (REPORTS / "ai-dashboard.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(json.dumps(summary, indent=2))
-
-
-def route_task(task: str) -> None:
-    lower = task.lower()
-    if any(word in lower for word in ("security", "auth", "jwt", "upload", "privacy", "llm")):
-        workflow, skills = "bug-fix.workflow.md", ["security.skill.md", "unit-testing.skill.md"]
-    elif any(word in lower for word in ("release", "deploy", "version")):
-        workflow, skills = "release.workflow.md", ["code-review.skill.md", "documentation.skill.md"]
-    elif any(word in lower for word in ("doc", "readme", "adr")):
-        workflow, skills = "documentation.workflow.md", ["documentation.skill.md"]
-    elif any(word in lower for word in ("bug", "fix", "error", "failure")):
-        workflow, skills = "bug-fix.workflow.md", ["unit-testing.skill.md", "code-review.skill.md"]
-    else:
-        workflow, skills = "feature-development.workflow.md", ["coding-standards.skill.md", "unit-testing.skill.md", "code-review.skill.md"]
-    print("Workflow:", f".ai/workflows/{workflow}")
-    print("Skills:")
-    for skill in skills:
-        print("-", f".ai/skills/{skill}")
-    print("Checks:")
-    print("- .ai/checklists/coding.md")
-    print("- .ai/checklists/testing.md")
-    if "security.skill.md" in skills:
-        print("- .ai/checklists/security.md")
-
-
-def record_learning(note: str) -> None:
-    if re.search(r"(api[_ -]?key|password|token|@|resume|candidate)", note, re.IGNORECASE):
-        raise SystemExit("Refusing to store potentially sensitive information in the learning log.")
-    destination = LEARNING / "lessons-learned.md"
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    with destination.open("a", encoding="utf-8") as handle:
-        handle.write(f"\n- {timestamp}: {note.strip()}\n")
-    print(f"Recorded learning note in {relative(destination)}")
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Operate the local AI engineering platform.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("report", help="Generate repository-wide reports.")
-    route = subparsers.add_parser("route", help="Route a task to workflow and skills.")
-    route.add_argument("task")
-    learn = subparsers.add_parser("learn", help="Record a non-sensitive lesson.")
-    learn.add_argument("note")
-    args = parser.parse_args()
-    if args.command == "report":
-        generate_reports()
-    elif args.command == "route":
-        route_task(args.task)
-    else:
-        record_learning(args.note)
+    print(f"Unknown command: {command}")
+    return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
