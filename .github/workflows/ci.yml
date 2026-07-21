@@ -6,25 +6,24 @@ on:
   pull_request:
   workflow_dispatch:
 
-jobs:
-  test-and-build:
-    name: Tests and Frontend Builds
-    runs-on: ubuntu-latest
+# Restrict default GITHUB_TOKEN permissions (Least Privilege)
+permissions:
+  contents: read
 
+jobs:
+  # ----------------------------------------------------
+  # 1. Backend Testing & Report Generation
+  # ----------------------------------------------------
+  backend-test:
+    name: Backend Unit Tests & AI Reports
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: npm
-          cache-dependency-path: |
-            frontend/package-lock.json
-            frontend-test/package-lock.json
+          cache: "pip"
 
       - name: Install Python dependencies
         run: |
@@ -37,18 +36,6 @@ jobs:
       - name: Generate AI engineering reports
         run: python scripts/ai_platform.py report
 
-      - name: Build recruiter frontend
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run build
-
-      - name: Build testing dashboard
-        working-directory: frontend-test
-        run: |
-          npm ci
-          npm run build
-
       - name: Upload engineering reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -57,66 +44,81 @@ jobs:
           path: reports/ai-*
           if-no-files-found: warn
 
-  security-scan:
-    name: Bandit Security Scan
+  # ----------------------------------------------------
+  # 2. Frontend Builds (Ran in Parallel)
+  # ----------------------------------------------------
+  frontend-builds:
+    name: Frontend Builds
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false                 # CHANGED: don't cancel the other app if one fails
+      matrix:
+        app: [frontend, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"           # CHANGED: Vite 8 + @vitejs/plugin-react 6 need >=20.19 / >=22.12
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Build ${{ matrix.app }}
+        working-directory: ${{ matrix.app }}
+        run: |
+          npm ci
+          npm run build
+
+  # ----------------------------------------------------
+  # 3. Static Code Security Analysis (Bandit & Pip-Audit)
+  # ----------------------------------------------------
+  security-scan:
+    name: Code & Dependency Security Scan
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+          cache: "pip"
 
       - name: Install security tools
         run: |
-          pip install bandit safety
+          pip install bandit pip-audit
 
-      - name: Run Bandit
+      - name: Run Bandit (High Severity/Confidence)
         run: |
           bandit -r backend api.py -s B101 --severity-level high --confidence-level high
 
-      - name: Run Safety dependency scan
-        run: safety check --file requirements.txt --full-report || true
+      - name: Run Dependency Vulnerability Audit
+        run: |
+          pip-audit -r requirements.txt
 
+  # ----------------------------------------------------
+  # 4. OWASP Dependency Check
+  # ----------------------------------------------------
   dependency-check:
-    name: Dependency Vulnerability Scan
+    name: OWASP Dependency Scan
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
         with:
-          distribution: temurin
-          java-version: 17
+          project: "AI-Recruiter-System"
+          path: "."
+          format: "HTML"
+          out: "reports"
+          args: >-
+            --failOnCVSS 7
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
-      - name: Install Dependency Check
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-          unzip dependency-check-9.0.9-release.zip
-
-      - name: Cache OWASP Dependency-Check Data
-        uses: actions/cache@v4
+      - name: Upload Dependency-Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          path: ~/.dependency-check-data
-          key: dependency-check-data-v1
-          restore-keys: |
-            dependency-check-data-v1-
-
-      - name: Run Dependency Check
-        run: |
-          ./dependency-check/bin/dependency-check.sh \
-            --project AI-Recruiter-System \
-            --scan . \
-            --format HTML \
-            --failOnCVSS 7 || true
-
-
-
-
-
+          name: dependency-check-report
+          path: reports/dependency-check-report.html
