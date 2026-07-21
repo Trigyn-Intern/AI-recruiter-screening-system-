@@ -14,7 +14,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .bandit
-
+.ai/history/
 # ===== Node / Frontend =====
 node_modules/
 frontend/node_modules/
@@ -84,3 +84,5 @@ review_jobs.json
 .cache/
 .tmp/
 tmp/
+
+.ai/runtime/
