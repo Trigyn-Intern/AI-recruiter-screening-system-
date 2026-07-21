@@ -8,18 +8,18 @@ python-multipart==0.0.31
 pydantic==2.9.2
 
 # --- Data + ML core ---
-# transformers 5.x closes the remaining CVEs that 4.53.0 left open.
-# sentence-transformers 5.x is the matching companion (its 4.x line
-# caps transformers<5.0.0).
+# transformers 5.x closes the 2 CVEs that 4.53.0 left open.
+# huggingface-hub must be >=1.3.0 to satisfy transformers 5.x.
+# sentence-transformers REMOVED: its 5.x line still caps
+# transformers<5.0.0, so it can never coexist with transformers 5.x.
+# Use transformers + torch + huggingface-hub directly for embeddings.
 pandas==2.2.3
 numpy==2.2.6
 scikit-learn==1.6.1
 faiss-cpu==1.13.1
-sentence-transformers==5.1.0
 torch==2.13.0
 transformers==5.3.0
-# transformers 5.x requires huggingface-hub>=1.3.0; 0.30.0 would conflict.
-huggingface-hub==0.34.0
+huggingface-hub==1.3.0
 
 # --- LLM providers ---
 ollama==0.5.1
@@ -40,12 +40,13 @@ httpx==0.28.1
 requests==2.33.0
 
 # --- Testing & profiling ---
-# pytest 9.0.3 closes PYSEC-2026-1845. pytest-playwright 0.7.0 removed
-# the pytest<9.0.0 cap that 0.5.2 had, so the 9.x line is now usable.
+# pytest 9.0.3 closes PYSEC-2026-1845. pytest-playwright 0.8.0 is the
+# first release that removed the pytest<9.0.0 cap (0.5.2 and 0.7.0
+# both still had it).
 pytest==9.0.3
 pytest-mock==3.14.0
 pytest-benchmark==4.0.0
-pytest-playwright==0.7.0
+pytest-playwright==0.8.0
 playwright==1.49.1
 allure-pytest==2.16.0
 scalene==1.5.33
