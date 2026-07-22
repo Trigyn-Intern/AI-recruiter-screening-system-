@@ -28,7 +28,9 @@ def _parse_scalar(value: str) -> Any:
         if not inner:
             return []
         return [item.strip().strip('"').strip("'") for item in inner.split(",")]
-    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
         return value[1:-1]
     return value
 

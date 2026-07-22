@@ -10,14 +10,45 @@ from .utils import relative, write_json, write_text
 from .wizard_defaults import DASHBOARD_JSON, REPORTS
 
 SKIP_PARTS = {
-    ".git", ".github", ".ai", "node_modules", "venv", "__pycache__", "dist", "build",
-    ".next", ".idea", ".vscode", "coverage", "reports", "vector_store",
-    ".lighthouseci", "zap-reports", "frontend-test",
+    ".git",
+    ".github",
+    ".ai",
+    "node_modules",
+    "venv",
+    "__pycache__",
+    "dist",
+    "build",
+    ".next",
+    ".idea",
+    ".vscode",
+    "coverage",
+    "reports",
+    "vector_store",
+    ".lighthouseci",
+    "zap-reports",
+    "frontend-test",
 }
 
 SOURCE_SUFFIXES = {
-    ".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".cs", ".go", ".cpp", ".c",
-    ".html", ".css", ".scss", ".sql", ".json", ".yaml", ".yml", ".md", ".txt",
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".java",
+    ".cs",
+    ".go",
+    ".cpp",
+    ".c",
+    ".html",
+    ".css",
+    ".scss",
+    ".sql",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".md",
+    ".txt",
 }
 
 
@@ -45,7 +76,9 @@ def _scan_repo(root: Path) -> tuple[list[Path], list[Path], list[Path]]:
         if path.name.startswith("test") or "tests" in path.parts:
             tests.append(path)
         try:
-            line_count = sum(1 for _ in path.open("r", encoding="utf-8", errors="ignore"))
+            line_count = sum(
+                1 for _ in path.open("r", encoding="utf-8", errors="ignore")
+            )
         except OSError:
             continue
         if line_count > max_lines:
@@ -226,6 +259,10 @@ def update_dashboard(
         "post_check_tools": post_checks_result.get("tools", []),
         "post_checks_missing": post_checks_result.get("missing_tools", []),
         "duration_seconds": round(duration_seconds, 2),
-        "reports": sorted(p.name for p in REPORTS.glob("ai-*-report.md")) if REPORTS.exists() else [],
+        "reports": (
+            sorted(p.name for p in REPORTS.glob("ai-*-report.md"))
+            if REPORTS.exists()
+            else []
+        ),
     }
     write_json(DASHBOARD_JSON, payload)

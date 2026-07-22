@@ -83,7 +83,9 @@ def build_final_prompt(context: dict[str, Any]) -> str:
     parts.append("## Workflow")
     parts.append("")
     workflow = context.get("workflow", {})
-    parts.append(redact_secrets(workflow.get("content", "").strip() or "_Empty document._"))
+    parts.append(
+        redact_secrets(workflow.get("content", "").strip() or "_Empty document._")
+    )
     parts.append("")
 
     parts.append(_section("Skills", context.get("skills", [])))

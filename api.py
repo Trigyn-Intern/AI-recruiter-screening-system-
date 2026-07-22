@@ -19,6 +19,7 @@ except ImportError:
 
 from dotenv import load_dotenv
 import pathlib
+
 _env_path = pathlib.Path(__file__).resolve().parent / "backend" / ".env"
 if _env_path.exists():
     load_dotenv(_env_path)
@@ -48,7 +49,6 @@ from backend import (  # noqa: E402
     validate_upload,
 )
 
-
 api = FastAPI(title="Resume Analyzer API")
 
 api.add_middleware(
@@ -73,11 +73,13 @@ ANALYZE_MAX_INFLIGHT = int(os.environ.get("ANALYZE_MAX_INFLIGHT", "4"))
 ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "90"))
 _analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
 
+
 class CodeReviewRequest(BaseModel):
     code: str
     provider: Optional[str] = "Gemini"
     model_name: Optional[str] = "gemini-2.5-flash"
     background: Optional[bool] = False
+
 
 class InMemoryUpload(io.BytesIO):
     def __init__(self, content, name):
@@ -133,7 +135,8 @@ def resume_database():
         "records": records,
         "total": len(records),
         "fully_indexed": sum(
-            1 for record in records
+            1
+            for record in records
             if record["embedding_indexed"] and record["skills_indexed"]
         ),
         "embedding_indexed": sum(
@@ -236,13 +239,15 @@ def _run_analyze_blocking(
         resume_text = extract_text(resume_file)
 
         if not resume_text.strip():
-            invalid_resumes.append({
-                "resume_name": resume.filename,
-                "error": (
-                    "No readable text could be extracted. Use a text-based "
-                    "PDF/DOCX or run OCR before uploading."
-                ),
-            })
+            invalid_resumes.append(
+                {
+                    "resume_name": resume.filename,
+                    "error": (
+                        "No readable text could be extracted. Use a text-based "
+                        "PDF/DOCX or run OCR before uploading."
+                    ),
+                }
+            )
             continue
 
         resume_embedding = get_or_create_resume_embedding(
@@ -274,7 +279,8 @@ def _run_analyze_blocking(
         )
         resume_skill_profile = (
             uploaded_item["resume_skill_profile"]
-            if uploaded_item else item["resume_skill_profile"]
+            if uploaded_item
+            else item["resume_skill_profile"]
         )
         score = calculate_match_score(item["resume_embedding"], job_description)
         record = {
@@ -283,11 +289,13 @@ def _run_analyze_blocking(
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        file_cache.append({
-            "record": record,
-            "resume_text": resume_text,
-            "resume_skill_profile": resume_skill_profile,
-        })
+        file_cache.append(
+            {
+                "record": record,
+                "resume_text": resume_text,
+                "resume_skill_profile": resume_skill_profile,
+            }
+        )
 
     for resume_id, item in uploaded_records.items():
         if resume_id in indexed_resume_ids:
@@ -299,11 +307,13 @@ def _run_analyze_blocking(
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        file_cache.append({
-            "record": record,
-            "resume_text": item["resume_text"],
-            "resume_skill_profile": item["resume_skill_profile"],
-        })
+        file_cache.append(
+            {
+                "record": record,
+                "resume_text": item["resume_text"],
+                "resume_skill_profile": item["resume_skill_profile"],
+            }
+        )
 
     if not file_cache:
         raise HTTPException(
@@ -319,8 +329,7 @@ def _run_analyze_blocking(
     detail_records = ranking[:detail_limit]
     detail_ids = {record["resume_id"] for record in detail_records}
     detail_order = {
-        record["resume_id"]: index
-        for index, record in enumerate(detail_records)
+        record["resume_id"]: index for index, record in enumerate(detail_records)
     }
     top_details = []
 
@@ -353,7 +362,9 @@ def _run_analyze_blocking(
 
     categories = {
         "good_fit": [r["resume_name"] for r in ranking if r["fit"] == "Good Fit"],
-        "moderate_fit": [r["resume_name"] for r in ranking if r["fit"] == "Moderate Fit"],
+        "moderate_fit": [
+            r["resume_name"] for r in ranking if r["fit"] == "Moderate Fit"
+        ],
         "bad_fit": [r["resume_name"] for r in ranking if r["fit"] == "Bad Fit"],
     }
 
@@ -375,6 +386,8 @@ def _run_analyze_blocking(
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
     }
+
+
 JOBS_FILE = "review_jobs.json"
 jobs_db = {}
 
@@ -385,16 +398,24 @@ if os.path.exists(JOBS_FILE):
     except Exception:
         pass
 
+
 def save_jobs():
 
-    
     try:
         with open(JOBS_FILE, "w", encoding="utf-8") as f:
             json.dump(jobs_db, f, indent=2)
     except Exception:
         pass
 
-def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system_prompt: str, invoke_path: str):
+
+def run_review_bg(
+    job_id: str,
+    code: str,
+    provider: str,
+    model_name: str,
+    system_prompt: str,
+    invoke_path: str,
+):
     def call_llm(user_prompt_text):
         # Try Gemini first (via direct REST API)
         api_key = os.getenv("GEMINI_API_KEY")
@@ -402,12 +423,14 @@ def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                 payload_data = {
-                    "contents": [{"parts": [{"text": f"{system_prompt}\n\n{user_prompt_text}"}]}]
+                    "contents": [
+                        {"parts": [{"text": f"{system_prompt}\n\n{user_prompt_text}"}]}
+                    ]
                 }
                 req = urllib.request.Request(
-                    url, 
-                    data=json.dumps(payload_data).encode("utf-8"), 
-                    headers={"Content-Type": "application/json"}
+                    url,
+                    data=json.dumps(payload_data).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
                 )
                 with urllib.request.urlopen(req, timeout=120) as response:
                     result = json.loads(response.read().decode())
@@ -420,18 +443,22 @@ def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system
         try:
             req = urllib.request.Request(
                 f"{ollama_host}/api/generate",
-                data=json.dumps({
-                    "model": "llama3.2",
-                    "prompt": f"{system_prompt}\n\n{user_prompt_text}",
-                    "stream": False
-                }).encode("utf-8"),
-                headers={"Content-Type": "application/json"}
+                data=json.dumps(
+                    {
+                        "model": "llama3.2",
+                        "prompt": f"{system_prompt}\n\n{user_prompt_text}",
+                        "stream": False,
+                    }
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
             )
             with urllib.request.urlopen(req, timeout=120) as response:
                 result = json.loads(response.read().decode())
                 return result.get("response", "")
         except Exception as ollama_exc:
-            raise Exception(f"Both Gemini and Ollama failed. Ollama error: {ollama_exc}")
+            raise Exception(
+                f"Both Gemini and Ollama failed. Ollama error: {ollama_exc}"
+            )
 
     try:
         files_to_review = []
@@ -462,15 +489,25 @@ def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system
                 user_prompt_text = f"Please review the following file ({file_path}):\n\n```\n{file_content}\n```"
                 try:
                     review_text = call_llm(user_prompt_text)
-                    full_review += f"### Review for {file_path}\n{review_text}\n\n---\n\n"
+                    full_review += (
+                        f"### Review for {file_path}\n{review_text}\n\n---\n\n"
+                    )
                 except Exception as e:
                     full_review += f"### Review for {file_path}\nFailed to review: {str(e)}\n\n---\n\n"
-            jobs_db[job_id] = {"status": "completed", "review": full_review.strip(), "error": None}
+            jobs_db[job_id] = {
+                "status": "completed",
+                "review": full_review.strip(),
+                "error": None,
+            }
         else:
             user_prompt_text = f"Please review the following code:\n\n```\n{code}\n```"
             try:
                 review_text = call_llm(user_prompt_text)
-                jobs_db[job_id] = {"status": "completed", "review": review_text, "error": None}
+                jobs_db[job_id] = {
+                    "status": "completed",
+                    "review": review_text,
+                    "error": None,
+                }
             except Exception as e:
                 jobs_db[job_id] = {"status": "failed", "review": None, "error": str(e)}
     except Exception as e:
@@ -519,7 +556,7 @@ async def review_code(payload: CodeReviewRequest, background_tasks: BackgroundTa
             payload.provider,
             payload.model_name,
             system_prompt,
-            ".code-review/invoke.txt"
+            ".code-review/invoke.txt",
         )
         return {"job_id": job_id, "status": "processing"}
     else:
@@ -530,13 +567,15 @@ async def review_code(payload: CodeReviewRequest, background_tasks: BackgroundTa
             payload.provider,
             payload.model_name,
             system_prompt,
-            ".code-review/invoke.txt"
+            ".code-review/invoke.txt",
         )
         result = jobs_db.get(job_id)
         if result and result["status"] == "completed":
             return {"review": result["review"]}
         else:
-            raise HTTPException(status_code=500, detail=(result["error"] if result else "Review failed"))
+            raise HTTPException(
+                status_code=500, detail=(result["error"] if result else "Review failed")
+            )
 
 
 @api.get("/api/review/status/{job_id}")

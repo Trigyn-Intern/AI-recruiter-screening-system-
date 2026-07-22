@@ -1,4 +1,5 @@
 """Render a 13-column Security Review HTML report from JSON input."""
+
 from __future__ import annotations
 
 import argparse
@@ -54,35 +55,39 @@ def _findings_from_data(data: dict) -> List[dict]:
     rows: List[dict] = []
     for idx, check in enumerate(data.get("securityChecks") or [], start=1):
         status = check.get("status", "Fail")
-        rows.append({
-            "cr_no": f"SR-{idx:03d}",
-            "name": check.get("checkItem", "Security check"),
-            "description": check.get("checkItem", ""),
-            "prerequisite": "Changed files in git diff against main",
-            "test_steps": "Reviewed diff with security-review SKILL.md",
-            "input_data": "",
-            "expected_result": "No vulnerability",
-            "actual_result": check.get("comments", check.get("notes", "")),
-            "pass_fail": status,
-            "enhancement": check.get("comments", ""),
-            "codex_prompt": "",
-            "reference": "",
-        })
+        rows.append(
+            {
+                "cr_no": f"SR-{idx:03d}",
+                "name": check.get("checkItem", "Security check"),
+                "description": check.get("checkItem", ""),
+                "prerequisite": "Changed files in git diff against main",
+                "test_steps": "Reviewed diff with security-review SKILL.md",
+                "input_data": "",
+                "expected_result": "No vulnerability",
+                "actual_result": check.get("comments", check.get("notes", "")),
+                "pass_fail": status,
+                "enhancement": check.get("comments", ""),
+                "codex_prompt": "",
+                "reference": "",
+            }
+        )
     if not rows and data.get("finalNotes"):
-        rows.append({
-            "cr_no": "SR-001",
-            "name": "security-review / summary",
-            "description": "LLM security review summary",
-            "prerequisite": "Git diff main..HEAD",
-            "test_steps": "Automated background security review",
-            "input_data": "",
-            "expected_result": "Structured findings",
-            "actual_result": str(data.get("finalNotes", ""))[:500],
-            "pass_fail": "Warning",
-            "enhancement": "See full notes in job output",
-            "codex_prompt": "",
-            "reference": "",
-        })
+        rows.append(
+            {
+                "cr_no": "SR-001",
+                "name": "security-review / summary",
+                "description": "LLM security review summary",
+                "prerequisite": "Git diff main..HEAD",
+                "test_steps": "Automated background security review",
+                "input_data": "",
+                "expected_result": "Structured findings",
+                "actual_result": str(data.get("finalNotes", ""))[:500],
+                "pass_fail": "Warning",
+                "enhancement": "See full notes in job output",
+                "codex_prompt": "",
+                "reference": "",
+            }
+        )
     return rows
 
 
@@ -108,7 +113,9 @@ def build_findings_html(data: dict) -> tuple[str, int, int, int]:
     return "\n".join(rows), pass_count, fail_count, warn_count
 
 
-def render_report(data: dict, mode: str, stamp: str, scope: str, template_path: Path) -> str:
+def render_report(
+    data: dict, mode: str, stamp: str, scope: str, template_path: Path
+) -> str:
     date_part = stamp.split(" ")[0] if " " in stamp else stamp[:10]
     findings_html, pass_count, fail_count, warn_count = build_findings_html(data)
     template = template_path.read_text(encoding="utf-8")

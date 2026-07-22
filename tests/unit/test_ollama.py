@@ -23,57 +23,36 @@ from backend import (
     safe_ollama_json,
 )
 
+
 def test_safe_ollama_json_success(mocker):
 
-    mock_response = {
-        "message": {
-            "content": '''
+    mock_response = {"message": {"content": """
             {
                 "experience": "3 years",
                 "primary_skills": ["Python"],
                 "secondary_skills": ["SQL"],
                 "education": "BTech"
             }
-            '''
-        }
-    }
+            """}}
 
-    mocker.patch(
-        "backend.ollama.chat",
-        return_value=mock_response
-    )
+    mocker.patch("backend.ollama.chat", return_value=mock_response)
 
     fallback = {}
 
-    result = safe_ollama_json(
-        "test prompt",
-        JD_SCHEMA,
-        fallback
-    )
+    result = safe_ollama_json("test prompt", JD_SCHEMA, fallback)
 
     assert result["experience"] == "3 years"
 
 
 def test_safe_ollama_json_invalid_schema(mocker):
 
-    mock_response = {
-        "message": {
-            "content": '{"wrong":"format"}'
-        }
-    }
+    mock_response = {"message": {"content": '{"wrong":"format"}'}}
 
-    mocker.patch(
-        "backend.ollama.chat",
-        return_value=mock_response
-    )
+    mocker.patch("backend.ollama.chat", return_value=mock_response)
 
     fallback = {"fallback": True}
 
-    result = safe_ollama_json(
-        "test",
-        JD_SCHEMA,
-        fallback
-    )
+    result = safe_ollama_json("test", JD_SCHEMA, fallback)
 
     assert result == fallback
 
@@ -279,9 +258,7 @@ def test_analyze_candidate_detail_falls_back_to_indexed_skills(mocker):
         "evidence": "Built FastAPI services using Python.",
         "source": "Payments project",
     }
-    assert result["matching_evidence"][1]["source"] == (
-        "Indexed experience summary"
-    )
+    assert result["matching_evidence"][1]["source"] == ("Indexed experience summary")
 
 
 def test_candidate_detail_replaces_not_found_missing_skills(mocker):

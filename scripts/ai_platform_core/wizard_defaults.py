@@ -61,14 +61,34 @@ WORKFLOW_MAP = {
 }
 
 SKILL_MAP = {
-    "feature": ["coding-standards.skill.md", "unit-testing.skill.md", "code-review.skill.md"],
+    "feature": [
+        "coding-standards.skill.md",
+        "unit-testing.skill.md",
+        "code-review.skill.md",
+    ],
     "bug": ["unit-testing.skill.md", "code-review.skill.md", "security.skill.md"],
-    "refactor": ["coding-standards.skill.md", "unit-testing.skill.md", "code-review.skill.md"],
+    "refactor": [
+        "coding-standards.skill.md",
+        "unit-testing.skill.md",
+        "code-review.skill.md",
+    ],
     "hotfix": ["security.skill.md", "unit-testing.skill.md", "code-review.skill.md"],
-    "security": ["security.skill.md", "coding-standards.skill.md", "unit-testing.skill.md"],
-    "performance": ["coding-standards.skill.md", "unit-testing.skill.md", "code-review.skill.md"],
+    "security": [
+        "security.skill.md",
+        "coding-standards.skill.md",
+        "unit-testing.skill.md",
+    ],
+    "performance": [
+        "coding-standards.skill.md",
+        "unit-testing.skill.md",
+        "code-review.skill.md",
+    ],
     "documentation": ["documentation.skill.md"],
-    "test automation": ["unit-testing.skill.md", "coding-standards.skill.md", "code-review.skill.md"],
+    "test automation": [
+        "unit-testing.skill.md",
+        "coding-standards.skill.md",
+        "code-review.skill.md",
+    ],
     "release": ["documentation.skill.md", "code-review.skill.md", "security.skill.md"],
 }
 

@@ -83,6 +83,8 @@ class CodexRunner:
     def manual_command(self, prompt_file: Path) -> str:
         binary = self.binary_name()
         flags = " ".join(self.extra_flags)
+        if self.oss_model:
+            flags += f" --model {_cmd_quote(self.oss_model)}"
         return f"{binary} exec {flags} < {_cmd_quote(str(prompt_file))}".strip()
 
     def _shim_command_line(self) -> str:
@@ -90,6 +92,8 @@ class CodexRunner:
         parts: list[str] = [_cmd_quote(binary), "exec"]
         for flag in self.extra_flags:
             parts.append(_cmd_quote(flag))
+        if self.oss_model:
+            parts.extend(["--model", _cmd_quote(self.oss_model)])
         return " ".join(parts)
 
     def _build_invocation(self) -> tuple[list[str], dict[str, Any]]:
@@ -111,6 +115,8 @@ class CodexRunner:
             argv = [cmd, "/D", "/S", "/C", self._shim_command_line()]
         else:
             argv = [binary, "exec", *self.extra_flags]
+            if self.oss_model:
+                argv.extend(["--model", self.oss_model])
         return argv, popen_kwargs
 
     def _prepare_env(self) -> dict[str, str]:
@@ -188,26 +194,13 @@ class CodexRunner:
         stdout_chunks: list[str] = []
         stderr_chunks: list[str] = []
         timed_out = False
+
         try:
-            assert process.stdin is not None
-            assert process.stdout is not None
-            assert process.stderr is not None
-            try:
-                process.stdin.write(prompt_text)
-                process.stdin.flush()
-            except BrokenPipeError:
-                pass
-            finally:
-                try:
-                    process.stdin.close()
-                except OSError:
-                    pass
-            for line in process.stdout:
-                stdout_chunks.append(line)
-            for line in process.stderr:
-                stderr_chunks.append(line)
             remaining = max(1, self.timeout_seconds - int(time.monotonic() - start))
-            returncode = process.wait(timeout=remaining)
+            stdout_text, stderr_text = process.communicate(input=prompt_text, timeout=remaining)
+            stdout_chunks.append(stdout_text)
+            stderr_chunks.append(stderr_text)
+            returncode = process.returncode
         except subprocess.TimeoutExpired:
             timed_out = True
             process.kill()
@@ -216,6 +209,7 @@ class CodexRunner:
             stderr_chunks.append(f"\n[executor] stream error: {exc}\n")
             returncode = process.poll()
 
+         
         duration = round(time.monotonic() - start, 2)
         stdout_text = "".join(stdout_chunks)
         stderr_text = "".join(stderr_chunks)

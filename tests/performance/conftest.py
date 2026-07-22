@@ -10,6 +10,7 @@ backend so its module-level imports bind to MagicMock instead of crashing.
 The real PDF / DOCX parsing logic (PyPDF, python-docx) does NOT use torch
 and is imported correctly after the stubs are in place.
 """
+
 from __future__ import annotations
 
 import sys
@@ -42,7 +43,6 @@ for _real in ("docx", "pypdf"):
     sys.modules.pop(_real, None)
 
 import importlib  # noqa: E402
+
 importlib.import_module("pypdf")
 importlib.import_module("docx")
-
-

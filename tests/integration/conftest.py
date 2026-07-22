@@ -19,7 +19,6 @@ from typing import Any, Dict, Iterable, List
 import pytest
 import yaml
 
-
 TESTS_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = TESTS_DIR.parent
 DEFAULT_CONFIG = TESTS_DIR / "data" / "scenarios.yaml"
@@ -115,9 +114,7 @@ def pytest_generate_tests(metafunc):
         scenarios = [s for s in scenarios if s.get("id") in selected]
         missing = selected - {s.get("id") for s in scenarios}
         if missing:
-            pytest.exit(
-                f"Unknown scenario ids in --scenario-filter: {sorted(missing)}"
-            )
+            pytest.exit(f"Unknown scenario ids in --scenario-filter: {sorted(missing)}")
 
     ids = [s["id"] for s in scenarios]
     metafunc.parametrize("scenario", scenarios, ids=ids)

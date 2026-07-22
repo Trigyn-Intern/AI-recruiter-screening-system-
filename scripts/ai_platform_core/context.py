@@ -8,7 +8,14 @@ from typing import Any, Iterable
 from .config import load_project_config
 from .routing import Route
 from .utils import read_text, relative
-from .wizard_defaults import CHECKLISTS, KNOWLEDGE, PROMPTS, SKILLS, TEMPLATES, WORKFLOWS
+from .wizard_defaults import (
+    CHECKLISTS,
+    KNOWLEDGE,
+    PROMPTS,
+    SKILLS,
+    TEMPLATES,
+    WORKFLOWS,
+)
 
 
 def _load_document(path: Path) -> dict[str, str]:
@@ -22,7 +29,9 @@ def _load_named(folder: Path, names: Iterable[str]) -> list[dict[str, str]]:
 def _load_all(folder: Path, pattern: str = "*.md") -> list[dict[str, str]]:
     if not folder.exists():
         return []
-    return [_load_document(path) for path in sorted(folder.glob(pattern)) if path.is_file()]
+    return [
+        _load_document(path) for path in sorted(folder.glob(pattern)) if path.is_file()
+    ]
 
 
 def merge_context(

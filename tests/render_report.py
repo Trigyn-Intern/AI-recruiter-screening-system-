@@ -6,6 +6,7 @@ Standalone renderer. Reads:
   --output  path to write the HTML report
   --filter  filter string (display only)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,7 +17,6 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import yaml
-
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -40,13 +40,13 @@ def load_junit(path: Path) -> list:
             if failure is not None:
                 tc_data["failure"] = {
                     "message": failure.get("message", ""),
-                    "text": failure.text or ""
+                    "text": failure.text or "",
                 }
             error = tc.find("error")
             if error is not None:
                 tc_data["error"] = {
                     "message": error.get("message", ""),
-                    "text": error.text or ""
+                    "text": error.text or "",
                 }
             testcases.append(tc_data)
         return testcases
@@ -73,11 +73,11 @@ def parse_yaml_meta(path: Path) -> dict:
 
 
 def get_scenario_id(testcase_name: str) -> str:
-    m = re.search(r'\[([^\]]+)\]', testcase_name)
+    m = re.search(r"\[([^\]]+)\]", testcase_name)
     if m:
         param = m.group(1)
-        if '-' in param:
-            return param.split('-', 1)[0]
+        if "-" in param:
+            return param.split("-", 1)[0]
         return param
     return testcase_name
 
@@ -97,7 +97,9 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     expected_min_score = m.get("expected_min_score", "N/A")
 
     # Description
-    description = f"Verify AI recruiter screening for {name} scenario using Ollama model {model}."
+    description = (
+        f"Verify AI recruiter screening for {name} scenario using Ollama model {model}."
+    )
 
     # Pre-requisite
     prerequisite = (
@@ -121,12 +123,10 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     )
 
     # Input Data
-    resume_text = "\n".join(f"  - {r}" for r in resume_files) if resume_files else "  (none)"
-    input_data = (
-        f"JD File: {jd_file}\n"
-        f"Model: {model}\n"
-        f"Resumes:\n{resume_text}"
+    resume_text = (
+        "\n".join(f"  - {r}" for r in resume_files) if resume_files else "  (none)"
     )
+    input_data = f"JD File: {jd_file}\n" f"Model: {model}\n" f"Resumes:\n{resume_text}"
 
     # Expected Result
     expected_result = (
@@ -140,10 +140,16 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
 
     if tc.get("failure"):
         status = "Fail"
-        actual_result = tc["failure"].get("message") or tc["failure"].get("text") or "Assertion Failed"
+        actual_result = (
+            tc["failure"].get("message")
+            or tc["failure"].get("text")
+            or "Assertion Failed"
+        )
     elif tc.get("error"):
         status = "Fail"
-        actual_result = tc["error"].get("message") or tc["error"].get("text") or "Execution Error"
+        actual_result = (
+            tc["error"].get("message") or tc["error"].get("text") or "Execution Error"
+        )
 
     # Enhancement
     if status == "Pass":
@@ -191,9 +197,7 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     screenshot_path = REPO_ROOT / "tests" / "ui" / "screenshots" / f"{scenario_id}.png"
     screenshot_html = ""
     if screenshot_path.exists():
-        screenshot_html = (
-            f"\n3. Screenshot: {scenario_id}.png"
-        )
+        screenshot_html = f"\n3. Screenshot: {scenario_id}.png"
     reference = (
         f"1. Case ID: 10560-{scenario_id}\n"
         f"2. Config: tests/data/scenarios.yaml"

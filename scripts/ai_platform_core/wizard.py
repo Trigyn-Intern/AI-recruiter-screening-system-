@@ -29,7 +29,9 @@ def _prompt_optional(question: str, default: str = "") -> str:
     return value or default
 
 
-def _choose(question: str, options: dict[str, str | tuple[str, str]], allow_custom: bool = True) -> str:
+def _choose(
+    question: str, options: dict[str, str | tuple[str, str]], allow_custom: bool = True
+) -> str:
     """Render a numbered choice and return a label (or a custom value)."""
 
     labels: list[tuple[str, str, str]] = []
@@ -140,6 +142,19 @@ def run_wizard() -> ExecutionRequest:
     migration_notes = _confirm("Migration Required?", default=False)
     additional = _multiline_notes()
 
+    skip_checks = _confirm("Skip all post-checks?", default=False)
+    if skip_checks:
+        options = {"skip_checks": True}
+    else:
+        options = {
+            "skip_checks": False,
+            "run_bandit": _confirm("Run Bandit security scan?", default=False),
+            "run_lighthouse": _confirm("Run Lighthouse?", default=False),
+            "run_integration": _confirm("Run integration tests?", default=False),
+            "run_performance": _confirm("Run performance benchmarks?", default=False),
+            "run_playwright": _confirm("Run Playwright e2e tests?", default=False),
+        }
+
     return ExecutionRequest(
         task=task,
         project_area=project_area,
@@ -151,4 +166,5 @@ def run_wizard() -> ExecutionRequest:
         security_review=security_review,
         migration_notes=migration_notes,
         additional_notes=additional,
+        options=options,
     )

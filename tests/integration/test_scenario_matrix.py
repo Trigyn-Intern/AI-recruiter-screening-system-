@@ -27,7 +27,6 @@ from typing import Any, Dict, List
 
 import pytest
 
-
 WEB_BASE_URL = os.environ.get("WEB_BASE_URL", "http://localhost:5173")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
 AUTH_API_URL = os.environ.get("AUTH_API_URL", "http://localhost:4000")
@@ -43,8 +42,13 @@ SCREENSHOT_DIR = Path(__file__).resolve().parent / "screenshots"
 # Shared helpers
 # ============================================================
 
-def _http_json(url: str, method: str = "GET", body: Dict[str, Any] | None = None,
-               token: str | None = None) -> Dict[str, Any]:
+
+def _http_json(
+    url: str,
+    method: str = "GET",
+    body: Dict[str, Any] | None = None,
+    token: str | None = None,
+) -> Dict[str, Any]:
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
@@ -157,7 +161,9 @@ def _wait_for_web(timeout_seconds: int = 60) -> None:
 
 
 def _switch_tab(page, tab_label: str) -> None:
-    page.get_by_role("button", name=re.compile(rf"^{re.escape(tab_label)}$")).first.click()
+    page.get_by_role(
+        "button", name=re.compile(rf"^{re.escape(tab_label)}$")
+    ).first.click()
 
 
 def _set_provider_model(page, model: str) -> None:
@@ -205,11 +211,13 @@ def _read_ranking(page) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
     for index in range(count):
         cells = table.nth(index).locator("td")
-        results.append({
-            "resume": (cells.nth(0).inner_text() or "").strip(),
-            "score": (cells.nth(1).inner_text() or "").strip(),
-            "fit": (cells.nth(2).inner_text() or "").strip(),
-        })
+        results.append(
+            {
+                "resume": (cells.nth(0).inner_text() or "").strip(),
+                "score": (cells.nth(1).inner_text() or "").strip(),
+                "fit": (cells.nth(2).inner_text() or "").strip(),
+            }
+        )
     return results
 
 
@@ -221,6 +229,7 @@ def _score_value(score_text: str) -> float:
 # ============================================================
 # The single browser scenario-matrix test
 # ============================================================
+
 
 @pytest.mark.ui
 def test_scenario_matrix(page, scenario, data_root):
@@ -259,9 +268,7 @@ def test_scenario_matrix(page, scenario, data_root):
     # Wait for the Ranking table to actually have rows; this avoids the
     # strict-mode collision between the wrapper results panel and the
     # inner <section> that contains the <h2>Ranking</h2> + table.
-    ranking_table = page.locator(
-        "section:has(h2:text-is('Ranking')) table tbody tr"
-    )
+    ranking_table = page.locator("section:has(h2:text-is('Ranking')) table tbody tr")
     ranking_table.first.wait_for(timeout=180_000)
     page.wait_for_timeout(500)
 
@@ -295,12 +302,13 @@ def test_scenario_matrix(page, scenario, data_root):
 # Backend unit tests
 # ============================================================
 
+
 @pytest.mark.backend
 def test_safe_json_extract_parses_embedded_json():
     from backend import safe_json_extract
 
     assert safe_json_extract('hello {"a": 1} world') == {"a": 1}
-    assert safe_json_extract('not json') is None
+    assert safe_json_extract("not json") is None
 
 
 @pytest.mark.backend
@@ -368,11 +376,16 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
     index.reconstruct.return_value = cached_vector
     mocker.patch(
         "backend.load_resume_vector_store",
-        return_value=(index, [{
-            "resume_id": "resume-1",
-            "resume_name": "resume.pdf",
-            "faiss_row": 4,
-        }]),
+        return_value=(
+            index,
+            [
+                {
+                    "resume_id": "resume-1",
+                    "resume_name": "resume.pdf",
+                    "faiss_row": 4,
+                }
+            ],
+        ),
     )
     mock_encode = mocker.patch("backend.encode_text_embedding")
 
@@ -391,12 +404,14 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
 def test_safe_ollama_json_success_and_fallback(mocker):
     from backend import JD_SCHEMA, safe_ollama_json
 
-    content = json.dumps({
-        "experience": "3 years",
-        "primary_skills": ["Python"],
-        "secondary_skills": ["SQL"],
-        "education": "BTech",
-    })
+    content = json.dumps(
+        {
+            "experience": "3 years",
+            "primary_skills": ["Python"],
+            "secondary_skills": ["SQL"],
+            "education": "BTech",
+        }
+    )
     mocker.patch(
         "backend.ollama.chat",
         return_value={"message": {"content": content}},
@@ -448,14 +463,23 @@ def test_analyze_candidate_detail_uses_cache_when_present(mocker):
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
-    mocker.patch("backend.get_ai_cache_key", return_value="candidate_detail|Gemini|gemini-2.5-flash|90|resume|job")
-    mocker.patch("backend.get_ai_cache", return_value={
-        "candidate_detail|Gemini|gemini-2.5-flash|90|resume|job": cached,
-    })
+    mocker.patch(
+        "backend.get_ai_cache_key",
+        return_value="candidate_detail|Gemini|gemini-2.5-flash|90|resume|job",
+    )
+    mocker.patch(
+        "backend.get_ai_cache",
+        return_value={
+            "candidate_detail|Gemini|gemini-2.5-flash|90|resume|job": cached,
+        },
+    )
     mock_ai = mocker.patch("backend.safe_ai_json")
 
     result = analyze_candidate_detail(
-        "resume", "job", 90, model_name="gemini-2.5-flash",
+        "resume",
+        "job",
+        90,
+        model_name="gemini-2.5-flash",
     )
     assert result == cached
     mock_ai.assert_not_called()
@@ -465,10 +489,12 @@ def test_analyze_candidate_detail_uses_cache_when_present(mocker):
 def test_normalize_configuration_prefills_blank_prompts():
     from backend import DEFAULT_JD_PROMPT_TEMPLATE, normalize_configuration
 
-    normalized = normalize_configuration({
-        "ai_provider": "Gemini",
-        "jd_prompt_template": "",
-    })
+    normalized = normalize_configuration(
+        {
+            "ai_provider": "Gemini",
+            "jd_prompt_template": "",
+        }
+    )
     assert normalized["ai_provider"] == "Gemini"
     assert normalized["jd_prompt_template"] == DEFAULT_JD_PROMPT_TEMPLATE
 
@@ -476,6 +502,7 @@ def test_normalize_configuration_prefills_blank_prompts():
 # ============================================================
 # Integration probes (FastAPI direct, no React dev server required)
 # ============================================================
+
 
 @pytest.mark.integration
 def test_api_health_is_reachable():
@@ -548,13 +575,13 @@ def test_jd_input_required_field_via_analyze():
     try:
         urllib.request.urlopen(request, timeout=10)
     except urllib.error.HTTPError as error:
-        assert error.code in (400, 422), (
-            f"Expected 400/422 for empty JD, got {error.code}"
-        )
+        assert error.code in (
+            400,
+            422,
+        ), f"Expected 400/422 for empty JD, got {error.code}"
         error_body = error.read()
         assert (
-            b"job_description" in error_body
-            or b"Job description" in error_body
+            b"job_description" in error_body or b"Job description" in error_body
         ), f"Error body should mention the job_description field: {error_body!r}"
     else:
         raise AssertionError("Empty JD should have produced an error response.")
@@ -586,7 +613,6 @@ def test_ranking_flow_orders_candidates_by_score(scenario, data_root):
         payload = json.loads(response.read().decode("utf-8"))
 
     scores = [row["match_score"] for row in payload["ranking"] if "match_score" in row]
-    assert scores == sorted(scores, reverse=True), (
-        f"Ranking not sorted descending: {scores}"
-    )
-
+    assert scores == sorted(
+        scores, reverse=True
+    ), f"Ranking not sorted descending: {scores}"

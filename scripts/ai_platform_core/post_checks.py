@@ -291,9 +291,7 @@ def run_post_checks(
 
     # --- Aggregate ---------------------------------------------------------
     applicable = [r for r in results if r.status != "skipped"]
-    hard_failures = [
-        r for r in applicable if r.status in {"failed", "timeout"}
-    ]
+    hard_failures = [r for r in applicable if r.status in {"failed", "timeout"}]
     missing_tools = [r for r in applicable if r.status == "missing"]
 
     if not applicable:

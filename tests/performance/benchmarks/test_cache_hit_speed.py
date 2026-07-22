@@ -5,6 +5,7 @@ already in the FAISS index. This is the hot path: the same resume gets
 re-uploaded every time a recruiter tweaks the JD, and we want that to
 be near-free.
 """
+
 import io
 import pytest
 import sys
@@ -12,7 +13,11 @@ import os
 from pathlib import Path
 
 # Ensure the root directory is in the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+)
 from backend import (
     extract_text,
     get_or_create_resume_embedding,

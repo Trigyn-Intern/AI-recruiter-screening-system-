@@ -61,10 +61,14 @@ def print_completion(
     print(f"Status: {status}")
     print(f"Prompt: {relative(paths.final_prompt)}")
     print(f"History: {relative(paths.history_dir)}")
-    print(f"Reports: {', '.join(sorted(p.name for p in REPORTS.glob('ai-*-report.md'))) or 'none'}")
+    print(
+        f"Reports: {', '.join(sorted(p.name for p in REPORTS.glob('ai-*-report.md'))) or 'none'}"
+    )
     print(f"Codex Status: {codex_result.get('status', 'not run')}")
     print(f"Tests: {post_checks_result.get('status', 'skipped')}")
     print(f"Security: {'enabled' if request.security_review else 'skipped'}")
-    print(f"Build: {'ran' if 'npm-build' in post_checks_result.get('tools', []) else 'skipped'}")
+    print(
+        f"Build: {'ran' if 'npm-build' in post_checks_result.get('tools', []) else 'skipped'}"
+    )
     print(f"Execution Time: {duration_seconds:.2f}s")
     print()

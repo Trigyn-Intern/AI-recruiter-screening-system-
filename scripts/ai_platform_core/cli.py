@@ -65,7 +65,11 @@ def _confirm_codex() -> bool:
     """Ask the user whether to launch Codex CLI."""
 
     while True:
-        answer = input("Run implementation automatically with Codex CLI? (Y/N): ").strip().lower()
+        answer = (
+            input("Run implementation automatically with Codex CLI? (Y/N): ")
+            .strip()
+            .lower()
+        )
         if answer in {"y", "yes"}:
             return True
         if answer in {"n", "no"}:
@@ -126,7 +130,11 @@ def _run_pipeline(
             "duration_seconds": 0.0,
             "stdout_path": None,
             "stderr_path": None,
-            "manual_command": codex.manual_command(paths.final_prompt) if codex.is_available() else None,
+            "manual_command": (
+                codex.manual_command(paths.final_prompt)
+                if codex.is_available()
+                else None
+            ),
         }
 
     post_checks_result = run_post_checks(
@@ -135,7 +143,11 @@ def _run_pipeline(
         request=request,
     )
 
-    if codex_result.get("status") == "ok" and post_checks_result.get("status") in {"ok", "skipped", "degraded"}:
+    if codex_result.get("status") == "ok" and post_checks_result.get("status") in {
+        "ok",
+        "skipped",
+        "degraded",
+    }:
         status = "ok"
     elif codex_result.get("status") == "skipped":
         status = "manual_followup"
@@ -146,8 +158,12 @@ def _run_pipeline(
 
     duration = time.monotonic() - start
 
-    write_execution_json(paths, request, route, codex_result, post_checks_result, status)
-    write_execution_summary(paths, request, route, codex_result, post_checks_result, status, duration)
+    write_execution_json(
+        paths, request, route, codex_result, post_checks_result, status
+    )
+    write_execution_summary(
+        paths, request, route, codex_result, post_checks_result, status, duration
+    )
 
     inventory = generate_execution_reports(
         history_dir=paths.history_dir,
@@ -156,9 +172,13 @@ def _run_pipeline(
         post_checks_result=post_checks_result,
         duration_seconds=duration,
     )
-    update_dashboard(inventory, codex_result, post_checks_result, duration, paths.history_dir)
+    update_dashboard(
+        inventory, codex_result, post_checks_result, duration, paths.history_dir
+    )
 
-    _print_completion(request, paths, codex_result, post_checks_result, status, duration)
+    _print_completion(
+        request, paths, codex_result, post_checks_result, status, duration
+    )
     return 0
 
 
@@ -243,7 +263,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("dashboard", help="Show report/workflow/history/learning dashboard")
     sub.add_parser("history", help="List previous executions")
     sub.add_parser("validate", help="Validate required .ai folders and files")
-    sub.add_parser("clean", help="Remove temporary files while preserving reports and history")
+    sub.add_parser(
+        "clean", help="Remove temporary files while preserving reports and history"
+    )
     sub.add_parser("lessons", help="List learned lessons grouped by category")
 
     sub.add_parser("config", help="Display parsed project config")
@@ -254,7 +276,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the interactive wizard. Pass a task to skip the wizard with a default request.",
     )
     execute_cmd.add_argument("task", nargs="?", default=None)
-    learn_cmd = sub.add_parser("learn", help="Store a categorized privacy-screened lesson")
+    learn_cmd = sub.add_parser(
+        "learn", help="Store a categorized privacy-screened lesson"
+    )
     learn_cmd.add_argument("note")
     search_cmd = sub.add_parser("search", help="Search .ai platform documents")
     search_cmd.add_argument("keyword")
@@ -273,5 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         return _route(args.task)
     if args.command == "config":
         return _config()
-    print(f"Command '{args.command}' is handled by the legacy bridge in scripts/ai_platform.py.")
+    print(
+        f"Command '{args.command}' is handled by the legacy bridge in scripts/ai_platform.py."
+    )
     return 0

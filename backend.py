@@ -27,8 +27,6 @@ except ImportError:
     faiss = None
 
 
-
-
 # ==================================================
 # CONFIGURATION DEFAULTS
 # ==================================================
@@ -558,6 +556,7 @@ RUNTIME_STATE = {
 # LOAD EMBEDDING MODEL
 # ==================================================
 
+
 @lru_cache(maxsize=1)
 def load_model():
     try:
@@ -601,8 +600,7 @@ def encode_text_embedding(text, prefix):
         return np.asarray(embedding, dtype="float32")
     except Exception as error:
         RUNTIME_STATE["last_vector_store_error"] = (
-            "Embedding model unavailable, using local hash embeddings: "
-            f"{error}"
+            "Embedding model unavailable, using local hash embeddings: " f"{error}"
         )
         return create_hash_embedding(text, prefix)
 
@@ -625,13 +623,14 @@ def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
             metadata = []
     return index, metadata
 
-def faiss_index_lookup(resume_id):
-    """Return the cached embedding for 
-esume_id from the FAISS index,
-    or None if it isn't indexed yet.
 
-    This is a fast path used by get_or_create_resume_embedding so repeat
-    uploads of the same resume skip the embedding model entirely.
+def faiss_index_lookup(resume_id):
+    """Return the cached embedding for
+    esume_id from the FAISS index,
+        or None if it isn't indexed yet.
+
+        This is a fast path used by get_or_create_resume_embedding so repeat
+        uploads of the same resume skip the embedding model entirely.
     """
     if faiss is None or not FAISS_INDEX_PATH.exists():
         return None
@@ -752,10 +751,7 @@ def get_available_ollama_models():
             if isinstance(model, dict):
                 name = model.get("name") or model.get("model")
             else:
-                name = (
-                    getattr(model, "name", None)
-                    or getattr(model, "model", None)
-                )
+                name = getattr(model, "name", None) or getattr(model, "model", None)
 
             if name:
                 names.append(name)
@@ -769,6 +765,7 @@ def get_available_ollama_models():
 # ==================================================
 # HELPERS
 # ==================================================
+
 
 def init_configuration_state():
     if RUNTIME_STATE.get("ai_provider") not in AI_PROVIDER_OPTIONS:
@@ -786,9 +783,7 @@ def init_configuration_state():
         RUNTIME_STATE["jd_prompt_template"] = DEFAULT_JD_PROMPT_TEMPLATE
 
     if not RUNTIME_STATE.get("skill_gap_prompt_template", "").strip():
-        RUNTIME_STATE[
-            "skill_gap_prompt_template"
-        ] = DEFAULT_SKILL_GAP_PROMPT_TEMPLATE
+        RUNTIME_STATE["skill_gap_prompt_template"] = DEFAULT_SKILL_GAP_PROMPT_TEMPLATE
 
     RUNTIME_STATE.setdefault("use_custom_jd_prompt", False)
     RUNTIME_STATE.setdefault("use_custom_skill_gap_prompt", False)
@@ -806,9 +801,7 @@ def init_configuration_state():
     )
 
     if not RUNTIME_STATE["use_custom_jd_prompt"]:
-        RUNTIME_STATE["active_jd_prompt_template"] = (
-            DEFAULT_JD_PROMPT_TEMPLATE
-        )
+        RUNTIME_STATE["active_jd_prompt_template"] = DEFAULT_JD_PROMPT_TEMPLATE
 
     if not RUNTIME_STATE["use_custom_skill_gap_prompt"]:
         RUNTIME_STATE["active_skill_gap_prompt_template"] = (
@@ -853,20 +846,12 @@ def get_skill_gap_prompt_template():
 
 def get_candidate_detail_prompt_template():
     prompt = RUNTIME_STATE.get("active_candidate_detail_prompt_template", "")
-    return (
-        prompt
-        if prompt.strip()
-        else DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
-    )
+    return prompt if prompt.strip() else DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
 
 
 def get_candidate_grading_prompt_template():
     prompt = RUNTIME_STATE.get("active_candidate_grading_prompt_template", "")
-    return (
-        prompt
-        if prompt.strip()
-        else DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
-    )
+    return prompt if prompt.strip() else DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
 
 
 def get_resume_skill_extraction_prompt_template():
@@ -874,11 +859,7 @@ def get_resume_skill_extraction_prompt_template():
         "active_resume_skill_extraction_prompt_template",
         "",
     )
-    return (
-        prompt
-        if prompt.strip()
-        else DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
-    )
+    return prompt if prompt.strip() else DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
 
 
 def get_ai_cache_key(*parts):
@@ -988,9 +969,8 @@ def get_resume_database_records():
         existing["skills_model"] = item.get("model", "")
         existing["skill_count"] = len(profile_skills)
         existing["skills_indexed"] = has_skill_signal
-        existing["last_updated_at"] = (
-            existing.get("last_updated_at")
-            or item.get("last_updated_at", "")
+        existing["last_updated_at"] = existing.get("last_updated_at") or item.get(
+            "last_updated_at", ""
         )
 
     for record in records.values():
@@ -1047,10 +1027,7 @@ def get_indexed_resume_analysis_records():
             resume_skill_profile = normalize_resume_skill_profile(
                 skills_item.get("skills", {}) or {}
             )
-            last_updated_at = (
-                last_updated_at
-                or skills_item.get("last_updated_at", "")
-            )
+            last_updated_at = last_updated_at or skills_item.get("last_updated_at", "")
 
         analysis_records.append(
             {
@@ -1063,11 +1040,11 @@ def get_indexed_resume_analysis_records():
                     dtype="float32",
                 ),
                 "resume_skill_profile": resume_skill_profile,
-                "resume_text": format_resume_skill_profile(
-                    resume_skill_profile
-                )
-                if resume_skill_profile_has_signal(resume_skill_profile)
-                else "",
+                "resume_text": (
+                    format_resume_skill_profile(resume_skill_profile)
+                    if resume_skill_profile_has_signal(resume_skill_profile)
+                    else ""
+                ),
             }
         )
 
@@ -1085,9 +1062,7 @@ def get_default_configuration():
         "gemini_model": GEMINI_MODEL_OPTIONS[0],
         "jd_prompt_template": DEFAULT_JD_PROMPT_TEMPLATE,
         "skill_gap_prompt_template": DEFAULT_SKILL_GAP_PROMPT_TEMPLATE,
-        "candidate_detail_prompt_template": (
-            DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
-        ),
+        "candidate_detail_prompt_template": (DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE),
         "candidate_grading_prompt_template": (
             DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
         ),
@@ -1129,10 +1104,7 @@ def normalize_configuration(config):
             DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
         )
 
-    if (
-        "Do not use or mention the existing match score"
-        not in candidate_grading_prompt
-    ):
+    if "Do not use or mention the existing match score" not in candidate_grading_prompt:
         normalized_config["candidate_grading_prompt_template"] = (
             DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
         )
@@ -1156,9 +1128,7 @@ def load_configuration():
     RUNTIME_STATE["ai_provider"] = config["ai_provider"]
     RUNTIME_STATE["ollama_model"] = config["ollama_model"]
     RUNTIME_STATE["gemini_model"] = config["gemini_model"]
-    RUNTIME_STATE["active_jd_prompt_template"] = config[
-        "jd_prompt_template"
-    ]
+    RUNTIME_STATE["active_jd_prompt_template"] = config["jd_prompt_template"]
     RUNTIME_STATE["active_skill_gap_prompt_template"] = config[
         "skill_gap_prompt_template"
     ]
@@ -1289,7 +1259,7 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
                 {
                     "role": "user",
                     "content": prompt,
-                }
+                },
             ],
             options={
                 "temperature": 0,
@@ -1300,9 +1270,7 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(result)
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = (
-                "The model did not return valid JSON."
-            )
+            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1317,14 +1285,10 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
 def safe_gemini_json(prompt, schema, fallback, model_name=None):
     try:
         if genai is None:
-            raise RuntimeError(
-                "Install google-genai to use Gemini models."
-            )
+            raise RuntimeError("Install google-genai to use Gemini models.")
 
         if not os.getenv("GEMINI_API_KEY"):
-            raise RuntimeError(
-                "Set GEMINI_API_KEY to use Gemini models."
-            )
+            raise RuntimeError("Set GEMINI_API_KEY to use Gemini models.")
 
         client = genai.Client()
         selected_model = model_name or get_selected_model()
@@ -1344,8 +1308,7 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None):
             except Exception as error:
                 message = str(error)
                 is_transient = any(
-                    code in message
-                    for code in GEMINI_TRANSIENT_ERROR_CODES
+                    code in message for code in GEMINI_TRANSIENT_ERROR_CODES
                 )
 
                 if not is_transient or attempt == 2:
@@ -1356,9 +1319,7 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(response.text or "")
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = (
-                "The model did not return valid JSON."
-            )
+            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1407,8 +1368,10 @@ def format_prompt(template, **values):
     if used_placeholder:
         return prompt
 
-    return prompt + "\n\n" + "\n\n".join(
-        f"{key.upper()}:\n{value}" for key, value in values.items()
+    return (
+        prompt
+        + "\n\n"
+        + "\n\n".join(f"{key.upper()}:\n{value}" for key, value in values.items())
     )
 
 
@@ -1447,18 +1410,16 @@ def normalize_skill_list(value):
 
     if isinstance(value, str):
         value = [
-            item.strip(" -ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢\t")
+            item.strip(
+                " -ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢\t"
+            )
             for item in value.replace("\n", ",").split(",")
         ]
 
     if not isinstance(value, list):
         return []
 
-    return [
-        str(item).strip()
-        for item in value
-        if str(item).strip()
-    ][:10]
+    return [str(item).strip() for item in value if str(item).strip()][:10]
 
 
 def split_skill_text(value):
@@ -1491,21 +1452,13 @@ def skill_matches_text(skill, text):
     if skill_text in target_text:
         return True
 
-    skill_tokens = [
-        token
-        for token in skill_text.split()
-        if len(token) > 2
-    ]
+    skill_tokens = [token for token in skill_text.split() if len(token) > 2]
 
     if not skill_tokens:
         return False
 
     target_tokens = set(target_text.split())
-    matched_tokens = [
-        token
-        for token in skill_tokens
-        if token in target_tokens
-    ]
+    matched_tokens = [token for token in skill_tokens if token in target_tokens]
     required_matches = 1 if len(skill_tokens) <= 2 else 2
     return len(matched_tokens) >= required_matches
 
@@ -1712,11 +1665,7 @@ def build_local_resume_skill_profile(resume_text):
         "Flowable",
         "Drools",
     }
-    tools = [
-        skill
-        for skill in technical_skills
-        if skill in tool_keywords
-    ][:15]
+    tools = [skill for skill in technical_skills if skill in tool_keywords][:15]
     evidence = []
 
     for skill in technical_skills[:10]:
@@ -1732,9 +1681,7 @@ def build_local_resume_skill_profile(resume_text):
             )
 
     summary_lines = [
-        line.strip()
-        for line in text.splitlines()
-        if len(line.strip()) > 40
+        line.strip() for line in text.splitlines() if len(line.strip()) > 40
     ][:3]
     summary = " ".join(summary_lines)[:700] or "Not Found"
 
@@ -1758,9 +1705,11 @@ def build_matching_skill_evidence(resume_skill_profile, matching_skills):
         else []
     )
     summary = display_value(
-        resume_skill_profile.get("experience_summary")
-        if isinstance(resume_skill_profile, dict)
-        else "",
+        (
+            resume_skill_profile.get("experience_summary")
+            if isinstance(resume_skill_profile, dict)
+            else ""
+        ),
         "",
     )
     matching_evidence = []
@@ -1883,9 +1832,7 @@ def build_indexed_candidate_detail(
     )
 
     matching_skills = [
-        skill
-        for skill in resume_skills
-        if skill_matches_text(skill, job_text)
+        skill for skill in resume_skills if skill_matches_text(skill, job_text)
     ][:10]
     missing_skills = []
 
@@ -1929,11 +1876,7 @@ def build_indexed_candidate_detail(
 
 
 def normalize_key(key):
-    return "".join(
-        character
-        for character in str(key).lower()
-        if character.isalnum()
-    )
+    return "".join(character for character in str(key).lower() if character.isalnum())
 
 
 def flatten_dict(data):
@@ -1956,14 +1899,8 @@ def get_first_present(data, keys, default=None):
         return default
 
     flattened = flatten_dict(data)
-    lower_key_map = {
-        str(key).lower(): value
-        for key, value in flattened.items()
-    }
-    normalized_key_map = {
-        normalize_key(key): value
-        for key, value in flattened.items()
-    }
+    lower_key_map = {str(key).lower(): value for key, value in flattened.items()}
+    normalized_key_map = {normalize_key(key): value for key, value in flattened.items()}
 
     for key in keys:
         if key in flattened:
@@ -1984,19 +1921,11 @@ def get_first_present(data, keys, default=None):
 
 def display_value(value, default="Not Found"):
     if isinstance(value, list):
-        values = [
-            str(item).strip()
-            for item in value
-            if str(item).strip()
-        ]
+        values = [str(item).strip() for item in value if str(item).strip()]
         return ", ".join(values) if values else default
 
     if isinstance(value, dict):
-        values = [
-            str(item).strip()
-            for item in value.values()
-            if str(item).strip()
-        ]
+        values = [str(item).strip() for item in value.values() if str(item).strip()]
         return ", ".join(values) if values else default
 
     if value is None:
@@ -2059,6 +1988,7 @@ def summarize_gemini_error(error):
 # EXTRACT TEXT
 # ==================================================
 
+
 def extract_pdf_text(pdf_file):
     text = ""
     reader = PdfReader(pdf_file)
@@ -2114,6 +2044,7 @@ def extract_text(file):
 # MATCH SCORE
 # ==================================================
 
+
 def calculate_match_score(resume_embedding, job_text):
     if isinstance(resume_embedding, str):
         resume_embedding = encode_text_embedding(
@@ -2152,6 +2083,7 @@ def analyze_job_description_cached(job_text, model_name=None, provider=None):
     result = analyze_job_description(job_text, model_name=model_name, provider=provider)
     _JD_ANALYSIS_CACHE[key] = result
     return result
+
 
 def analyze_job_description(
     job_text,
@@ -2454,25 +2386,15 @@ def normalize_candidate_grading(data):
 
 def normalize_resume_skill_profile(data):
     return {
-        "technical_skills": normalize_skill_list(
-            data.get("technical_skills", [])
-        ),
-        "soft_skills": normalize_skill_list(
-            data.get("soft_skills", [])
-        ),
-        "tools": normalize_skill_list(
-            data.get("tools", [])
-        ),
-        "domains": normalize_skill_list(
-            data.get("domains", [])
-        ),
+        "technical_skills": normalize_skill_list(data.get("technical_skills", [])),
+        "soft_skills": normalize_skill_list(data.get("soft_skills", [])),
+        "tools": normalize_skill_list(data.get("tools", [])),
+        "domains": normalize_skill_list(data.get("domains", [])),
         "experience_summary": display_value(
             data.get("experience_summary"),
             "Not Found",
         ),
-        "skill_evidence": normalize_skill_evidence(
-            data.get("skill_evidence", [])
-        ),
+        "skill_evidence": normalize_skill_evidence(data.get("skill_evidence", [])),
     }
 
 
@@ -2493,10 +2415,13 @@ def resume_skill_profile_has_signal(profile):
     if any(profile.get(key) for key in skill_keys):
         return True
 
-    return display_value(
-        profile.get("experience_summary"),
-        "",
-    ) != "Not Found"
+    return (
+        display_value(
+            profile.get("experience_summary"),
+            "",
+        )
+        != "Not Found"
+    )
 
 
 def is_complete_resume_skill_profile(profile):
@@ -2522,7 +2447,8 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
 
     if (
         isinstance(existing, dict)
-        and existing.get("model") in [
+        and existing.get("model")
+        in [
             GEMINI_RESUME_SKILL_MODEL,
             "local-fallback",
         ]
@@ -2569,16 +2495,13 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
             return local_profile
 
         RUNTIME_STATE["last_resume_skill_status"] = (
-            f"Could not save Gemini skills for {resume_name}: "
-            f"{resume_skill_error}"
+            f"Could not save Gemini skills for {resume_name}: " f"{resume_skill_error}"
         )
         RUNTIME_STATE["last_ai_error"] = previous_ai_error
         return profile
 
     if not resume_skill_profile_has_signal(profile):
-        local_profile = local_profile or build_local_resume_skill_profile(
-            resume_text
-        )
+        local_profile = local_profile or build_local_resume_skill_profile(resume_text)
 
         if resume_skill_profile_has_signal(local_profile):
             profile = local_profile
@@ -2615,9 +2538,7 @@ def format_resume_skill_profile(profile):
 def build_resume_analysis_context(resume_text, resume_skill_profile):
     raw_resume_text = display_value(resume_text, "")
     has_raw_resume_text = raw_resume_text and raw_resume_text != "Not Found"
-    has_indexed_profile = resume_skill_profile_has_signal(
-        resume_skill_profile
-    )
+    has_indexed_profile = resume_skill_profile_has_signal(resume_skill_profile)
 
     if has_raw_resume_text and has_indexed_profile:
         return (
@@ -2650,9 +2571,7 @@ def build_candidate_grading_fallback(
     lower_context = resume_context_text.lower()
     total_skill_signals = len(matching_skills) + len(missing_skills)
     match_ratio = (
-        len(matching_skills) / total_skill_signals
-        if total_skill_signals
-        else 0
+        len(matching_skills) / total_skill_signals if total_skill_signals else 0
     )
     project_signal_count = sum(
         1
@@ -2684,19 +2603,16 @@ def build_candidate_grading_fallback(
 
     if matching_skills:
         strengths.append(
-            "Matches key requirements including "
-            f"{', '.join(matching_skills[:4])}."
+            "Matches key requirements including " f"{', '.join(matching_skills[:4])}."
         )
 
     if project_signal_count >= 2:
         strengths.append(
-            "Resume context includes hands-on project or implementation "
-            "signals."
+            "Resume context includes hands-on project or implementation " "signals."
         )
     elif matching_skills:
         concerns.append(
-            "Hands-on project evidence is limited or unclear for the matched "
-            "skills."
+            "Hands-on project evidence is limited or unclear for the matched " "skills."
         )
 
     if missing_skills:
@@ -2770,12 +2686,16 @@ def ensure_candidate_grading(
 
     fallback_grading = build_candidate_grading_fallback(
         resume_context,
-        matching_skills
-        if matching_skills is not None
-        else candidate_detail.get("matching_skills", []),
-        missing_skills
-        if missing_skills is not None
-        else candidate_detail.get("missing_skills", []),
+        (
+            matching_skills
+            if matching_skills is not None
+            else candidate_detail.get("matching_skills", [])
+        ),
+        (
+            missing_skills
+            if missing_skills is not None
+            else candidate_detail.get("missing_skills", [])
+        ),
     )
     fallback_grading["debug"] = {
         "resume_name": candidate_detail.get("resume_name", ""),
@@ -2813,9 +2733,7 @@ def analyze_candidate_grading(
     prompt_template=None,
     resume_name="",
 ):
-    prompt_template = (
-        prompt_template or get_candidate_grading_prompt_template()
-    )
+    prompt_template = prompt_template or get_candidate_grading_prompt_template()
     matching_skills = remove_placeholder_skills(matching_skills)
     missing_skills = remove_placeholder_skills(missing_skills)
     debug = {
@@ -2842,11 +2760,7 @@ def analyze_candidate_grading(
     cache = get_ai_cache()
 
     if cache_key in cache and candidate_grading_is_usable(cache[cache_key]):
-        cached_error = (
-            cache[cache_key]
-            .get("debug", {})
-            .get("gemini_error", "")
-        )
+        cached_error = cache[cache_key].get("debug", {}).get("gemini_error", "")
         cached_result = {
             **cache[cache_key],
             "debug": {
@@ -2982,9 +2896,7 @@ def analyze_candidate_detail(
                 cached_result.get("matching_skills", []),
             )
 
-        if not candidate_grading_is_usable(
-            cached_result.get("candidate_grading")
-        ):
+        if not candidate_grading_is_usable(cached_result.get("candidate_grading")):
             cached_result["candidate_grading"] = analyze_candidate_grading(
                 resume_context,
                 job_text,
@@ -3022,9 +2934,7 @@ def analyze_candidate_detail(
     if not result["matching_skills"]:
         result["matching_skills"] = indexed_detail["matching_skills"]
     else:
-        result["matching_skills"] = remove_placeholder_skills(
-            result["matching_skills"]
-        )
+        result["matching_skills"] = remove_placeholder_skills(result["matching_skills"])
 
         if not result["matching_skills"]:
             result["matching_skills"] = indexed_detail["matching_skills"]
@@ -3035,8 +2945,7 @@ def analyze_candidate_detail(
     )
 
     if (
-        result["justification"]
-        == CANDIDATE_DETAIL_FALLBACK["justification"]
+        result["justification"] == CANDIDATE_DETAIL_FALLBACK["justification"]
         or unusable_resume_message
     ):
         result["justification"] = indexed_detail["justification"]
@@ -3062,6 +2971,7 @@ def analyze_candidate_detail(
 # PROCESS SINGLE RESUME
 # ==================================================
 
+
 def process_resume(resume_file, job_description):
     resume_id = get_resume_id(resume_file)
     resume_text = extract_text(resume_file)
@@ -3085,6 +2995,7 @@ def process_resume(resume_file, job_description):
         "Resume ID": resume_id,
         "Match Score (%)": score,
     }
+
 
 def persist_analysis_session(*args, **kwargs) -> str:
     """Append one analysis session to vector_store/analysis_sessions.json.
@@ -3119,10 +3030,3 @@ def persist_analysis_session(*args, **kwargs) -> str:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(sessions, f, ensure_ascii=False, indent=2)
     return payload["session_id"]
-
-
-
-
-
-
-
