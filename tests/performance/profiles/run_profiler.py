@@ -40,7 +40,7 @@ for _mod in _STUBS:
 for _real in ("docx", "pypdf"):
     sys.modules.pop(_real, None)
 
-import importlib
+import importlib  # noqa: E402
 importlib.import_module("pypdf")
 importlib.import_module("docx")
 

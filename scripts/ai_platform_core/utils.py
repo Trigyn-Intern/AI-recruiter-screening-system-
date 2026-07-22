@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from datetime import datetime, timezone
+
 UTC = timezone.utc
 
-from .wizard_defaults import ROOT
+from .wizard_defaults import ROOT  # noqa: E402
 
 
 def utc_now() -> datetime:

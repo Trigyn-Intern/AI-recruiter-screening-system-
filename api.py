@@ -1,5 +1,6 @@
 import io
 import os
+import time
 import asyncio
 import json
 import uuid
@@ -22,7 +23,7 @@ _env_path = pathlib.Path(__file__).resolve().parent / "backend" / ".env"
 if _env_path.exists():
     load_dotenv(_env_path)
 
-from backend import (
+from backend import (  # noqa: E402
     AI_PROVIDER_OPTIONS,
     GEMINI_MODEL_OPTIONS,
     OLLAMA_MODEL_OPTIONS,
