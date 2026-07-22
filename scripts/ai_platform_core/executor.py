@@ -197,7 +197,9 @@ class CodexRunner:
 
         try:
             remaining = max(1, self.timeout_seconds - int(time.monotonic() - start))
-            stdout_text, stderr_text = process.communicate(input=prompt_text, timeout=remaining)
+            stdout_text, stderr_text = process.communicate(
+                input=prompt_text, timeout=remaining
+            )
             stdout_chunks.append(stdout_text)
             stderr_chunks.append(stderr_text)
             returncode = process.returncode
@@ -209,7 +211,6 @@ class CodexRunner:
             stderr_chunks.append(f"\n[executor] stream error: {exc}\n")
             returncode = process.poll()
 
-         
         duration = round(time.monotonic() - start, 2)
         stdout_text = "".join(stdout_chunks)
         stderr_text = "".join(stderr_chunks)
