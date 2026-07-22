@@ -7,9 +7,9 @@ import re
 import shutil
 import sys
 from collections import Counter
+from pathlib import Path
 from datetime import datetime, timezone
 UTC = timezone.utc
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 AI = ROOT / ".ai"
@@ -202,17 +202,22 @@ def main() -> int:
         )
         return 0
     if command == "status":
-        _status(); return 0
+        _status()
+        return 0
     if command == "dashboard":
-        _dashboard(); return 0
+        _dashboard()
+        return 0
     if command == "history":
-        _list_history(); return 0
+        _list_history()
+        return 0
     if command == "validate":
         return _validate()
     if command == "clean":
-        _clean(); return 0
+        _clean()
+        return 0
     if command == "lessons":
-        _lessons(); return 0
+        _lessons()
+        return 0
     if command == "learn":
         if len(sys.argv) < 3:
             print("Usage: ai_platform.py learn <note>")

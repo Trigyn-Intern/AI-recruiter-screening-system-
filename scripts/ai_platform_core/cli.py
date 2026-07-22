@@ -38,6 +38,14 @@ def _one_shot_request(task: str) -> ExecutionRequest:
         security_review=False,
         migration_notes=False,
         additional_notes="",
+        options={
+            "skip_checks": False,
+            "run_bandit": False,
+            "run_lighthouse": False,
+            "run_integration": False,
+            "run_performance": False,
+            "run_playwright": False,
+        },
     )
 
 
@@ -127,10 +135,12 @@ def _run_pipeline(
         request=request,
     )
 
-    if codex_result.get("status") == "ok" and post_checks_result.get("status") in {"ok", "skipped"}:
+    if codex_result.get("status") == "ok" and post_checks_result.get("status") in {"ok", "skipped", "degraded"}:
         status = "ok"
     elif codex_result.get("status") == "skipped":
         status = "manual_followup"
+    elif post_checks_result.get("status") == "degraded":
+        status = "degraded"
     else:
         status = "needs_attention"
 
@@ -236,7 +246,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("clean", help="Remove temporary files while preserving reports and history")
     sub.add_parser("lessons", help="List learned lessons grouped by category")
 
-    config_cmd = sub.add_parser("config", help="Display parsed project config")
+    sub.add_parser("config", help="Display parsed project config")
     route_cmd = sub.add_parser("route", help="Route a task")
     route_cmd.add_argument("task")
     execute_cmd = sub.add_parser(

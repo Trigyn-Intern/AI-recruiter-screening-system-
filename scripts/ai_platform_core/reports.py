@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_project_config
-from .utils import read_text, relative, write_json, write_text
+from .utils import relative, write_json, write_text
 from .wizard_defaults import DASHBOARD_JSON, REPORTS
 
 SKIP_PARTS = {
-    ".git", ".github", "node_modules", "venv", "__pycache__", "dist", "build",
+    ".git", ".github", ".ai", "node_modules", "venv", "__pycache__", "dist", "build",
     ".next", ".idea", ".vscode", "coverage", "reports", "vector_store",
     ".lighthouseci", "zap-reports", "frontend-test",
 }
@@ -224,6 +224,7 @@ def update_dashboard(
         "codex_status": codex_result.get("status", "not run"),
         "post_checks_status": post_checks_result.get("status", "skipped"),
         "post_check_tools": post_checks_result.get("tools", []),
+        "post_checks_missing": post_checks_result.get("missing_tools", []),
         "duration_seconds": round(duration_seconds, 2),
         "reports": sorted(p.name for p in REPORTS.glob("ai-*-report.md")) if REPORTS.exists() else [],
     }

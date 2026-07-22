@@ -10,7 +10,6 @@ os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 import numpy as np
 import ollama
-import pandas as pd
 from docx import Document
 from jsonschema import ValidationError, validate
 from pypdf import PdfReader
@@ -652,21 +651,6 @@ esume_id from the FAISS index,
             except Exception:
                 return None
     return None
-
-    if faiss is None:
-        raise RuntimeError(
-            "Install faiss-cpu to use the resume vector database."
-        )
-
-    ensure_vector_store_dir()
-    metadata = read_json_file(FAISS_METADATA_PATH, [])
-
-    if FAISS_INDEX_PATH.exists():
-        index = faiss.read_index(str(FAISS_INDEX_PATH))
-    else:
-        index = faiss.IndexFlatIP(dimension)
-
-    return index, metadata
 
 
 def save_resume_vector_store(index, metadata):
@@ -3110,7 +3094,9 @@ def persist_analysis_session(*args, **kwargs) -> str:
     ``file_cache=``). All extra args are folded into the stored payload
     so any caller shape works.
     """
-    import os, json, uuid
+    import os
+    import json
+    import uuid
 
     if args and isinstance(args[0], dict) and not kwargs:
         payload = dict(args[0])

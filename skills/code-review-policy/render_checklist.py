@@ -1,6 +1,11 @@
 """Render a single Code Review Checklist HTML report from the two templates."""
 from __future__ import annotations
-import argparse, datetime, html, json, re, sys
+import argparse
+import datetime
+import html
+import json
+import re
+import sys
 from pathlib import Path
 
 TAG_PATTERN = re.compile(r"\{(\^|#|/)([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -27,7 +32,8 @@ def render_template(text, data):
                 out.append(render_template(body, item))
         else:
             items = data.get(name) or []
-            if not items: out.append(render_template(body, data))
+            if not items:
+                out.append(render_template(body, data))
         pos = inner_end + close.end() - close.start()
     return "".join(out)
 
@@ -69,9 +75,12 @@ CSS = """\
 
 def pill_for(status):
     s = (status or "").strip().lower()
-    if s in ("pass","ok","yes","done","approved","approve"): return "pass"
-    if s in ("fail","no","rejected","block","request changes"): return "fail"
-    if s in ("warn","warning","needs changes","approve with suggestions","partial"): return "warn"
+    if s in ("pass", "ok", "yes", "done", "approved", "approve"):
+        return "pass"
+    if s in ("fail", "no", "rejected", "block", "request changes"):
+        return "fail"
+    if s in ("warn", "warning", "needs changes", "approve with suggestions", "partial"):
+        return "warn"
     return "na"
 
 def render_structured(data):
@@ -85,9 +94,12 @@ def render_structured(data):
     if items:
         out.append("<h2>General Checklist</h2><ul>")
         for it in items:
-            item = html.escape(str(it.get("item", ""))); comment = html.escape(str(it.get("comment", "")))
-            if comment: out.append("<li><strong>" + item + "</strong> - " + comment + "</li>")
-            else: out.append("<li><strong>" + item + "</strong></li>")
+            item = html.escape(str(it.get("item", "")))
+            comment = html.escape(str(it.get("comment", "")))
+            if comment:
+                out.append("<li><strong>" + item + "</strong> - " + comment + "</li>")
+            else:
+                out.append("<li><strong>" + item + "</strong></li>")
         out.append("</ul>")
     rows = data.get("codeQuality") or []
     if rows:
@@ -106,16 +118,19 @@ def render_structured(data):
             pill = pill_for(r.get("status", ""))
             out.append("<tr><td>" + html.escape(str(r.get("checkItem", ""))) + "</td><td><span class=\"pill " + pill + "\">" + html.escape(str(r.get("status", ""))) + "</span></td><td>" + html.escape(str(r.get("comments", ""))) + "</td></tr>")
         out.append("</tbody></table>")
-    else: out.append("<p class=\"note\">No security-specific checks were included in this review.</p>")
+    else:
+        out.append("<p class=\"note\">No security-specific checks were included in this review.</p>")
     perf = data.get("performanceChecks") or []
     if perf:
         out.append("<h2>Performance Checks</h2><ul>")
-        for p in perf: out.append("<li><strong>" + html.escape(str(p.get("title", ""))) + "</strong>: " + html.escape(str(p.get("details", ""))) + "</li>")
+        for p in perf:
+            out.append("<li><strong>" + html.escape(str(p.get("title", ""))) + "</strong>: " + html.escape(str(p.get("details", ""))) + "</li>")
         out.append("</ul>")
     style = data.get("stylePractices") or []
     if style:
         out.append("<h2>Style and Best Practices</h2><ul>")
-        for s in style: out.append("<li><strong>" + html.escape(str(s.get("practice", ""))) + "</strong>: " + html.escape(str(s.get("issuesFound", ""))) + "</li>")
+        for s in style:
+            out.append("<li><strong>" + html.escape(str(s.get("practice", ""))) + "</strong>: " + html.escape(str(s.get("issuesFound", ""))) + "</li>")
         out.append("</ul>")
     out.append("<h2>Test Coverage</h2><dl class=\"grid\">")
     out.append("<dt>Are tests present?</dt><dd>" + html.escape(str(data.get("hasTests", "-"))) + "</dd>")
@@ -124,13 +139,16 @@ def render_structured(data):
     fb = data.get("reviewerFeedbacks") or []
     if fb:
         out.append("<h2>Additional Reviewers Feedback</h2><ul>")
-        for f in fb: out.append("<li><strong>" + html.escape(str(f.get("reviewerName", ""))) + "</strong>: " + html.escape(str(f.get("comment", ""))) + "</li>")
+        for f in fb:
+            out.append("<li><strong>" + html.escape(str(f.get("reviewerName", ""))) + "</strong>: " + html.escape(str(f.get("comment", ""))) + "</li>")
         out.append("</ul>")
-    if data.get("finalNotes"): out.append("<h2>Final Notes</h2><p>" + html.escape(str(data["finalNotes"])) + "</p>")
+    if data.get("finalNotes"):
+        out.append("<h2>Final Notes</h2><p>" + html.escape(str(data["finalNotes"])) + "</p>")
     out.append("<h2>Approval</h2><dl class=\"grid\">")
     out.append("<dt>Approved by</dt><dd>" + html.escape(str(data.get("approvedBy", "-"))) + "</dd>")
     out.append("<dt>Date of Approval</dt><dd>" + html.escape(str(data.get("approvalDate", "-"))) + "</dd>")
-    merge = data.get("mergeStatus", "-") or "-"; pill = pill_for(merge)
+    merge = data.get("mergeStatus", "-") or "-"
+    pill = pill_for(merge)
     out.append("<dt>Merge Status</dt><dd><span class=\"pill " + pill + "\">" + html.escape(str(merge)) + "</span></dd></dl>")
     return "\n".join(out)
 
@@ -239,7 +257,8 @@ def main():
     p.add_argument("--stamp", default=None)
     args = p.parse_args()
     data = {}
-    if args.data and args.data.exists(): data = json.loads(args.data.read_text(encoding="utf-8"))
+    if args.data and args.data.exists():
+        data = json.loads(args.data.read_text(encoding="utf-8"))
     structured_html = render_structured(data)
     detailed_html = render_detailed(data)
     stamp = args.stamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

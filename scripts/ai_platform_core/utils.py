@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-UTC = timezone.utc
 from pathlib import Path
 from typing import Any
+from datetime import datetime, timezone
+UTC = timezone.utc
 
 from .wizard_defaults import ROOT
 
