@@ -1,6 +1,5 @@
 from fastapi.testclient import TestClient
 from api import api, build_fit_bucket, serialize_jd_info
-import pytest
 
 client = TestClient(api)
 
