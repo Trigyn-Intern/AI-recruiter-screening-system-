@@ -231,7 +231,7 @@ def _score_value(score_text: str) -> float:
 # ============================================================
 
 
-@pytest.mark.ui
+@pytest.mark.e2e
 def test_scenario_matrix(page, scenario, data_root):
     SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -504,13 +504,13 @@ def test_normalize_configuration_prefills_blank_prompts():
 # ============================================================
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 def test_api_health_is_reachable():
     with urllib.request.urlopen(f"{API_BASE_URL}/health", timeout=5) as response:
         assert response.status == 200
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 def test_models_endpoint_lists_providers():
     with urllib.request.urlopen(f"{API_BASE_URL}/models", timeout=5) as response:
         payload = json.loads(response.read().decode("utf-8"))
@@ -521,7 +521,7 @@ def test_models_endpoint_lists_providers():
     assert payload["gemini_models"]
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 def test_resume_upload_via_analyze_endpoint(scenario, data_root):
     """Replaces tests/ui/test_upload.py."""
     jd_text = (data_root / scenario["jd_file"]).read_text(encoding="utf-8")
@@ -552,7 +552,7 @@ def test_resume_upload_via_analyze_endpoint(scenario, data_root):
     assert sum("error" not in row for row in payload["ranking"]) >= 1
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 def test_jd_input_required_field_via_analyze():
     """Replaces tests/ui/test_jd_input.py: empty JD must be rejected.
 
@@ -587,7 +587,7 @@ def test_jd_input_required_field_via_analyze():
         raise AssertionError("Empty JD should have produced an error response.")
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 def test_ranking_flow_orders_candidates_by_score(scenario, data_root):
     """Replaces tests/ui/test_rank_flow.py."""
     jd_text = (data_root / scenario["jd_file"]).read_text(encoding="utf-8")
