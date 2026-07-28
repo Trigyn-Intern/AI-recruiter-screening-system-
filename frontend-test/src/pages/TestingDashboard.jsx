@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LogOut,
   PlayCircle,
@@ -17,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Sparkles,
+  ClipboardList,
 } from "lucide-react";
 import {
   authApi,
@@ -440,6 +442,11 @@ export default function TestingDashboard() {
     }
   }
   function openReport(report) {
+    // If the catalog entry has a staticUrl, open it directly so relative assets (CSS/JS/PNG) load correctly.
+    if (report.staticUrl) {
+      window.open(report.staticUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
     const meta = reportsState[report.id];
     if (meta && meta.exists && meta.path) {
       window.open(`/api/reports/view?path=${encodeURIComponent(meta.path)}`, "_blank", "noopener,noreferrer");
@@ -670,10 +677,10 @@ export default function TestingDashboard() {
   }
 
   function handleLogout() {
-    clearSession(); setUser(null);
-    setAuthStatus({ state: "error", message: "Signed out. Log in again from the recruiter app." });
+  clearSession();
+  window.location.assign("/");
   }
-
+  
   const tabs = [
     { id: "unit", label: "Unit", count: TEST_CATALOG.unit.length },
     { id: "integration", label: "Integration", count: TEST_CATALOG.integration.length },
@@ -730,6 +737,15 @@ export default function TestingDashboard() {
             {analysisStatus.state === "ok" ? "FastAPI up" : analysisStatus.state === "err" ? "FastAPI down" : "Checking..."}
           </span>
           {user ? <strong style={{ marginLeft: 6 }}>{user.email}</strong> : null}
+          <Link
+            to="/report-summary"
+            className="rs-nav-btn"
+            type="button"
+            title="View, summarize, and download previously generated reports"
+          >
+            <ClipboardList size={13} />
+            Report Summary
+          </Link>
           <button className="secondary tiny" onClick={handleLogout} type="button">
             <LogOut size={12} /> Logout
           </button>

@@ -1,33 +1,30 @@
 """Run pytest, pip-audit, bandit, frontend builds, and lighthouse conditionally.
 
-Design notes
-------------
-* The previous version always ran the full backend suite (`if needs_backend or
-  True:`). This version honours the requested project area and supports
-  per-tool opt-outs via ``request.options``.
-* ``safety`` has been replaced with ``pip-audit`` to align with the CI
-  pipeline (``.github/workflows/ci.yml``). ``safety`` is still used as a
-  fallback if pip-audit is not installed.
-* Each tool reports its own status; the overall status is ``ok`` only when
+Design notes:
+- The previous version always ran the full backend suite (`if needs_backend or
+  True:`). This version honours the requested project area, supports per-tool
+  opt-outs via ``request.options``, and skips slow/integration tests by
+  default unless the user explicitly opts in.
+- ``safety`` has been replaced with ``pip-audit`` to align with the CI
+  pipeline (``.github/workflows/ci.yml``). ``safety`` is still recognised
+  as a fallback if pip-audit is not installed.
+- Each tool reports its own status; the overall status is ``ok`` only when
   every *applicable* tool passed. Missing CLIs are reported as ``missing``
   instead of silently skipping.
-* Subprocess output is captured as bytes and decoded with
-  ``errors="replace"`` to avoid truncation and OOM on large logs.
-* ``sys.executable`` is used to invoke ``python -m pytest`` so the run honours
-  the active virtualenv.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
-import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .routing import ExecutionRequest
+from .utils import relative
 
 
 @dataclass(frozen=True)
@@ -55,9 +52,7 @@ class ToolResult:
 def _resolve_python_executable() -> str:
     """Prefer the current interpreter; fall back to ``python`` on PATH."""
 
-    if sys.executable:
-        return sys.executable
-    return shutil.which("python") or "python"
+    return sys.executable if sys.executable else (shutil.which("python") or "python")
 
 
 def _run(
@@ -73,7 +68,7 @@ def _run(
             args,
             cwd=str(cwd),
             capture_output=True,
-            text=False,  # capture bytes; decode safely below
+            text=False,  # capture bytes so we can decode safely ourselves
             timeout=timeout,
             check=False,
         )
@@ -108,6 +103,7 @@ def _run(
             error=str(exc),
         )
 
+    # Decode bytes safely, replacing invalid sequences rather than truncating.
     stdout_text = (completed.stdout or b"").decode("utf-8", errors="replace")
     stderr_text = (completed.stderr or b"").decode("utf-8", errors="replace")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -154,8 +150,8 @@ def _bandit_args() -> list[str]:
 def _pytest_args(options: dict[str, Any]) -> list[str]:
     """Build a focused pytest invocation.
 
-    By default, only the unit suite runs. Performance, integration, and
-    Playwright suites are opt-in via ``request.options``.
+    By default, we run only the unit suite. Performance, integration, and
+    benchmark tests are opt-in via ``request.options``.
     """
 
     args = ["-q", "tests/unit"]
@@ -187,9 +183,7 @@ def _classify_area(area: str) -> dict[str, bool]:
         "needs_backend": any(
             token in lowered for token in ("backend", "api", "database", "full stack")
         ),
-        "needs_frontend_test": (
-            "frontend-test" in lowered or "qa" in lowered or "testing" in lowered
-        ),
+        "needs_frontend_test": "frontend-test" in lowered or "qa" in lowered,
     }
 
 
@@ -199,20 +193,20 @@ def run_post_checks(
     request: ExecutionRequest,
 ) -> dict[str, Any]:
     results: list[ToolResult] = []
-    options = getattr(request, "options", None) or {}
+    options = getattr(request, "options", {}) or {}
 
     if options.get("skip_checks"):
         return {
             "tools": [],
             "results": [],
-            "missing_tools": [],
             "status": "skipped",
             "reason": "user requested skip",
         }
 
     flags = _classify_area(request.project_area)
+    python = _resolve_python_executable()
 
-    # --- Backend checks ----------------------------------------------------
+    # --- Backend checks ------------------------------------------------------
     if flags["needs_backend"]:
         # pytest: prefer the current interpreter via ``python -m``.
         results.append(
@@ -255,14 +249,13 @@ def run_post_checks(
                 )
             )
 
-    # --- Frontend checks ---------------------------------------------------
+    # --- Frontend checks ----------------------------------------------------
     if flags["needs_frontend"] or flags["needs_frontend_test"]:
         npm = shutil.which("npm") or "npm"
-        for app, want in (
-            ("frontend", flags["needs_frontend"]),
-            ("frontend-test", flags["needs_frontend_test"]),
-        ):
-            if not want:
+        for app in ("frontend", "frontend-test"):
+            if not flags["needs_frontend"] and app == "frontend":
+                continue
+            if not flags["needs_frontend_test"] and app == "frontend-test":
                 continue
             app_dir = root / app
             if not (app_dir.exists() and (app_dir / "package.json").exists()):
@@ -289,9 +282,12 @@ def run_post_checks(
                 )
             )
 
-    # --- Aggregate ---------------------------------------------------------
+    # --- Aggregate ----------------------------------------------------------
+    # Treat ``missing`` as a soft failure: it should be visible but should not
+    # flip the overall status to "failed" if the tool is genuinely unavailable
+    # in this environment.
     applicable = [r for r in results if r.status != "skipped"]
-    hard_failures = [r for r in applicable if r.status in {"failed", "timeout"}]
+    hard_failures = [r for r in applicable if r.status == "failed" or r.status == "timeout"]
     missing_tools = [r for r in applicable if r.status == "missing"]
 
     if not applicable:
@@ -306,6 +302,6 @@ def run_post_checks(
     return {
         "tools": [r.tool for r in results],
         "results": [r.to_dict() for r in results],
-        "missing_tools": [r.tool for r in missing_tools],
+        "missing_tools": [r.tool for r in r in missing_tools] if False else [r.tool for r in missing_tools],
         "status": overall,
     }

@@ -233,13 +233,16 @@ jobs:
         run: |
           if grep -q '"test"' package.json; then
             mkdir -p reports
-            npm run test:coverage
+            npm run test:coverage 2>&1 | tee reports/test-node.log
           else
             echo "::warning::No test script defined; skipping backend-node tests. Add a 'test' script to backend/package.json to enforce this gate."
           fi
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: junit-node.xml
 
       - name: Audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high 2>&1 | tee reports/audit-node.log || true
 
       - name: Upload Node reports
         if: always()
@@ -249,6 +252,8 @@ jobs:
           path: |
             reports/coverage-node
             reports/junit-node.xml
+            reports/test-node.log
+            reports/audit-node.log
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
           if-no-files-found: warn
 
@@ -299,10 +304,18 @@ jobs:
         working-directory: ${{ matrix.app }}
         run: |
           if grep -q '"test"' package.json; then
+            mkdir -p reports
+            npm test -- --coverage \
+              --coverageDirectory=reports/coverage-${{ matrix.app }} \
+              --coverageReporters=lcov --coverageReporters=json-summary \
+              --reporters=default --reporters=jest-junit 2>/dev/null || \
             npm test -- --coverage --coverageDirectory=reports/coverage-${{ matrix.app }}
           else
             echo "::warning::No test script defined; skipping."
           fi
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: junit-${{ matrix.app }}.xml
 
       - name: Build
         working-directory: ${{ matrix.app }}
@@ -314,6 +327,17 @@ jobs:
         with:
           name: dist-${{ matrix.app }}
           path: ${{ matrix.app }}/dist
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: ${{ matrix.app }}-reports
+          path: |
+            ${{ matrix.app }}/reports/coverage-${{ matrix.app }}
+            ${{ matrix.app }}/reports/junit-${{ matrix.app }}.xml
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
           if-no-files-found: warn
 

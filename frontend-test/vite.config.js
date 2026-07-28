@@ -171,6 +171,51 @@ export default defineConfig({
           }
         });
 
+        // Static directory server for multi-file HTML reports (e.g. htmlcov which needs CSS/JS/PNG assets).
+        // Usage: /reports-static/<repo-relative-path>  e.g. /reports-static/reports/ci/backend-python-reports/htmlcov-python/index.html
+        server.middlewares.use("/reports-static", async (req, res, next) => {
+          const rawSubPath = decodeURIComponent(req.url || "/").replace(/^\/*/, "");
+          if (!rawSubPath) { res.statusCode = 400; return res.end("Missing path"); }
+
+          // Security sandbox check: prevent directory traversal
+          const targetPath = path.resolve(projectRoot, rawSubPath);
+          if (!targetPath.startsWith(projectRoot)) {
+            res.statusCode = 403;
+            return res.end("Access denied");
+          }
+
+          try {
+            const info = await stat(targetPath);
+            if (!info.isFile()) { res.statusCode = 404; return res.end("Not a file"); }
+
+            const ext = path.extname(targetPath).toLowerCase();
+            const mimeMap = {
+              ".html": "text/html",
+              ".htm":  "text/html",
+              ".css":  "text/css",
+              ".js":   "application/javascript",
+              ".json": "application/json",
+              ".xml":  "application/xml",
+              ".txt":  "text/plain",
+              ".log":  "text/plain",
+              ".md":   "text/markdown",
+              ".png":  "image/png",
+              ".jpg":  "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".svg":  "image/svg+xml",
+              ".gif":  "image/gif",
+              ".ico":  "image/x-icon",
+            };
+            res.statusCode = 200;
+            res.setHeader("Content-Type", mimeMap[ext] || "application/octet-stream");
+            const { createReadStream } = await import("fs");
+            createReadStream(targetPath).pipe(res);
+          } catch (e) {
+            res.statusCode = 404;
+            res.end("File not found");
+          }
+        });
+
         // 2. Execute Command with virtual environment PATH & Live Log Streaming (SSE)
         server.middlewares.use("/api/execute", (req, res, next) => {
           if (req.method !== "POST") return next();

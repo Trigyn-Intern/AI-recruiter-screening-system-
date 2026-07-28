@@ -158,3 +158,87 @@
   font-size: 13px;
   margin: 0;
 }
+
+/* ── Open Report button (shown next to HTML artifacts) ── */
+.report-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  background: rgba(130, 180, 167, 0.15);
+  border: 1px solid rgba(130, 180, 167, 0.4);
+  color: #d6e4dc;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.report-open-btn:hover { background: rgba(130, 180, 167, 0.28); }
+
+/* ── Iframe overlay ── */
+.report-iframe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: #0b1310;
+  border: 1px solid rgba(130, 180, 167, 0.25);
+}
+
+.report-iframe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(20, 28, 24, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.report-iframe-title {
+  font-weight: 600;
+  color: #e7efea;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-iframe-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.report-iframe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(130, 180, 167, 0.12);
+  border: 1px solid rgba(130, 180, 167, 0.35);
+  color: #d6e4dc;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.report-iframe-btn:hover { background: rgba(130, 180, 167, 0.25); }
+
+.report-iframe-close {
+  border-color: rgba(255, 100, 100, 0.4);
+  color: #fca5a5;
+}
+.report-iframe-close:hover { background: rgba(255, 100, 100, 0.15); }
+
+.report-iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
+

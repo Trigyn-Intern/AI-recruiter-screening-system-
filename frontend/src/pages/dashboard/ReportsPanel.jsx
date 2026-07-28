@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Copy, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, FileText, X, ExternalLink } from "lucide-react";
 import "./reportsPanel.css";
 
 function ReportsPanel() {
@@ -7,6 +7,8 @@ function ReportsPanel() {
   const [error, setError] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [iframeUrl, setIframeUrl] = useState(null);
+  const [iframeTitle, setIframeTitle] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +34,23 @@ function ReportsPanel() {
         setTimeout(() => setCopiedId(null), 1500);
       });
     }
+  }
+
+  /**
+   * Convert a local artifact path like
+   *   reports/ci/backend-python-reports/htmlcov-python/index.html
+   * to a URL served by the FastAPI static mount at /reports-static/
+   *   /reports-static/ci/backend-python-reports/htmlcov-python/index.html
+   */
+  function artifactToIframeUrl(artifact) {
+    if (!artifact) return null;
+    // Normalise separators and strip a leading "reports/" or "reports\"
+    const normalised = artifact.replace(/\\/g, "/").replace(/^reports\//, "");
+    return `http://127.0.0.1:8000/reports-static/${normalised}`;
+  }
+
+  function isHtml(artifact) {
+    return artifact && /\.html?$/i.test(artifact);
   }
 
   if (error) {
@@ -61,6 +80,39 @@ function ReportsPanel() {
 
   return (
     <section className="reports-panel">
+      {/* ── Iframe overlay ── */}
+      {iframeUrl && (
+        <div className="report-iframe-overlay">
+          <div className="report-iframe-header">
+            <span className="report-iframe-title">{iframeTitle}</span>
+            <div className="report-iframe-actions">
+              <a
+                href={iframeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="report-iframe-btn"
+                title="Open in new tab"
+              >
+                <ExternalLink size={14} /> Open in new tab
+              </a>
+              <button
+                type="button"
+                className="report-iframe-btn report-iframe-close"
+                onClick={() => setIframeUrl(null)}
+                title="Close"
+              >
+                <X size={14} /> Close
+              </button>
+            </div>
+          </div>
+          <iframe
+            src={iframeUrl}
+            title={iframeTitle}
+            className="report-iframe"
+          />
+        </div>
+      )}
+
       <header className="reports-header">
         <h2>Reports &amp; test runs</h2>
         <p className="reports-meta">
@@ -132,6 +184,18 @@ function ReportsPanel() {
                           <span className="report-artifact-note">
                             ({r.actualLastRun.lastModified})
                           </span>
+                          {r.actualLastRun.exists && isHtml(r.actualLastRun.artifact) && (
+                            <button
+                              type="button"
+                              className="report-open-btn"
+                              onClick={() => {
+                                setIframeUrl(artifactToIframeUrl(r.actualLastRun.artifact));
+                                setIframeTitle(r.name);
+                              }}
+                            >
+                              <ExternalLink size={13} /> Open Report
+                            </button>
+                          )}
                         </p>
                       </div>
                     </div>
