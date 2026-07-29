@@ -1,70 +1,86 @@
-﻿# Python cache and build artifacts
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
+# ===== Environments =====
+.env
+.env.*
+!.env.example
 venv/
 .venv/
-
-# Streamlit logs
-streamlit.log
-streamlit.err.log
-
-# Runtime resume vector and skill caches
-vector_store/
-.requirements.sha
-
-# Local auth/runtime data
-backend/data/
-
-# Local OWASP ZAP reports
-zap-reports/
-zap-baseline-report.*
-
-# Test run logs
-tests/ui/logs/
-
-# Accidental nested clone
-AI-recruiter-screening-system-/
-
-# Frontend dependencies and builds
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.bandit
+.ai/history/
+# ===== Node / Frontend =====
+node_modules/
 frontend/node_modules/
 frontend-test/node_modules/
-frontend-test/dist/
-frontend-test/vite-test.err
-frontend-test/vite-test.log
 frontend/dist/
+frontend-test/dist/
+frontend/build/
+frontend-test/build/
+.next/
+.nuxt/
+.svelte-kit/
+.cache/
+.parcel-cache/
+coverage/
+.nyc_output/
 
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
+# ===== Logs =====
+*.log
+*.log.*
+logs/
+*.err
+uvicorn.log
+uvicorn-error.log
+uvicorn-perf.log
+uvicorn-perf.log.err
+uvicorn-smoke.log
+uvicorn-smoke.err
+uvicorn-test.log
+uvicorn-test.err
+backend/server-debug.log
 
-# IDE / editor
-.vscode/
+# ===== Reports / Test artifacts =====
 
-# OS files
+tests/ui/screenshots/
+tests/ui/logs/
+
+.lighthouseci/
+frontend-test/coverage/
+
+# ===== Vector store / runtime data =====
+vector_store/*.faiss
+vector_store/*.index
+vector_store/*.pkl
+vector_store/*.npy
+vector_store/*.bin
+vector_store/*.json
+!vector_store/.gitkeep
+backend/data/*.db
+backend/data/*.sqlite
+backend/data/*.sqlite3
+
+# ===== OS / Editor =====
 .DS_Store
 Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-.env
+# ===== Misc tooling =====
+skills.zip
+review_jobs.json
+.cache/
+.tmp/
+tmp/
 
-tests/ui/screenshots
-tests/ui/logs
-reports/allure-results
-reports/junit.json
-        reports/logs/api.log
-        reports/logs/auth.log
-        reports/logs/web.log
-
-reports/logs/api.log
-/chrome
-/uvicorn-perf.log
-backend/uvicorn-smoke.err
-backend/uvicorn-test.err
-/.benchmarks
-/.lighthouseci
-
-
-tests/performance/load/run-4workers.log
+.ai/runtime/

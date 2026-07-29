@@ -10,6 +10,7 @@ Include it for a full performance audit:
 
     pytest tests/performance/benchmarks/ -m slow -v
 """
+
 from __future__ import annotations
 
 import pytest
@@ -18,8 +19,7 @@ from pathlib import Path
 from backend import analyze_candidate_detail
 
 SAMPLE_JD_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "tests" / "data" / "jds" / "jd_python_ml.txt"
+    Path(__file__).resolve().parents[3] / "tests" / "data" / "jds" / "jd_python_ml.txt"
 )
 
 _MOCK_RESUME_TEXT = (

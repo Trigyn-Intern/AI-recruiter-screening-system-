@@ -545,3 +545,4 @@ Released under the MIT License. See `LICENSE` for the full text.
 
 - Built with FastAPI, React, Vite, Sentence Transformers, FAISS, Ollama, Llama 3.2, and Google Gemini.
 - Thanks to the open-source community behind `pypdf`, `python-docx`, `lucide-react`, `playwright`, and Lighthouse.
+test

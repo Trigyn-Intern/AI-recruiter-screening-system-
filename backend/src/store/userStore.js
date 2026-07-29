@@ -13,13 +13,13 @@ let _ready = null;
 
 function toJsonTransform(doc) {
   if (!doc) return doc;
-  const { _id, password, ...rest } = doc;
-  const out = { ...rest };
-  if (_id !== undefined) out.id = _id;
+  const out = { ...doc };
+  delete out._id;
+  delete out.password;
+  if (doc._id !== undefined) out.id = doc._id;
   if (out.id === undefined && doc.id !== undefined) out.id = doc.id;
   return out;
 }
-
 function applySelect(doc, fields) {
   if (!doc) return doc;
   const id = doc._id || doc.id;

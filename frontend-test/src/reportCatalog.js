@@ -56,6 +56,7 @@ function detectRepoRoot() {
 const ROOT = detectRepoRoot();
 
 export const REPORT_CATALOG = [
+ 
   {
     id: "html",
     title: "Scenario Matrix (HTML Report)",
@@ -112,5 +113,60 @@ export const REPORT_CATALOG = [
     cwd: ROOT,
     description:
       "Send api.py to Gemini using the Security Review skill. The AI produces a structured HTML report under skills/reports/.",
+  },
+  {
+    id: "fetch-ci",
+    title: "Fetch Latest CI Pipeline Run",
+    kind: "ci",
+    filename: "ci-logs.txt",
+    path: "reports/ci-logs.txt",
+    command: "python scripts/fetch_ci.py",
+    cwd: ROOT,
+    description:
+      "Downloads the latest ci.yml logs and build artifacts from GitHub. Requires GITHUB_TOKEN in .env for artifact downloads.",
+  },
+  {
+    // Coverage report has relative CSS/JS/PNG assets — served via /reports-static/ so all assets load correctly.
+    id: "ci-python-coverage",
+    title: "CI: Python Coverage Report",
+    kind: "code",
+    filename: "index.html",
+    path: "reports/ci/backend-python-reports/htmlcov-python/index.html",
+    staticUrl: "/reports-static/reports/ci/backend-python-reports/htmlcov-python/index.html",
+    cwd: ROOT,
+    description:
+      "Python test coverage report (48%) from the latest CI run. Run \"Fetch Latest CI Pipeline Run\" first to download it.",
+  },
+  {
+    id: "ci-junit-xml",
+    title: "CI: Python Test Results (JUnit XML)",
+    kind: "junit",
+    filename: "junit-python.xml",
+    path: "reports/ci/backend-python-reports/junit-python.xml",
+    cwd: ROOT,
+    description:
+      "JUnit XML test results from the latest CI run. Run \"Fetch Latest CI Pipeline Run\" first to download it.",
+  },
+  {
+    id: "ci-depcheck",
+    title: "CI: OWASP Dependency-Check",
+    kind: "security",
+    filename: "dependency-check-report.html",
+    path: "reports/ci/dependency-check-report/dependency-check-report.html",
+    cwd: ROOT,
+    description:
+      "Dependency-Check HTML report from the CI run. Only available if the OWASP dependency-check job completed in the latest ci.yml run.",
+  },
+  {
+    // Fetched by scripts/fetch_ci.py. The polished HTML page opens in a single click via /reports-static/.
+    id: "ci-summary",
+    title: "CI: Pipeline Run Summary",
+    kind: "ci",
+    filename: "ci-summary.html",
+    path: "reports/ci/ci-summary.html",
+    staticUrl: "/reports-static/reports/ci/ci-summary.html",
+    cwd: ROOT,
+    description:
+      "Polished overview of the latest ci.yml run: verdict, branch, commit, every artifact with file counts and sizes, and the aggregated log path. Run \"Fetch Latest CI Pipeline Run\" first to generate it.",
   },
 ];

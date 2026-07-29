@@ -6,11 +6,9 @@ Python/ML profile, a data engineer, a frontend engineer, and a junior
 candidate. Run it once locally with ``python tests/data/generate_resumes.py``.
 """
 
-
 import os
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
-
 
 RESUMES_DIR = os.path.join(os.path.dirname(__file__), "resumes")
 

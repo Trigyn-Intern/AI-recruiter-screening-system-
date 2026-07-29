@@ -7,6 +7,7 @@ Measures how long get_or_create_resume_embedding() takes on a cold run
 Run:
     pytest tests/performance/benchmarks/test_embedding_speed.py -v
 """
+
 from __future__ import annotations
 
 import io
@@ -44,7 +45,7 @@ def sample_resume_pdf():
 def test_embedding_speed(benchmark, sample_resume_pdf):
     """Benchmark cold embedding generation (not yet in FAISS)."""
     text = sample_resume_pdf["text"]
-    rid  = sample_resume_pdf["resume_id"]
+    rid = sample_resume_pdf["resume_id"]
     name = sample_resume_pdf["name"]
     # Use a unique ID each run to force a cold (non-cached) embedding path
     cold_rid = f"bench-cold-{rid}"

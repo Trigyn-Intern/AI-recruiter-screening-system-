@@ -7,6 +7,7 @@ and saves the top-30 most expensive call frames to profile_results.txt.
 Run from the project root:
     python tests/performance/profiles/run_profiler.py
 """
+
 from __future__ import annotations
 
 import cProfile
@@ -40,7 +41,8 @@ for _mod in _STUBS:
 for _real in ("docx", "pypdf"):
     sys.modules.pop(_real, None)
 
-import importlib
+import importlib  # noqa: E402
+
 importlib.import_module("pypdf")
 importlib.import_module("docx")
 
@@ -53,7 +55,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from backend import extract_text, analyze_candidate_grading  # noqa: E402
 
 SAMPLE_RESUMES_DIR = PROJECT_ROOT / "tests" / "data" / "resumes"
-SAMPLE_JD_PATH     = PROJECT_ROOT / "tests" / "data" / "jds" / "jd_python_ml.txt"
+SAMPLE_JD_PATH = PROJECT_ROOT / "tests" / "data" / "jds" / "jd_python_ml.txt"
 
 
 def _load_resume_text(pdf_path: Path) -> str:
@@ -74,7 +76,7 @@ def run_heavy_ml_task() -> None:
         raise SystemExit(f"No sample PDFs found in {SAMPLE_RESUMES_DIR}")
 
     matching_skills = ["Python", "FastAPI", "SQL"]
-    missing_skills  = ["Kubernetes"]
+    missing_skills = ["Kubernetes"]
 
     for pdf_path in resume_files:
         resume_text = _load_resume_text(pdf_path)

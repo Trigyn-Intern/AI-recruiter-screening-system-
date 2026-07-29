@@ -184,6 +184,32 @@
       }
     },
     {
+      "id": "ci-summary",
+      "name": "CI: Pipeline Run Summary",
+      "category": "integration",
+      "command": "python scripts/fetch_ci.py",
+      "artifacts": [
+        "reports/ci/ci-summary.html",
+        "reports/ci-logs.txt",
+        "reports/ci/ci-summary.json"
+      ],
+      "prerequisites": [
+        "Set GITHUB_TOKEN with actions:read + contents:read in the environment or .env",
+        "Run scripts/fetch_ci.py from the repo root; it resolves repo + branch from git itself",
+        "The script downloads logs and the four standard ci.yml artifacts, then writes reports/ci/ci-summary.html"
+      ],
+      "expectedOutput": [
+        "Polished HTML summary at reports/ci/ci-summary.html with verdict, branch, commit, and per-artifact cards",
+        "Machine-readable sidecar at reports/ci/ci-summary.json with the same data for the testing dashboard",
+        "Aggregated logs at reports/ci-logs.txt (ordered by job / step)"
+      ],
+      "actualLastRun": {
+        "artifact": "reports/ci/ci-summary.html",
+        "exists": true,
+        "lastModified": "regenerated every scripts/fetch_ci.py invocation"
+      }
+    },
+    {
       "id": "security-review",
       "name": "AI Security Review (LLM-driven)",
       "category": "security",

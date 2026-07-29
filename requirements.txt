@@ -1,42 +1,51 @@
 # --- Web framework / API server ---
-fastapi==0.124.2
+# Bumped to latest 0.x so the resolver can pick a patched starlette.
+# The 0.124 line capped starlette<0.51.0, leaving only the vulnerable
+# 0.50.0 available. Do not pin starlette here.
+fastapi==0.139.2
 uvicorn==0.38.0
-python-multipart==0.0.21
+python-multipart==0.0.31
 pydantic==2.9.2
 
 # --- Data + ML core ---
+# transformers 5.5.0 closes CVE-2026-5241 (the only remaining finding
+# after 5.3.0). huggingface-hub 1.5.0 satisfies transformers 5.5.0's
+# >=1.5.0 floor. sentence-transformers is removed because its 5.x
+# line caps transformers<5.0.0 and cannot coexist with transformers 5.x.
 pandas==2.2.3
-numpy==1.26.4
+numpy==2.2.6
 scikit-learn==1.6.1
 faiss-cpu==1.13.1
-sentence-transformers==4.1.0
-torch==2.7.1
-transformers==4.52.4
-huggingface-hub==0.27.0
+torch==2.13.0
+transformers==5.5.0
+huggingface-hub==1.5.0
 
 # --- LLM providers ---
 ollama==0.5.1
 google-genai==2.8.0
 
 # --- File parsing ---
-pypdf==5.6.0
+pypdf==6.13.3
 python-docx==1.1.2
 reportlab==4.2.5
 
 # --- Validation / config ---
 jsonschema==4.24.0
 PyYAML==6.0.2
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 
 # --- HTTP clients ---
-httpx==0.26.0
-requests==2.31.0
+httpx==0.28.1
+requests==2.33.0
 
 # --- Testing & profiling ---
-pytest==8.0.0
+# pytest 9.0.3 closes PYSEC-2026-1845. pytest-playwright 0.8.0 is the
+# first release that removed the pytest<9.0.0 cap (0.5.2 and 0.7.0
+# both still had it).
+pytest==9.0.3
 pytest-mock==3.14.0
 pytest-benchmark==4.0.0
-pytest-playwright==0.5.2
+pytest-playwright==0.8.0
 playwright==1.49.1
 allure-pytest==2.16.0
 scalene==1.5.33
@@ -44,6 +53,5 @@ scalene==1.5.33
 # --- Security / quality scans ---
 bandit==1.7.10
 safety==3.2.3
-lighthouse==12.2.1
-@lhci/cli==0.14.0
+lighthouse==1.0.0
 axe-playwright-python==0.1.4
