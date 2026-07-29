@@ -1,5 +1,4 @@
 """Render a 13-column Security Review HTML report from JSON input."""
-
 from __future__ import annotations
 
 import argparse
@@ -51,6 +50,7 @@ def _findings_from_data(data: dict) -> List[dict]:
     findings = data.get("findings")
     if isinstance(findings, list) and findings:
         return findings
+
     rows: List[dict] = []
     for idx, check in enumerate(data.get("securityChecks") or [], start=1):
         status = check.get("status", "Fail")
@@ -86,7 +86,7 @@ def _findings_from_data(data: dict) -> List[dict]:
     return rows
 
 
-def build_findings_html(data: dict) -> tuple:
+def build_findings_html(data: dict) -> tuple[str, int, int, int]:
     findings = _findings_from_data(data)
     pass_count = fail_count = warn_count = 0
     rows: List[str] = []

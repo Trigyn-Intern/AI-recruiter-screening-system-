@@ -56,7 +56,6 @@ function detectRepoRoot() {
 const ROOT = detectRepoRoot();
 
 export const REPORT_CATALOG = [
- 
   {
     id: "html",
     title: "Scenario Matrix (HTML Report)",

@@ -677,10 +677,10 @@ export default function TestingDashboard() {
   }
 
   function handleLogout() {
-  clearSession();
-  window.location.assign("/");
+    clearSession(); setUser(null);
+    setAuthStatus({ state: "error", message: "Signed out. Log in again from the recruiter app." });
   }
-  
+
   const tabs = [
     { id: "unit", label: "Unit", count: TEST_CATALOG.unit.length },
     { id: "integration", label: "Integration", count: TEST_CATALOG.integration.length },

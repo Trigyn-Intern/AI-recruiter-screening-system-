@@ -44,6 +44,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import yaml
 
+
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
 DEFAULT_CONFIG = HERE.parent / "data" / "scenarios.yaml"
@@ -55,7 +56,6 @@ DEFAULT_AUTH_PORT = int(os.environ.get("AUTH_PORT", "4000"))
 # FastAPI app object is named ``api`` inside api.py; load it via the
 # ``api:api`` import path so uvicorn doesn't need an ``app`` symbol.
 UVICORN_APP = os.environ.get("UVICORN_APP", "api:api")
-
 
 def _normalize_ollama_host(value):
     """Accept bare `127.0.0.1:11434`, `localhost`, or full URLs.
@@ -80,7 +80,6 @@ OLLAMA_HOST = _normalize_ollama_host(os.environ.get("OLLAMA_HOST"))
 # ------------------------------------------------------------
 # YAML + filter
 # ------------------------------------------------------------
-
 
 def load_scenarios(path: Path) -> List[Dict[str, Any]]:
     with path.open("r", encoding="utf-8") as handle:
@@ -110,7 +109,6 @@ def filter_scenarios(
 # ------------------------------------------------------------
 # Ollama
 # ------------------------------------------------------------
-
 
 def _ollama_list() -> List[str]:
     """Return the names of models currently installed locally."""
@@ -155,7 +153,6 @@ def ensure_ollama_models(required: Iterable[str]) -> None:
 # port helpers
 # ------------------------------------------------------------
 
-
 def port_in_use(port: int, host: str = "127.0.0.1") -> bool:
     with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         sock.settimeout(0.5)
@@ -189,7 +186,6 @@ def _wait_for_http(
 # service starters
 # ------------------------------------------------------------
 
-
 def _spawn(command: Sequence[str], cwd: Path, log_path: Path) -> subprocess.Popen:
     log_handle = log_path.open("ab")
     print(f"[runner] {' '.join(command)}  (logs -> {log_path})")
@@ -210,7 +206,7 @@ def start_api(
     venv_python: Path,
 ) -> tuple:
     """Start the FastAPI analyzer (uvicorn api:api).
-
+    
     Returns (process, already_running) tuple.
     already_running=True means the port was in use before we spawned anything.
     """
@@ -289,7 +285,6 @@ def _noop_process() -> subprocess.Popen:
 # process lifecycle
 # ------------------------------------------------------------
 
-
 class ServiceSupervisor:
     """Spawns services, waits for their health, and tears them down on exit."""
 
@@ -333,79 +328,36 @@ def supervised_services(log_dir: Path):
 # CLI
 # ------------------------------------------------------------
 
-
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--config",
-        type=Path,
-        default=DEFAULT_CONFIG,
-        help="Path to scenarios.yaml (default: tests/data/scenarios.yaml)",
-    )
-    parser.add_argument(
-        "--filter",
-        dest="scenario_filter",
-        type=str,
-        default="",
-        help="Comma- or whitespace-separated list of scenario IDs to run.",
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG,
+                        help="Path to scenarios.yaml (default: tests/data/scenarios.yaml)")
+    parser.add_argument("--filter", dest="scenario_filter", type=str, default="",
+                        help="Comma- or whitespace-separated list of scenario IDs to run.")
     parser.add_argument("--api-port", type=int, default=DEFAULT_API_PORT)
     parser.add_argument("--web-port", type=int, default=DEFAULT_WEB_PORT)
     parser.add_argument("--auth-port", type=int, default=DEFAULT_AUTH_PORT)
-    parser.add_argument(
-        "--no-auth",
-        action="store_true",
-        help="Skip starting the Node auth API (assumes one is already running).",
-    )
-    parser.add_argument(
-        "--keep-streamlit",
-        action="store_true",
-        help="Keep spawned services alive after pytest finishes.",
-    )
-    parser.add_argument(
-        "--pytest-args",
-        type=str,
-        default="",
-        help="Extra arguments forwarded to pytest.",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print the scenario matrix and the commands that would run, "
-        "without starting services or invoking pytest.",
-    )
-    parser.add_argument(
-        "--log-dir",
-        type=Path,
-        default=HERE / "logs",
-        help="Directory for service + pytest logs.",
-    )
-    parser.add_argument(
-        "--report-dir",
-        dest="report_dir",
-        type=Path,
-        default=None,
-        help="If set, write a structured HTML report here. The JUnit "
-        "JSON is written alongside it. The renderer is "
-        "tests/render_report.py.",
-    )
-    parser.add_argument(
-        "--junit",
-        dest="junit_path",
-        type=Path,
-        default=None,
-        help="Path to write the raw JUnit JSON. Defaults to "
-        "<report-dir>/junit-<timestamp>.json when --report-dir "
-        "is set. Ignored otherwise.",
-    )
-    parser.add_argument(
-        "--open-report",
-        dest="open_report",
-        action="store_true",
-        help="Open the rendered HTML report in the default browser.",
-    )
+    parser.add_argument("--no-auth", action="store_true",
+                        help="Skip starting the Node auth API (assumes one is already running).")
+    parser.add_argument("--keep-streamlit", action="store_true",
+                        help="Keep spawned services alive after pytest finishes.")
+    parser.add_argument("--pytest-args", type=str, default="",
+                        help="Extra arguments forwarded to pytest.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print the scenario matrix and the commands that would run, "
+                             "without starting services or invoking pytest.")
+    parser.add_argument("--log-dir", type=Path, default=HERE / "logs",
+                        help="Directory for service + pytest logs.")
+    parser.add_argument("--report-dir", dest="report_dir", type=Path, default=None,
+                        help="If set, write a structured HTML report here. The JUnit "
+                             "JSON is written alongside it. The renderer is "
+                             "tests/render_report.py.")
+    parser.add_argument("--junit", dest="junit_path", type=Path, default=None,
+                        help="Path to write the raw JUnit JSON. Defaults to "
+                             "<report-dir>/junit-<timestamp>.json when --report-dir "
+                             "is set. Ignored otherwise.")
+    parser.add_argument("--open-report", dest="open_report", action="store_true",
+                        help="Open the rendered HTML report in the default browser.")
     return parser.parse_args(argv)
 
 
@@ -504,13 +456,13 @@ def main(argv: Optional[List[str]] = None) -> int:
             args.report_dir.mkdir(parents=True, exist_ok=True)
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             junit_path = args.report_dir / ("junit-" + timestamp + ".json")
-            html_path = args.report_dir / ("scenario-report-" + timestamp + ".html")
+            html_path  = args.report_dir / ("scenario-report-" + timestamp + ".html")
         elif args.junit_path is not None:
             junit_path = args.junit_path
-            html_path = None
+            html_path  = None
         else:
             junit_path = None
-            html_path = None
+            html_path  = None
 
         if junit_path is not None:
             junit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -528,25 +480,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         renderer = REPO_ROOT / "tests" / "render_report.py"
 
         if not renderer.exists():
-            print(
-                "[runner] WARNING: renderer not found at "
-                + str(renderer)
-                + "; skipping HTML report."
-            )
+            print("[runner] WARNING: renderer not found at " + str(renderer) + "; skipping HTML report.")
         else:
             stamp = junit_path.stem.replace("junit-", "", 1)
             filter_value = args.scenario_filter or "(all)"
             render_cmd = [
                 sys.executable,
                 str(renderer),
-                "--junit",
-                str(junit_path),
-                "--output",
-                str(html_path),
-                "--filter",
-                filter_value,
-                "--stamp",
-                stamp,
+                "--junit",  str(junit_path),
+                "--output", str(html_path),
+                "--filter", filter_value,
+                "--stamp",  stamp,
             ]
             print("[runner] rendering report: " + " ".join(render_cmd))
             render_result = subprocess.run(render_cmd, env=os.environ.copy())
@@ -563,14 +507,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                     except Exception as exc:  # pragma: no cover
                         print("[runner] could not open report: " + str(exc))
             else:
-                print(
-                    "[runner] renderer exited "
-                    + str(render_result.returncode)
-                    + "; HTML report not generated."
-                )
+                print("[runner] renderer exited " + str(render_result.returncode) +
+                      "; HTML report not generated.")
 
     return result.returncode
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+
+
+

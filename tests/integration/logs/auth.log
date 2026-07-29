@@ -1,0 +1,16 @@
+In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
+Auth API listening on http://localhost:4000
+In-process auth store ready at D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\data\users.json
+Auth API listening on http://localhost:4000
+login error: Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\node_modules\jsonwebtoken\sign.js:111:20)
+    at signToken (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:8:14)
+    at login (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:93:19)
+login error: Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\node_modules\jsonwebtoken\sign.js:111:20)
+    at signToken (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:8:14)
+    at login (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:93:19)
+login error: Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\node_modules\jsonwebtoken\sign.js:111:20)
+    at signToken (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:8:14)
+    at login (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend\controllers\authController.js:93:19)

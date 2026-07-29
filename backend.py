@@ -10,6 +10,7 @@ os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 import numpy as np
 import ollama
+import pandas as pd
 from docx import Document
 from jsonschema import ValidationError, validate
 from pypdf import PdfReader
@@ -556,7 +557,6 @@ RUNTIME_STATE = {
 # LOAD EMBEDDING MODEL
 # ==================================================
 
-
 @lru_cache(maxsize=1)
 def load_model():
     try:
@@ -623,15 +623,9 @@ def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
             metadata = []
     return index, metadata
 
-
 def faiss_index_lookup(resume_id):
-    """Return the cached embedding for
-    esume_id from the FAISS index,
-        or None if it isn't indexed yet.
-
-        This is a fast path used by get_or_create_resume_embedding so repeat
-        uploads of the same resume skip the embedding model entirely.
-    """
+    """Return the cached embedding for resume_id from the FAISS index,
+    or None if it isn't indexed yet."""
     if faiss is None or not FAISS_INDEX_PATH.exists():
         return None
     if not FAISS_METADATA_PATH.exists():
@@ -650,7 +644,6 @@ def faiss_index_lookup(resume_id):
             except Exception:
                 return None
     return None
-
 
 def save_resume_vector_store(index, metadata):
     ensure_vector_store_dir()
@@ -751,7 +744,10 @@ def get_available_ollama_models():
             if isinstance(model, dict):
                 name = model.get("name") or model.get("model")
             else:
-                name = getattr(model, "name", None) or getattr(model, "model", None)
+                name = (
+                    getattr(model, "name", None)
+                    or getattr(model, "model", None)
+                )
 
             if name:
                 names.append(name)
@@ -765,7 +761,6 @@ def get_available_ollama_models():
 # ==================================================
 # HELPERS
 # ==================================================
-
 
 def init_configuration_state():
     if RUNTIME_STATE.get("ai_provider") not in AI_PROVIDER_OPTIONS:
@@ -801,7 +796,9 @@ def init_configuration_state():
     )
 
     if not RUNTIME_STATE["use_custom_jd_prompt"]:
-        RUNTIME_STATE["active_jd_prompt_template"] = DEFAULT_JD_PROMPT_TEMPLATE
+        RUNTIME_STATE["active_jd_prompt_template"] = (
+            DEFAULT_JD_PROMPT_TEMPLATE
+        )
 
     if not RUNTIME_STATE["use_custom_skill_gap_prompt"]:
         RUNTIME_STATE["active_skill_gap_prompt_template"] = (
@@ -969,8 +966,9 @@ def get_resume_database_records():
         existing["skills_model"] = item.get("model", "")
         existing["skill_count"] = len(profile_skills)
         existing["skills_indexed"] = has_skill_signal
-        existing["last_updated_at"] = existing.get("last_updated_at") or item.get(
-            "last_updated_at", ""
+        existing["last_updated_at"] = (
+            existing.get("last_updated_at")
+            or item.get("last_updated_at", "")
         )
 
     for record in records.values():
@@ -1027,7 +1025,10 @@ def get_indexed_resume_analysis_records():
             resume_skill_profile = normalize_resume_skill_profile(
                 skills_item.get("skills", {}) or {}
             )
-            last_updated_at = last_updated_at or skills_item.get("last_updated_at", "")
+            last_updated_at = (
+                last_updated_at
+                or skills_item.get("last_updated_at", "")
+            )
 
         analysis_records.append(
             {
@@ -1104,7 +1105,10 @@ def normalize_configuration(config):
             DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
         )
 
-    if "Do not use or mention the existing match score" not in candidate_grading_prompt:
+    if (
+        "Do not use or mention the existing match score"
+        not in candidate_grading_prompt
+    ):
         normalized_config["candidate_grading_prompt_template"] = (
             DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
         )
@@ -1270,7 +1274,9 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(result)
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
+            RUNTIME_STATE["last_ai_error"] = (
+                "The model did not return valid JSON."
+            )
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1319,7 +1325,9 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(response.text or "")
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
+            RUNTIME_STATE["last_ai_error"] = (
+                "The model did not return valid JSON."
+            )
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1988,7 +1996,6 @@ def summarize_gemini_error(error):
 # EXTRACT TEXT
 # ==================================================
 
-
 def extract_pdf_text(pdf_file):
     text = ""
     reader = PdfReader(pdf_file)
@@ -2044,7 +2051,6 @@ def extract_text(file):
 # MATCH SCORE
 # ==================================================
 
-
 def calculate_match_score(resume_embedding, job_text):
     if isinstance(resume_embedding, str):
         resume_embedding = encode_text_embedding(
@@ -2083,7 +2089,6 @@ def analyze_job_description_cached(job_text, model_name=None, provider=None):
     result = analyze_job_description(job_text, model_name=model_name, provider=provider)
     _JD_ANALYSIS_CACHE[key] = result
     return result
-
 
 def analyze_job_description(
     job_text,
@@ -2447,8 +2452,7 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
 
     if (
         isinstance(existing, dict)
-        and existing.get("model")
-        in [
+        and existing.get("model") in [
             GEMINI_RESUME_SKILL_MODEL,
             "local-fallback",
         ]
@@ -2733,7 +2737,9 @@ def analyze_candidate_grading(
     prompt_template=None,
     resume_name="",
 ):
-    prompt_template = prompt_template or get_candidate_grading_prompt_template()
+    prompt_template = (
+        prompt_template or get_candidate_grading_prompt_template()
+    )
     matching_skills = remove_placeholder_skills(matching_skills)
     missing_skills = remove_placeholder_skills(missing_skills)
     debug = {
@@ -2760,7 +2766,11 @@ def analyze_candidate_grading(
     cache = get_ai_cache()
 
     if cache_key in cache and candidate_grading_is_usable(cache[cache_key]):
-        cached_error = cache[cache_key].get("debug", {}).get("gemini_error", "")
+        cached_error = (
+            cache[cache_key]
+            .get("debug", {})
+            .get("gemini_error", "")
+        )
         cached_result = {
             **cache[cache_key],
             "debug": {
@@ -2971,7 +2981,6 @@ def analyze_candidate_detail(
 # PROCESS SINGLE RESUME
 # ==================================================
 
-
 def process_resume(resume_file, job_description):
     resume_id = get_resume_id(resume_file)
     resume_text = extract_text(resume_file)
@@ -2995,7 +3004,6 @@ def process_resume(resume_file, job_description):
         "Resume ID": resume_id,
         "Match Score (%)": score,
     }
-
 
 def persist_analysis_session(*args, **kwargs) -> str:
     """Append one analysis session to vector_store/analysis_sessions.json.
@@ -3030,3 +3038,10 @@ def persist_analysis_session(*args, **kwargs) -> str:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(sessions, f, ensure_ascii=False, indent=2)
     return payload["session_id"]
+
+
+
+
+
+
+

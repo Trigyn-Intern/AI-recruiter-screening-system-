@@ -138,15 +138,9 @@ def _run_code_review_worker(job_id: str) -> None:
             "files": diff["files"],
             "diff": diff["diff"],
         })
-        # Build a minimal JSON data file from the LLM output. The
-        # renderer does not parse the markdown; it just renders the
-        # checkedItems list and the structured tables from this JSON.
         CODE_REVIEW_DIR.mkdir(parents=True, exist_ok=True)
         data_path = CODE_REVIEW_DIR / f"last-checklist-data-{job_id}.json"
         report_path = CODE_REVIEW_DIR / "checklist-report.html"
-        # The LLM output is the chat review; the data file is a thin
-        # record of what was reviewed. The renderer will emit the
-        # 39-checkbox template using these fields.
         data_path.write_text(json.dumps({
             "projectName": "AI Recruiter Screening System",
             "repositoryBranch": "main",

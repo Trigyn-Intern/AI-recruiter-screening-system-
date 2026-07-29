@@ -1,0 +1,554 @@
+INFO:     127.0.0.1:63289 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63295 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63295 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20261 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2187 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60936 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46232 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26492 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26493 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26494 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34885 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:34886 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63041 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63060 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34503 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34503 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9239 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30380 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30380 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4788 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59444 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59444 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36437 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36438 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36439 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36440 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50286 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50309 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:50310 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34713 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24086 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24105 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36097 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32948 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32967 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19696 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:19696 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32551 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41168 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41168 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44560 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4328 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4328 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11201 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11202 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11203 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11204 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11205 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20107 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:20108 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20109 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:20110 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Started server process [10408]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:3178 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32209 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32213 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32217 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32221 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32222 - "GET /models HTTP/1.1" 200 OK
+INFO:     Started server process [11260]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:12048 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:12055 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:30973 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     Started server process [18408]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Started server process [31192]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:65421 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65430 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25568 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25568 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:26924 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45517 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45517 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10049 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10050 - "GET /models HTTP/1.1" 200 OK
+INFO:     Started server process [31404]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:10103 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10111 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1928 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1928 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47156 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47157 - "GET /models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47158 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47185 - "POST /analyze HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:47186 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [31404]
+INFO:     Started server process [29380]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:15062 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15069 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22802 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:22802 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44742 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44749 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44752 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14194 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15567 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:14194 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15567 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /resume-db HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56743 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21321 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62268 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62269 - "GET /models HTTP/1.1" 200 OK
+INFO:     Started server process [25100]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56914 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2476 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8727 - "GET /configuration HTTP/1.1" 200 OK
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+    ~~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1569, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1490, in main
+    rv = self.invoke(ctx)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1353, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 907, in invoke
+    return callback(*args, **kwargs)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\main.py", line 423, in main
+    run(
+    ~~~^
+        app,
+        ^^^^
+    ...<46 lines>...
+        h11_max_incomplete_event_size=h11_max_incomplete_event_size,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\main.py", line 593, in run
+    server.run()
+    ~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "C:\Program Files\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Program Files\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Program Files\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 71, in serve
+    await self._serve(sockets)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 78, in _serve
+    config.load()
+    ~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "C:\Program Files\Python313\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 6, in <module>
+    from backend import (
+    ...<23 lines>...
+    )
+ImportError: cannot import name 'persist_analysis_session' from 'backend' (D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend.py)
+INFO:     Started server process [7828]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58513 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:28168 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13354 - "GET /configuration HTTP/1.1" 200 OK
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+    ~~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1569, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1490, in main
+    rv = self.invoke(ctx)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 1353, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\click\core.py", line 907, in invoke
+    return callback(*args, **kwargs)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\main.py", line 423, in main
+    run(
+    ~~~^
+        app,
+        ^^^^
+    ...<46 lines>...
+        h11_max_incomplete_event_size=h11_max_incomplete_event_size,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\main.py", line 593, in run
+    server.run()
+    ~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "C:\Program Files\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Program Files\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Program Files\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 71, in serve
+    await self._serve(sockets)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\server.py", line 78, in _serve
+    config.load()
+    ~~~~~~~~~~~^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "C:\Program Files\Python313\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 6, in <module>
+    from backend import (
+    ...<23 lines>...
+    )
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend.py", line 17, in <module>
+    from sentence_transformers import SentenceTransformer
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\sentence_transformers\__init__.py", line 14, in <module>
+    from sentence_transformers.cross_encoder import (
+    ...<4 lines>...
+    )
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\sentence_transformers\cross_encoder\__init__.py", line 3, in <module>
+    from .CrossEncoder import CrossEncoder
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\sentence_transformers\cross_encoder\CrossEncoder.py", line 19, in <module>
+    from transformers import (
+    ...<6 lines>...
+    )
+  File "<frozen importlib._bootstrap>", line 1412, in _handle_fromlist
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\transformers\utils\import_utils.py", line 2045, in __getattr__
+    module = self._get_module(self._class_to_module[name])
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\transformers\utils\import_utils.py", line 2075, in _get_module
+    raise e
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\transformers\utils\import_utils.py", line 2073, in _get_module
+    return importlib.import_module("." + module_name, self.__name__)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\transformers\modeling_utils.py", line 62, in <module>
+    from .integrations.flex_attention import flex_attention_forward
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\transformers\integrations\flex_attention.py", line 39, in <module>
+    from torch.nn.attention.flex_attention import BlockMask, flex_attention
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\nn\attention\flex_attention.py", line 15, in <module>
+    from torch._dynamo._trace_wrapped_higher_order_op import TransformGetItemToIndex
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\_dynamo\__init__.py", line 53, in <module>
+    from .polyfills import loader as _  # usort: skip # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\_dynamo\polyfills\loader.py", line 25, in <module>
+    POLYFILLED_MODULES: tuple["ModuleType", ...] = tuple(
+                                                   ~~~~~^
+        importlib.import_module(f".{submodule}", package=polyfills.__name__)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for submodule in POLYFILLED_MODULE_NAMES
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\_dynamo\polyfills\loader.py", line 26, in <genexpr>
+    importlib.import_module(f".{submodule}", package=polyfills.__name__)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\_dynamo\polyfills\itertools.py", line 53, in <module>
+    @substitute_in_graph(itertools.compress, is_embedded_type=True)  # type: ignore[arg-type]
+     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\torch\_dynamo\decorators.py", line 362, in wrapper
+    original_sig = inspect.signature(original_fn)
+  File "C:\Program Files\Python313\Lib\inspect.py", line 3375, in signature
+    return Signature.from_callable(obj, follow_wrapped=follow_wrapped,
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                   globals=globals, locals=locals, eval_str=eval_str)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\inspect.py", line 3098, in from_callable
+    return _signature_from_callable(obj, sigcls=cls,
+                                    follow_wrapper_chains=follow_wrapped,
+                                    globals=globals, locals=locals, eval_str=eval_str)
+  File "C:\Program Files\Python313\Lib\inspect.py", line 2653, in _signature_from_callable
+    return _signature_fromstr(sigcls, base, text_sig)
+  File "C:\Program Files\Python313\Lib\inspect.py", line 2255, in _signature_fromstr
+    sys_module_dict = sys.modules.copy()
+MemoryError
+INFO:     Started server process [14920]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:4383 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:4390 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29548 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:15716 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:49326 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47364 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47364 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:7184 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55185 - "GET /configuration HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55185 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\trigyn\trigyn project\AI-recruiter-screening-system-\api.py", line 352, in analyze
+    persist_analysis_session(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        job_description=job_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        file_cache=file_cache,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: persist_analysis_session() got an unexpected keyword argument 'job_description'
+INFO:     127.0.0.1:10657 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10658 - "GET /models HTTP/1.1" 200 OK
+forrtl: error (200): program aborting due to window-CLOSE event
+Image              PC                Routine            Line        Source             
+KERNELBASE.dll     00007FFEBC293ECD  Unknown               Unknown  Unknown
+KERNEL32.DLL       00007FFEBE65E957  Unknown               Unknown  Unknown
+ntdll.dll          00007FFEBED67C1C  Unknown               Unknown  Unknown

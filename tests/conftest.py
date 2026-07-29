@@ -55,6 +55,7 @@ for _mod in [
     _install_stub(_mod)
 
 # Configure pytest-asyncio to auto-mark async tests.
+import pytest
 
 
 def pytest_configure(config):

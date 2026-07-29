@@ -6,7 +6,6 @@ Standalone renderer. Reads:
   --output  path to write the HTML report
   --filter  filter string (display only)
 """
-
 from __future__ import annotations
 
 import argparse
@@ -17,6 +16,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import yaml
+
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -197,7 +197,9 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     screenshot_path = REPO_ROOT / "tests" / "ui" / "screenshots" / f"{scenario_id}.png"
     screenshot_html = ""
     if screenshot_path.exists():
-        screenshot_html = f"\n3. Screenshot: {scenario_id}.png"
+        screenshot_html = (
+            f"\n3. Screenshot: {scenario_id}.png"
+        )
     reference = (
         f"1. Case ID: 10560-{scenario_id}\n"
         f"2. Config: tests/data/scenarios.yaml"

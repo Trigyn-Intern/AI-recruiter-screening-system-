@@ -1,6 +1,5 @@
 from backend import safe_json_extract
 
-
 def test_valid_json():
     text = 'hello {"a": 1} world'
 

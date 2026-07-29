@@ -19,6 +19,7 @@ from typing import Any, Dict, Iterable, List
 import pytest
 import yaml
 
+
 TESTS_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = TESTS_DIR.parent
 DEFAULT_CONFIG = TESTS_DIR / "data" / "scenarios.yaml"
