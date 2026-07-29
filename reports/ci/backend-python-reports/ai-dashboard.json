@@ -1,0 +1,22 @@
+{
+  "generated_at": "history",
+  "history_dir": ".ai/history",
+  "source_files": 15464,
+  "test_modules": 3544,
+  "oversized_files": 4263,
+  "dependency_manifests": 7,
+  "codex_status": "not run",
+  "post_checks_status": "skipped",
+  "post_check_tools": [],
+  "post_checks_missing": [],
+  "duration_seconds": 0.0,
+  "reports": [
+    "ai-architecture-report.md",
+    "ai-dependency-report.md",
+    "ai-execution-report.md",
+    "ai-executive-report.md",
+    "ai-quality-report.md",
+    "ai-security-report.md",
+    "ai-technical-debt-report.md"
+  ]
+}

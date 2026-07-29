@@ -1,0 +1,211 @@
+{
+  "updated": "2026-07-14T00:00:00Z",
+  "schemaVersion": 1,
+  "source": "Generated from skills/code-review-policy and skills/reports/ inventory. Edit there, not here. This file is the static recruiter-side view; frontend-test/src/reportCatalog.js is the testing-side view; both share the same shape so they can be generated from one source.",
+  "notes": "Do not put secrets in `command`. If a command needs a token, name the env var in `prerequisites` and reference $VAR in `command`.",
+  "reports": [
+    {
+      "id": "zap-baseline",
+      "name": "OWASP ZAP Baseline - Recruiter UI",
+      "category": "security",
+      "command": "pwsh scripts/run-zap.ps1 -Target http://host.docker.internal:5173 -ReportName zap-baseline-report",
+      "artifacts": [
+        "reports/zap/zap-baseline-report.html"
+      ],
+      "prerequisites": [
+        "Docker Desktop is running (open from Start menu / Applications / systemctl start docker)",
+        "pwsh start-app.ps1 has been run and the local stack is up on :8000, :4000, :5173",
+        "The zaproxy/zap-stable image is present locally (the script pulls it if missing)"
+      ],
+      "expectedOutput": [
+        "HTML report at reports/zap/zap-baseline-report.html with no High alerts",
+        "A summary of Medium / Low alerts (informational; ZAP baseline does not fail on these)",
+        "Console log shows the number of alerts and the time taken"
+      ],
+      "actualLastRun": {
+        "artifact": "reports/zap/zap-baseline-report.html",
+        "exists": true,
+        "lastModified": "see working tree"
+      }
+    },
+    {
+      "id": "zap-auth",
+      "name": "OWASP ZAP Baseline - Auth API",
+      "category": "security",
+      "command": "pwsh scripts/run-zap.ps1 -Target http://host.docker.internal:4000 -ReportName zap-baseline-report-auth",
+      "artifacts": [
+        "reports/zap/zap-baseline-report-auth.html"
+      ],
+      "prerequisites": [
+        "Docker Desktop is running",
+        "The auth API is up on :4000 (curl http://127.0.0.1:4000/api/health returns 200)"
+      ],
+      "expectedOutput": [
+        "HTML report at reports/zap/zap-baseline-report-auth.html",
+        "No High alerts on the auth endpoints",
+        "CORS misconfiguration may surface as a Medium; that is informational only"
+      ],
+      "actualLastRun": {
+        "artifact": "reports/zap/zap-baseline-report-auth.html",
+        "exists": true,
+        "lastModified": "see working tree"
+      }
+    },
+    {
+      "id": "lighthouse-ci",
+      "name": "Lighthouse CI",
+      "category": "performance",
+      "command": "Triggered by the .github/workflows/lighthouse.yml job on every pull_request",
+      "artifacts": [
+        ".lighthouseci/lhr-*.html",
+        ".lighthouseci/assertion-results.json"
+      ],
+      "prerequisites": [
+        "The job installs Ollama, Node 18, Python 3.11, and the project deps automatically",
+        "Ollama must be running with the llama3.2 model pulled (the job does this)",
+        "The FastAPI analyzer must be reachable on :8000 from the runner"
+      ],
+      "expectedOutput": [
+        "Performance category score >= 0.5 (warn threshold from lighthouserc.json)",
+        "Accessibility category score >= 0.7",
+        "Best-practices category score >= 0.7",
+        "All resource-size budgets within the .github/lighthouse/budget.json limits",
+        "Assert: true promotes warn-level failures to errors so a regression blocks the PR"
+      ],
+      "actualLastRun": {
+        "artifact": ".lighthouseci/lhr-1783410866000.html",
+        "exists": true,
+        "lastModified": "see working tree"
+      }
+    },
+    {
+      "id": "perf-benchmarks",
+      "name": "Performance Benchmarks (pytest-benchmark)",
+      "category": "performance",
+      "command": "Triggered by the .github/workflows/perf.yml job on every pull_request",
+      "artifacts": [
+        "bench.json",
+        ".benchmarks/baseline.json"
+      ],
+      "prerequisites": [
+        "The job installs Ollama, Python 3.11, and pytest-benchmark automatically",
+        "Ollama must be running with the llama3.2 model pulled (the job does this)",
+        "The FastAPI analyzer must be reachable on :8000 from the runner"
+      ],
+      "expectedOutput": [
+        "bench.json with mean / stddev / median / iqr for each benchmark",
+        "No benchmark regresses by more than 25% on mean or stddev vs the stored baseline",
+        "First run with no baseline: stored as .benchmarks/baseline.json for the next comparison"
+      ],
+      "actualLastRun": {
+        "artifact": "bench.json",
+        "exists": false,
+        "lastModified": "no local artifact; CI uploads as a build artifact"
+      }
+    },
+    {
+      "id": "scenario-matrix",
+      "name": "Scenario Matrix (Playwright)",
+      "category": "integration",
+      "command": "pwsh tests/run.ps1 -Filter python_ml_llama32",
+      "artifacts": [
+        "skills/reports/scenario-report/scenario-report-*.html",
+        "skills/reports/scenario-report/junit-*.json",
+        "skills/reports/scenario-report/logs/api.log"
+      ],
+      "prerequisites": [
+        "Python venv exists at venv/ with requirements installed (python -m pip install -r requirements.txt)",
+        "Node deps installed in backend/, frontend/, and frontend-test/ (npm install in each)",
+        "Ollama is running on :11434 with llama3.2 pulled",
+        "The FastAPI analyzer is reachable on :8000",
+        "The Express auth API is reachable on :4000",
+        "The React dev server is reachable on :5173",
+        "The React testing dashboard is reachable on :5174 (optional, for the live log stream)"
+      ],
+      "expectedOutput": [
+        "Three scenarios pass with their expected top-ranked resume and minimum score:",
+        "  - python_ml_llama32: top=resume_strong_python.pdf, score>=50",
+        "  - data_engineer_llama32: top=resume_data_engineer.pdf, score>=45",
+        "  - frontend_react_llama32: top=resume_frontend.pdf, score>=45",
+        "A scenario-report-*.html file with one article per scenario and a Verdict pill in the Approval row"
+      ],
+      "actualLastRun": {
+        "artifact": "skills/reports/scenario-report/index.html",
+        "exists": true,
+        "lastModified": "see working tree"
+      }
+    },
+    {
+      "id": "html-report",
+      "name": "HTML Report (spreadsheet view)",
+      "category": "integration",
+      "command": "pwsh tests/run.ps1",
+      "artifacts": [
+        "reports/report.html"
+      ],
+      "prerequisites": [
+        "Same as the scenario-matrix report; tests/render_report.py converts the JUnit XML into the spreadsheet view"
+      ],
+      "expectedOutput": [
+        "reports/report.html with one row per scenario and pass/fail per assertion"
+      ],
+      "actualLastRun": {
+        "artifact": "reports/report.html",
+        "exists": true,
+        "lastModified": "regenerated every tests/run.ps1 invocation"
+      }
+    },
+    {
+      "id": "code-review",
+      "name": "AI Code Review (LLM-driven)",
+      "category": "review",
+      "command": "Invoke the Code Review Policy skill in chat. The LLM produces a fresh report, writes the JSON, the hash, and the checklist HTML; you paste the one-liner in chat to regenerate checklist-report.html.",
+      "artifacts": [
+        ".code-review/last-report.md",
+        ".code-review/last-checklist-data.json",
+        ".code-review/checklist-report.html"
+      ],
+      "prerequisites": [
+        "The AI Skill is registered (skills/code-review-policy/SKILL.md exists)",
+        "The pre-push hook is installed (git config core.hooksPath .githooks)",
+        "Ollama is not required for the review itself; the LLM does the review in chat"
+      ],
+      "expectedOutput": [
+        "last-report.md with a trailing 'VERDICT: <verdict>' line on the last line",
+        "last-checklist-data.json with every section populated and a checkedItems array",
+        "checklist-report.html with 39 tickable checkboxes, all ticked by the LLM",
+        "Verdict is one of: Approve | Approve with Suggestions | Request Changes",
+        "The pre-push hook reads the verdict and blocks on Request Changes"
+      ],
+      "actualLastRun": {
+        "artifact": ".code-review/checklist-report.html",
+        "exists": true,
+        "lastModified": "regenerated on every push"
+      }
+    },
+    {
+      "id": "security-review",
+      "name": "AI Security Review (LLM-driven)",
+      "category": "security",
+      "command": "Invoke the Security Review skill in chat. The LLM produces a chat report and a structured HTML file.",
+      "artifacts": [
+        "skills/reports/security-review-*.html",
+        "skills/reports/index.html"
+      ],
+      "prerequisites": [
+        "The Security Review skill is registered (skills/security-review/SKILL.md exists)",
+        "No infrastructure prerequisites; the review is LLM-driven"
+      ],
+      "expectedOutput": [
+        "Chat findings inline in the conversation",
+        "An HTML report at skills/reports/security-review-<mode>-<date>.html with 10 fields per finding",
+        "Safe-mode reviews (secrets-hygiene, test-data-pii) use redacted input data"
+      ],
+      "actualLastRun": {
+        "artifact": "skills/reports/security-review-all-2026-07-03.html",
+        "exists": true,
+        "lastModified": "see working tree"
+      }
+    }
+  ]
+}

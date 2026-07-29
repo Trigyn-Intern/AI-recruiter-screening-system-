@@ -1,0 +1,283 @@
+{
+  "repo": "Trigyn-Intern/AI-recruiter-screening-system-",
+  "branch": "ci",
+  "workflow": "ci.yml",
+  "run_id": 29984562766,
+  "run_name": "CI Pipeline",
+  "status": "completed",
+  "conclusion": "success",
+  "event": "pull_request",
+  "head_sha": "a031a521f21508085ad7750ba068a06eadee0075",
+  "created_at": "2026-07-23T06:17:01Z",
+  "updated_at": "2026-07-23T16:57:28Z",
+  "html_url": "https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/29984562766",
+  "actor": "rishabatra1802",
+  "logs_path": "reports/ci-logs.txt",
+  "logs_bytes": 154318,
+  "artifacts": [
+    {
+      "name": "backend-python-reports",
+      "download_url": "https://api.github.com/repos/Trigyn-Intern/AI-recruiter-screening-system-/actions/artifacts/8571814170/zip",
+      "size_bytes": 153908,
+      "size_human": "150.3 KB",
+      "file_count": 21,
+      "top_level": [
+        "ai-architecture-report.md",
+        "ai-dashboard.json",
+        "ai-dependency-report.md",
+        "ai-execution-report.md",
+        "ai-executive-report.md",
+        "ai-quality-report.md",
+        "ai-security-report.md",
+        "ai-technical-debt-report.md",
+        "coverage-python.html",
+        "coverage-python.xml",
+        "htmlcov-python",
+        "junit-python.html",
+        "junit-python.xml"
+      ],
+      "files": [
+        "ai-architecture-report.md",
+        "ai-dashboard.json",
+        "ai-dependency-report.md",
+        "ai-execution-report.md",
+        "ai-executive-report.md",
+        "ai-quality-report.md",
+        "ai-security-report.md",
+        "ai-technical-debt-report.md",
+        "coverage-python.xml",
+        "htmlcov-python/api_py.html",
+        "htmlcov-python/append_api_py.html",
+        "htmlcov-python/backend_py.html",
+        "htmlcov-python/class_index.html",
+        "htmlcov-python/coverage_html_cb_dd2e7eb5.js",
+        "htmlcov-python/favicon_32_cb_c827f16f.png",
+        "htmlcov-python/function_index.html",
+        "htmlcov-python/index.html",
+        "htmlcov-python/keybd_closed_cb_900cfef5.png",
+        "htmlcov-python/status.json",
+        "htmlcov-python/style_cb_4667309f.css",
+        "junit-python.xml"
+      ],
+      "status": "ok",
+      "note": null,
+      "output_dir": "reports/ci/backend-python-reports",
+      "parsed": {
+        "junit": {
+          "present": true,
+          "tests": 32,
+          "passed": 32,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "duration_seconds": 2.102,
+          "pass_rate": 100.0,
+          "suites": [
+            {
+              "name": "pytest",
+              "tests": 32,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0,
+              "duration": 2.102,
+              "timestamp": "2026-07-23T16:57:11.821181+00:00"
+            }
+          ],
+          "failed_cases": [],
+          "slow_cases": [],
+          "path": "reports/ci/backend-python-reports/junit-python.xml"
+        },
+        "coverage": {
+          "present": true,
+          "line_rate": 48.19,
+          "branch_rate": 0.0,
+          "files": [
+            {
+              "file": "append_api.py",
+              "line_rate": 0.0,
+              "branch_rate": 0.0,
+              "lines": 8,
+              "missing": 8
+            },
+            {
+              "file": "api.py",
+              "line_rate": 0.3114,
+              "branch_rate": 0.0,
+              "lines": 228,
+              "missing": 157
+            },
+            {
+              "file": "backend.py",
+              "line_rate": 0.5244,
+              "branch_rate": 0.0,
+              "lines": 1005,
+              "missing": 478
+            }
+          ],
+          "weakest": [
+            {
+              "file": "append_api.py",
+              "line_rate": 0.0
+            },
+            {
+              "file": "api.py",
+              "line_rate": 31.1
+            },
+            {
+              "file": "backend.py",
+              "line_rate": 52.4
+            }
+          ],
+          "path": "reports/ci/backend-python-reports/coverage-python.xml"
+        },
+        "status": {
+          "present": true,
+          "files": [
+            {
+              "file": "api_py",
+              "statements": 0,
+              "covered": 0,
+              "missing": 0,
+              "excluded": 0,
+              "line_rate": 0
+            },
+            {
+              "file": "append_api_py",
+              "statements": 0,
+              "covered": 0,
+              "missing": 0,
+              "excluded": 0,
+              "line_rate": 0
+            },
+            {
+              "file": "backend_py",
+              "statements": 0,
+              "covered": 0,
+              "missing": 0,
+              "excluded": 0,
+              "line_rate": 0
+            }
+          ],
+          "weakest": [
+            {
+              "file": "api_py",
+              "line_rate": 0
+            },
+            {
+              "file": "append_api_py",
+              "line_rate": 0
+            },
+            {
+              "file": "backend_py",
+              "line_rate": 0
+            }
+          ]
+        },
+        "ai_dashboard": {
+          "present": true,
+          "source_files": 15464,
+          "test_modules": 3544,
+          "oversized_files": 4263,
+          "dependency_manifests": 7,
+          "duration_seconds": 0.0,
+          "codex_status": "not run",
+          "post_checks_status": "skipped",
+          "reports": [
+            "ai-architecture-report.md",
+            "ai-dependency-report.md",
+            "ai-execution-report.md",
+            "ai-executive-report.md",
+            "ai-quality-report.md",
+            "ai-security-report.md",
+            "ai-technical-debt-report.md"
+          ],
+          "path": "reports/ci/backend-python-reports/ai-dashboard.json"
+        },
+        "k6": {
+          "present": true,
+          "metrics": {},
+          "path": "reports/k6-results.json"
+        }
+      }
+    },
+    {
+      "name": "dist-frontend-test",
+      "download_url": "https://api.github.com/repos/Trigyn-Intern/AI-recruiter-screening-system-/actions/artifacts/8571795177/zip",
+      "size_bytes": 86189,
+      "size_human": "84.2 KB",
+      "file_count": 3,
+      "top_level": [
+        "assets",
+        "index.html"
+      ],
+      "files": [
+        "assets/index-7x4OUyoU.js",
+        "assets/index-Hu0AHujP.css",
+        "index.html"
+      ],
+      "status": "ok",
+      "note": null,
+      "output_dir": "reports/ci/dist-frontend-test",
+      "parsed": {
+        "index_size_bytes": 417,
+        "k6": {
+          "present": true,
+          "metrics": {},
+          "path": "reports/k6-results.json"
+        }
+      }
+    },
+    {
+      "name": "dist-frontend",
+      "download_url": "https://api.github.com/repos/Trigyn-Intern/AI-recruiter-screening-system-/actions/artifacts/8571794414/zip",
+      "size_bytes": 877955,
+      "size_human": "857.4 KB",
+      "file_count": 5,
+      "top_level": [
+        "assets",
+        "index.html",
+        "reports.json"
+      ],
+      "files": [
+        "assets/index--eXYKgLk.js",
+        "assets/index-EXyqGyrQ.css",
+        "assets/monstera_bg-BRxu-G8P.png",
+        "index.html",
+        "reports.json"
+      ],
+      "status": "ok",
+      "note": null,
+      "output_dir": "reports/ci/dist-frontend",
+      "parsed": {
+        "catalog": {
+          "present": true,
+          "updated": "2026-07-14T00:00:00Z",
+          "report_count": 8,
+          "categories": [
+            "integration",
+            "performance",
+            "review",
+            "security"
+          ],
+          "ids": [
+            "zap-baseline",
+            "zap-auth",
+            "lighthouse-ci",
+            "perf-benchmarks",
+            "scenario-matrix",
+            "html-report",
+            "code-review",
+            "security-review"
+          ],
+          "path": "reports/ci/dist-frontend/reports.json"
+        },
+        "k6": {
+          "present": true,
+          "metrics": {},
+          "path": "reports/k6-results.json"
+        }
+      }
+    }
+  ],
+  "fetched_at": "2026-07-28T05:22:50+00:00"
+}

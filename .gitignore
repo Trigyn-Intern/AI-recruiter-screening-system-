@@ -47,12 +47,10 @@ uvicorn-test.err
 backend/server-debug.log
 
 # ===== Reports / Test artifacts =====
-reports/
-reports/allure-results/
-tests/reports/
+
 tests/ui/screenshots/
 tests/ui/logs/
-zap-reports/
+
 .lighthouseci/
 frontend-test/coverage/
 
