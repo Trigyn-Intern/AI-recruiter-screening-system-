@@ -1,0 +1,70 @@
+﻿# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+
+# Streamlit logs
+streamlit.log
+streamlit.err.log
+
+# Runtime resume vector and skill caches
+vector_store/
+.requirements.sha
+
+# Local auth/runtime data
+backend/data/
+
+# Local OWASP ZAP reports
+zap-reports/
+zap-baseline-report.*
+
+# Test run logs
+tests/ui/logs/
+
+# Accidental nested clone
+AI-recruiter-screening-system-/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend-test/node_modules/
+frontend-test/dist/
+frontend-test/vite-test.err
+frontend-test/vite-test.log
+frontend/dist/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE / editor
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+.env
+
+tests/ui/screenshots
+tests/ui/logs
+reports/allure-results
+reports/junit.json
+        reports/logs/api.log
+        reports/logs/auth.log
+        reports/logs/web.log
+
+reports/logs/api.log
+/chrome
+/uvicorn-perf.log
+backend/uvicorn-smoke.err
+backend/uvicorn-test.err
+/.benchmarks
+/.lighthouseci
+
+
+tests/performance/load/run-4workers.log

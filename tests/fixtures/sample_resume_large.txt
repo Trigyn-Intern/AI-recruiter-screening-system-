@@ -1,0 +1,18 @@
+John Doe - Senior Software Engineer
+Email: john.doe@example.com | Phone: 555-0199
+
+SUMMARY
+Experienced software architect with 10+ years specializing in Python, FastAPI, and PostgreSQL. Proven track record of scaling applications to handle 10k+ concurrent users.
+
+EXPERIENCE
+Company A (2018 - Present)
+- Designed microservices architecture reducing latency by 40%.
+- Implemented LLM-based parsing using LangChain and OpenAI APIs.
+- Built performance testing frameworks utilizing k6 and Grafana.
+
+Company B (2012 - 2018)
+- Managed database migrations and indexing strategies.
+- Mentored junior developers in REST API design.
+
+SKILLS
+Python, Go, JavaScript, SQL, NoSQL, Docker, Kubernetes, AWS, Terraform, Pytest, Locust, k6.

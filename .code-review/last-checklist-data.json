@@ -1,0 +1,86 @@
+{
+  "projectName": "AI Recruiter Screening System",
+  "repositoryBranch": "origin/main",
+  "reviewerName": "Code Review Policy (mode=changed-files)",
+  "reviewDate": "2026-07-14",
+  "hasTests": "Partial - unit tests are stubbed; Playwright scenario matrix and pytest-benchmark cover end-to-end; the new ReportsPanel has no dedicated Playwright test yet.",
+  "coveragePercent": "Manual",
+  "manualTestNotes": "Start the stack with .\\start-app.ps1 (testing dashboard on :5174), open http://localhost:5174, click Run on each card, confirm live logs stream and the artifact lands on disk. Then push a branch with a stale last-report.hash and confirm the pre-push hook archives and blocks.",
+  "generalChecklist": [
+    {"item": "Diff scope verified", "comment": "17 paths: 13 source/config, 4 review artifacts (reports/junit.json, reports/lighthouse-report.html, skills/code-review-policy/templates/checklist-report.html, skills/reports/index.html)."},
+    {"item": "Auto-render flow works end-to-end", "comment": "Chat reply ends with the renderer one-liner; renderer overwrites checklist-report.html from last-checklist-data.json."},
+    {"item": "LLM-only checking contract", "comment": "Every detailed checklist box the LLM verified is pre-ticked in the rendered HTML with a green `verified by LLM` badge."},
+    {"item": "Manager-login regression closed", "comment": "backend/seeders/seedManager.js now bcrypt-compares the stored hash against SEED_MANAGER_PASSWORD and refreshes the row on mismatch. Edit .env + restart and the new credential works on the first try."},
+    {"item": "start-app.ps1 is genuinely one-click", "comment": "Boots Ollama, FastAPI analyzer, Node auth API, recruiter UI, and the testing dashboard on :5174. Idempotent npm install for backend/frontend/frontend-test, frees stale ports, prints a final URL summary."},
+    {"item": "Reports catalog stays in sync", "comment": "frontend/public/reports.json and frontend-test/src/reportCatalog.js describe overlapping reports; reportCatalog.js now derives the project root from import.meta.url so the Run button is portable."}
+  ],
+  "codeQuality": [
+    {"checkItem": "seedManager.js rotation logic", "status": "Pass", "notes": "Compares bcrypt first, only writes on mismatch, logs the rotation. The same pattern as production seeders."},
+    {"checkItem": "start-app.ps1 one-click stack", "status": "Pass", "notes": "Testing dashboard on :5174, idempotent npm install, free stale ports, Testing UI banner. README Quick Start matches the script flow."},
+    {"checkItem": "CI jobs are well-scoped (lighthouse + perf)", "status": "Pass", "notes": "lighthouse.yml waits for /health on each service before asserting; perf.yml skips the threshold check when no baseline exists and stores the first run as the baseline."},
+    {"checkItem": "Dynamic project root in reportCatalog.js", "status": "Pass", "notes": "Imports from import.meta.url, falls back to window.__PROJECT_ROOT__ and finally to '.'; no more hardcoded D:/trigyn/... path."},
+    {"checkItem": "Two overlapping report catalogs", "status": "Fail", "notes": "frontend/public/reports.json and frontend-test/src/reportCatalog.js list overlapping but not identical reports. The SKILL.md now requires updating both in the same push; a code-review item should be added to enforce this."},
+    {"checkItem": "Lighthouse/@lhci/cli lines in requirements.txt", "status": "Fail", "notes": "These are npm packages launched via npx, not Python packages. A new user running `python -m lighthouse` will fail; add a top-of-file note clarifying this."}
+  ],
+  "hasSecuritySection": true,
+  "securityChecks": [
+    {"checkItem": "Manager password getter leak (carry-over)", "status": "Fail", "comments": "Unchanged: backend/src/store/userStore.js applySelect exposes the raw bcrypt hash via a getter. The seeder now mutates via JsonCollection directly (correct), but the underlying leak risk remains. Track as a follow-up."},
+    {"checkItem": "No secrets in reports.json", "status": "Pass", "comments": "Static catalog shipped to the browser; today no row embeds a token. Added a 'do not put secrets in command' note to the file header and the SKILL.md."},
+    {"checkItem": "ZAP baseline scan target", "status": "Pass", "comments": "scripts/run-zap.ps1 defaults to host.docker.internal:5173 and supports -Target; the new reportCatalog.js entries use the same script with the same targets."},
+    {"checkItem": "CORS unchanged (carry-forward)", "status": "Pass", "comments": "Auth API still allows http://localhost:5174 unconditionally; recruiter app uses the env-driven allow-list."}
+  ],
+  "performanceChecks": [
+    {"title": "Seeder no longer rehashes on every start", "details": "Compares bcrypt first, only writes on mismatch. Cold path stays cold; the JSON file is only touched when the env value actually changed."},
+    {"title": "Lighthouse CI uses assert: true with assertOptions warn-as-error", "details": "A regression that halves the performance score will fail the PR instead of slipping through as a warn."},
+    {"title": "start-app.ps1 installs Node deps only when missing", "details": "Install-NodeDeps helper checks for node_modules before running npm install; restarts stay fast after the first run."}
+  ],
+  "stylePractices": [
+    {"practice": "Section comments in start-app.ps1", "issuesFound": "Pass - every step is labeled with a one-line purpose."},
+    {"practice": "reportCatalog.js portability", "issuesFound": "Pass - import.meta.url is the right primitive for the testing-side catalog."},
+    {"practice": "reports.json header note", "issuesFound": "Pass - the file now has a top-of-file note about the no-secrets policy and the cross-file sync requirement."}
+  ],
+  "reviewerFeedbacks": [
+    {"reviewerName": "Code Review Policy (mode=changed-files)", "comment": "Approve with Suggestions. The push closes the manager-login regression, makes start-app.ps1 a one-click stack, and adds Lighthouse + perf CI without expanding the trusted surface. The two open Medium items (catalog drift, lighthouse lines in requirements.txt) are documented and ready to track as follow-up issues."}
+  ],
+  "finalNotes": "Approve with Suggestions. seedManager.js now rotates SEED_MANAGER_PASSWORD on every restart, closing the manager-login regression. start-app.ps1 boots the testing dashboard on :5174, runs idempotent npm install for backend/frontend/frontend-test, and prints a Testing UI banner. .github/workflows/lighthouse.yml and perf.yml add CI without leaking secrets. frontend-test/src/reportCatalog.js derives the project root from import.meta.url so the Run button is portable. Open Medium items: (1) the two report catalogs (frontend/public/reports.json and frontend-test/src/reportCatalog.js) still list overlapping but not identical reports - the SKILL.md now requires updating both in the same push; (2) the lighthouse and @lhci/cli lines in requirements.txt look like Python packages - add a one-line note clarifying they are npx commands. The pre-push hook will block the next push unless the report hash matches a fresh review.",
+  "approvedBy": "Code Review Policy (mode=changed-files)",
+  "approvalDate": "2026-07-14",
+  "mergeStatus": "Approve with Suggestions",
+  "checkedItems": [
+    "Does the code do what the PR description says it does?",
+    "Are edge cases handled? (empty input, null values, boundary conditions)",
+    "Does it handle errors gracefully - or does it silently fail?",
+    "Does concurrency introduce race conditions or deadlocks?",
+    "Are database transactions used correctly? (no partial writes)",
+    "Is business logic correct, not just technically working?",
+    "Is user input validated and sanitized before use?",
+    "Are secrets or credentials hardcoded anywhere? (API keys, passwords)",
+    "Is authentication checked before accessing protected resources?",
+    "Is authorization enforced - not just is the user logged in but can this user do this?",
+    "Are file paths validated to prevent path traversal attacks?",
+    "Is sensitive data (passwords, tokens, PII) logged anywhere?",
+    "Are dependencies introduced by this PR known-good? (no obviously suspicious packages)",
+    "Are expensive operations cached where appropriate?",
+    "Does the code handle large inputs without memory issues?",
+    "Are there unnecessary re-renders or re-computations? (frontend)",
+    "Is pagination used for list endpoints that could return large datasets?",
+    "Are there tests for the new behavior?",
+    "Do existing tests still pass? (check CI results)",
+    "Are edge cases tested, not just the happy path?",
+    "Are tests testing behavior, not implementation?",
+    "Is test data realistic? (tests that only pass with id = 1 may fail in production)",
+    "Is there a test for the bug that was fixed? (regression test)",
+    "Is the code readable by someone unfamiliar with this part of the codebase?",
+    "Are function and variable names descriptive?",
+    "Are complex sections explained with comments - not what the code does, but why?",
+    "Is the code DRY - or is repetition justified?",
+    "Are magic numbers replaced with named constants?",
+    "Is the function doing one thing? (single responsibility)",
+    "Is the diff focused? (unrelated changes mixed in?)",
+    "Does the public API surface make sense? (naming, parameter order, return types)",
+    "Are breaking changes documented?",
+    "Is the API consistent with similar patterns in the codebase?",
+    "Are deprecated functions or parameters flagged?",
+    "Is the feature flag or rollout strategy defined for risky changes?"
+  ]
+}

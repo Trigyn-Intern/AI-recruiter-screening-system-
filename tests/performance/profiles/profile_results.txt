@@ -1,0 +1,38 @@
+         61721 function calls (60700 primitive calls) in 0.113 seconds
+
+   Ordered by: cumulative time
+   List reduced from 295 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.113    0.113 D:\trigyn\trigyn project\AI-recruiter-screening-system-\tests\performance\profiles\run_profiler.py:25(run_heavy_ml_task)
+        4    0.000    0.000    0.099    0.025 D:\trigyn\trigyn project\AI-recruiter-screening-system-\tests\performance\profiles\run_profiler.py:19(_load_resume_text)
+        4    0.000    0.000    0.095    0.024 D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend.py:2101(extract_text)
+        4    0.000    0.000    0.095    0.024 D:\trigyn\trigyn project\AI-recruiter-screening-system-\backend.py:2078(extract_pdf_text)
+        8    0.000    0.000    0.073    0.009 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:2225(extract_text)
+        8    0.001    0.000    0.072    0.009 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:1783(_extract_text)
+  805/349    0.005    0.000    0.041    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:1447(read_object)
+        8    0.000    0.000    0.027    0.003 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:1419(operations)
+        8    0.003    0.000    0.027    0.003 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:1286(_parse_content_stream)
+    56/40    0.003    0.000    0.023    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:523(read_from_stream)
+      100    0.000    0.000    0.022    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_base.py:369(get_object)
+      100    0.001    0.000    0.022    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_reader.py:389(get_object)
+      306    0.002    0.000    0.020    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:1874(process_operation)
+8193/7665    0.003    0.000    0.016    0.000 {built-in method builtins.len}
+       85    0.000    0.000    0.014    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:1747(_handle_tj)
+       12    0.000    0.000    0.013    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:2550(__iter__)
+       12    0.000    0.000    0.013    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_page.py:2475(__len__)
+       12    0.000    0.000    0.013    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_doc_common.py:338(get_num_pages)
+     12/4    0.000    0.000    0.013    0.003 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_doc_common.py:1122(_flatten)
+      148    0.000    0.000    0.011    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:476(__getitem__)
+      878    0.005    0.000    0.011    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_utils.py:223(read_until_regex)
+        8    0.000    0.000    0.010    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:1155(__init__)
+        8    0.000    0.000    0.010    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_data_structures.py:1100(get_data)
+       85    0.006    0.000    0.010    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_utils.py:62(read_string_from_stream)
+        8    0.000    0.000    0.010    0.001 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\filters.py:712(decode_stream_data)
+        4    0.000    0.000    0.009    0.002 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_reader.py:112(__init__)
+        4    0.000    0.000    0.009    0.002 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_reader.py:146(_initialize_stream)
+        4    0.000    0.000    0.009    0.002 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_reader.py:588(read)
+      316    0.002    0.000    0.008    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\generic\_base.py:858(read_from_stream)
+       16    0.000    0.000    0.008    0.000 D:\trigyn\trigyn project\AI-recruiter-screening-system-\venv\Lib\site-packages\pypdf\_cmap.py:18(build_char_map)
+
+

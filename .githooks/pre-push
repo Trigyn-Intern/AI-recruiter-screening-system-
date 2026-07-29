@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# Pre-push hook: enforces a fresh AI code-review for every push.
+#
+# Flow:
+#   1. Compute the list of files in this push (diff against the upstream).
+#   2. Hash that list with sha256.
+#   3. If the hash differs from the hash recorded in
+#      .code-review/last-report.hash, the previous report is stale:
+#      - Move it to .code-review/last-report.<oldhash>.md (archive, not delete).
+#      - Delete .code-review/last-report.md so the gate blocks.
+#   4. Block the push until a fresh report is written to
+#      .code-review/last-report.md, ending with a VERDICT: line.
+#
+# The hook itself does not call an LLM. The developer pastes the
+# invocation prompt into their AI chat, gets the review, and saves the
+# report. The LLM is also expected to write .code-review/last-report.hash
+# next to the report so the next push can verify freshness.
+#
+# Verdict handling (GitHub-style):
+#   Request Changes           -> block the push
+#   Approve with Suggestions  -> allow the push, print a warning
+#   Approve                   -> allow the push silently
+#
+# Override in emergencies:
+#   AI_SKIP_PRE_PUSH=1 git push
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+REVIEW_DIR="$REPO_ROOT/.code-review"
+REPORT="$REVIEW_DIR/last-report.md"
+HASH_FILE="$REVIEW_DIR/last-report.hash"
+CHANGED_FILES="$REVIEW_DIR/last-changed-files.txt"
+INVOKE="$REVIEW_DIR/invoke.txt"
+
+mkdir -p "$REVIEW_DIR"
+
+# --- 1. Resolve the remote and the range of commits about to be pushed. ---
+REMOTE_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
+if [ -z "$REMOTE_BRANCH" ]; then
+  echo ""
+  echo "[pre-push] no upstream branch set; skipping AI review (initial push)."
+  echo "[pre-push] PASS"
+  exit 0
+fi
+
+CHANGED=$(git diff --name-only "$REMOTE_BRANCH"..HEAD 2>/dev/null || true)
+if [ -z "$CHANGED" ]; then
+  echo ""
+  echo "[pre-push] no changed files in this push; nothing to review."
+  echo "[pre-push] PASS"
+  exit 0
+fi
+
+FILE_COUNT=$(printf "%s\n" "$CHANGED" | wc -l | tr -d ' ')
+
+# --- 2. Hash the new changed-files list. ---
+NEW_HASH=$(printf "%s" "$CHANGED" | sha256sum | cut -d' ' -f1)
+PREV_HASH=""
+if [ -f "$HASH_FILE" ]; then
+  PREV_HASH=$(cat "$HASH_FILE" 2>/dev/null || echo "")
+fi
+
+# --- 3. Print a friendly summary. ------------------------------------------
+echo ""
+echo "============================================================"
+echo "  AI Code Review Policy - pre-push"
+echo "============================================================"
+echo "  Mode:          changed-files"
+echo "  Files queued:  $FILE_COUNT"
+echo "  Remote ref:    $REMOTE_BRANCH"
+echo "  Review dir:    $REVIEW_DIR"
+echo "  Diff hash:     $NEW_HASH"
+if [ -n "$PREV_HASH" ]; then
+  echo "  Prev hash:     $PREV_HASH"
+fi
+echo "------------------------------------------------------------"
+
+i=0
+echo "$CHANGED" | while IFS= read -r path; do
+  i=$((i + 1))
+  if [ "$i" -le 25 ]; then
+    echo "    $path"
+  fi
+done
+if [ "$FILE_COUNT" -gt 25 ]; then
+  REMAINING=$((FILE_COUNT - 25))
+  echo "    ... and $REMAINING more"
+fi
+echo "============================================================"
+echo ""
+
+# --- 4. Invalidate stale report if the diff hash changed. -----------------
+if [ -n "$PREV_HASH" ] && [ "$NEW_HASH" != "$PREV_HASH" ]; then
+  if [ -f "$REPORT" ]; then
+    ARCHIVE="$REVIEW_DIR/last-report.${PREV_HASH:0:12}.md"
+    mv "$REPORT" "$ARCHIVE"
+    echo "[pre-push] changed-files list changed since the last report."
+    echo "[pre-push] archived old report to: $ARCHIVE"
+  fi
+  rm -f "$HASH_FILE"
+  echo "[pre-push] a fresh AI review is required for this push."
+  echo ""
+fi
+
+# --- 5. Write the changed-files list and the invocation prompt. -----------
+printf "%s\n" "$CHANGED" > "$CHANGED_FILES"
+
+cat > "$INVOKE" <<EOF
+Invoke the Code Review Policy skill in mode=changed-files.
+
+Files to review (one per line, from $CHANGED_FILES):
+$CHANGED
+
+Diff hash: $NEW_HASH
+
+Save the full report (with the trailing VERDICT: line) to:
+$REPORT
+
+After saving the report, also write the diff hash to:
+$HASH_FILE
+  (echo $NEW_HASH > $HASH_FILE)
+EOF
+
+# --- 6. Decide whether the developer already produced a report. -----------
+if [ ! -f "$REPORT" ]; then
+  echo "[pre-push] no fresh AI review report found at $REPORT"
+  echo ""
+  echo "  How to generate it:"
+  echo "    1. Open your AI chat."
+  echo "    2. Paste the contents of: $INVOKE"
+  echo "    3. Save the report to:     $REPORT"
+  echo "    4. Save the diff hash to:  $HASH_FILE"
+  echo "       (or run:  echo $NEW_HASH > $HASH_FILE)"
+  echo "    5. Re-run:                 git push"
+  echo ""
+  echo "  Override (emergencies only):  AI_SKIP_PRE_PUSH=1 git push"
+  echo ""
+  if [ "${AI_SKIP_PRE_PUSH:-0}" = "1" ]; then
+    echo "[pre-push] AI_SKIP_PRE_PUSH=1 set; allowing push without review."
+    echo "[pre-push] PASS (skipped)"
+    exit 0
+  fi
+  echo "[pre-push] FAIL: blocked. Generate a fresh AI review first."
+  exit 1
+fi
+
+# --- 7. Verify the report's hash matches the current diff. ----------------
+# The LLM is expected to write HASH_FILE when it saves the report. If the
+# hash is missing or stale, the report is from a previous push and the
+# gate blocks.
+REPORT_HASH=""
+if [ -f "$HASH_FILE" ]; then
+  REPORT_HASH=$(cat "$HASH_FILE" 2>/dev/null || echo "")
+fi
+
+if [ -z "$REPORT_HASH" ]; then
+  echo "[pre-push] FAIL: $REPORT exists but $HASH_FILE is missing."
+  echo "[pre-push] the LLM must write the diff hash next to the report."
+  echo "[pre-push] run:  echo $NEW_HASH > $HASH_FILE"
+  exit 1
+fi
+
+if [ "$REPORT_HASH" != "$NEW_HASH" ]; then
+  echo "[pre-push] FAIL: $REPORT is from a previous push."
+  echo "[pre-push] report hash:  $REPORT_HASH"
+  echo "[pre-push] current hash:  $NEW_HASH"
+  echo "[pre-push] generate a fresh review and re-run git push."
+  exit 1
+fi
+
+# --- 8. Read the verdict from the last line of the report. ----------------
+VERDICT_RAW=$(grep -E "^VERDICT:" "$REPORT" | tail -n 1 | sed -e 's/^VERDICT:[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+if [ -z "$VERDICT_RAW" ]; then
+  echo "[pre-push] FAIL: $REPORT has no 'VERDICT:' line."
+  echo "[pre-push] the AI must end its report with one of:"
+  echo "    VERDICT: Approve"
+  echo "    VERDICT: Approve with Suggestions"
+  echo "    VERDICT: Request Changes"
+  exit 1
+fi
+
+echo "[pre-push] verdict: $VERDICT_RAW"
+echo "[pre-push] diff hash matches the report hash."
+
+case "$VERDICT_RAW" in
+  "Request Changes")
+    echo ""
+    echo "[pre-push] FAIL: 'Request Changes' verdict blocks the push."
+    echo "[pre-push] fix the High-severity findings in $REPORT and re-run."
+    exit 1
+    ;;
+  "Approve with Suggestions")
+    echo ""
+    echo "[pre-push] WARN: 'Approve with Suggestions' - allowing push."
+    echo "[pre-push] review the Medium findings in $REPORT after pushing."
+    echo "[pre-push] PASS"
+    ;;
+  "Approve")
+    echo ""
+    echo "[pre-push] 'Approve' - allowing push."
+    echo "[pre-push] PASS"
+    ;;
+  *)
+    echo ""
+    echo "[pre-push] FAIL: unknown verdict '$VERDICT_RAW' in $REPORT."
+    echo "[pre-push] must be one of: Approve | Approve with Suggestions | Request Changes"
+    exit 1
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,12 @@
+Invoke the Code Review Policy skill in mode=changed-files.
+
+Files to review (one per line, from D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-changed-files.txt):
+frontend/src/App.jsx
+Diff hash: c9afd9a5427c713a30ee5aaebef924f14ddd7c2ece7f1a60f24c610900598ca9
+
+Save the full report (with the trailing VERDICT: line) to:
+D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.md
+
+After saving the report, also write the diff hash to:
+D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.hash
+  (echo c9afd9a5427c713a30ee5aaebef924f14ddd7c2ece7f1a60f24c610900598ca9 > D:/trigyn/trigyn project/AI-recruiter-screening-system-/.code-review/last-report.hash)

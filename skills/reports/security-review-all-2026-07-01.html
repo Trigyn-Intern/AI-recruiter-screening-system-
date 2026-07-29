@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>security-review &mdash; all &mdash; 2026-07-01</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --code-bg: #f3f4f6;
+    --pass: #16a34a;
+    --fail: #dc2626;
+    --warning: #d97706;
+    --link: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 32px;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  h1 { margin: 0 0 8px 0; font-size: 24px; }
+  .meta { color: var(--muted); font-size: 14px; }
+  .meta dl { display: grid; grid-template-columns: 140px 1fr; gap: 4px 16px; margin: 12px 0 0 0; }
+  .meta dt { color: var(--muted); }
+  .meta dd { margin: 0; }
+  table.summary { border-collapse: collapse; margin-top: 16px; }
+  table.summary th, table.summary td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
+  .status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .status.pass { background: #dcfce7; color: var(--pass); }
+  .status.fail { background: #fee2e2; color: var(--fail); }
+  .status.warning { background: #fef3c7; color: var(--warning); }
+  article.test-case {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  article.test-case h2 { margin: 0 0 8px 0; font-size: 18px; }
+  article.test-case .description { color: var(--muted); margin: 0 0 16px 0; }
+  article.test-case section { margin-top: 16px; }
+  article.test-case h3 { margin: 0 0 6px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+  code.redacted { color: var(--warning); font-style: italic; }
+  ul, ol { margin: 4px 0 0 0; padding-left: 24px; }
+  li { margin: 2px 0; }
+  a { color: var(--link); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>security-review &mdash; all &mdash; 2026-07-01</h1>
+  <div class="meta">
+    <dl>
+      <dt>Generated</dt><dd>2026-07-01T00:00:00Z</dd>
+      <dt>Mode(s)</dt><dd>auth-review, llm-prompt-safety, secrets-hygiene, frontend-input, test-data-pii</dd>
+      <dt>Files in scope</dt>
+      <dd>
+        backend/server.js, backend/controllers/authController.js, backend/middleware/requireAuth.js,
+        backend/middleware/validate.js, backend/routes/authRoutes.js, api.py, backend.py,
+        vector_store/prompt_config.json, vector_store/resume_metadata.json, vector_store/resume_skills.json,
+        frontend/src/defaultPrompts.js, backend/.env, frontend/.env, backend/config/db.js,
+        frontend/src/App.jsx, frontend/src/main.jsx, frontend/src/defaultModels.js,
+        frontend/index.html, frontend/package.json, tests/data/resumes/*.pdf,
+        tests/data/jds/*.txt, tests/data/scenarios.yaml
+      </dd>
+    </dl>
+    <table class="summary">
+      <thead><tr><th>Status</th><th>Count</th></tr></thead>
+      <tbody>
+        <tr><td><span class="status fail">Fail</span></td><td>12</td></tr>
+        <tr><td><span class="status warning">Warning</span></td><td>15</td></tr>
+        <tr><td><span class="status pass">Pass</span></td><td>12</td></tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+<main>
+
+<article class="test-case">
+  <h2>secrets-hygiene / committed-env-backend <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that no <code>.env</code> files are committed to the repository and that the JWT secret is not exposed via the working tree.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>secrets-hygiene</code> (safe mode)</li>
+      <li>Files inspected: <code>backend/.env</code>, <code>frontend/.env</code>, <code>.gitignore</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>backend/.env</code> and identify whether the file is tracked by git.</li>
+      <li>Read <code>frontend/.env</code> and identify whether the file is tracked by git.</li>
+      <li>Read <code>.gitignore</code> and check whether the two paths above are excluded.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>backend/.env:1-5    category=committed-env   <code class="redacted">[REDACTED: env file contents]</code>
+frontend/.env:1     category=committed-env   <code class="redacted">[REDACTED: env file contents]</code></code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>No <code>.env</code> file is tracked by git. A <code>.env.example</code> with placeholders is committed instead. <code>.gitignore</code> excludes <code>backend/.env</code> and <code>frontend/.env</code>.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>Both <code>backend/.env</code> and <code>frontend/.env</code> are tracked. <code>.gitignore</code> contains a generic <code>.env</code> line that was added after the fact, so the rule is correct in intent but the historical commit is still in the index.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Add explicit <code>backend/.env</code> and <code>frontend/.env</code> entries to <code>.gitignore</code>. Run <code>git rm --cached backend/.env frontend/.env</code>. Create <code>.env.example</code> files with placeholder values for new contributors. After untracking, rotate the JWT secret immediately and reissue all active tokens.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Open AI-recruiter-screening-system-/backend/.env and AI-recruiter-screening-system-/frontend/.env.
+Read the current .gitignore.
+Make these changes and show me the diff:
+  1. Add backend/.env and frontend/.env to .gitignore (explicit entries).
+  2. Create backend/.env.example and frontend/.env.example with placeholder values.
+  3. Do not modify the .env files themselves.
+Do not run git rm --cached yet � I will do that after reviewing.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>secrets-hygiene / jwt-secret-in-tracked-env <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that the JWT signing secret is not stored in a tracked file.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>secrets-hygiene</code> (safe mode)</li>
+      <li>Files inspected: <code>backend/.env</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>backend/.env</code> and locate the <code>JWT_SECRET</code> entry.</li>
+      <li>Confirm the file is tracked by git.</li>
+      <li>Assess whether rotation is required even after untracking.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>backend/.env:3   category=weak-secret-by-location   <code class="redacted">[REDACTED: high-entropy hex string]</code></code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>The secret is read from a real secret store (environment variable injected at deploy, Vault, AWS Secrets Manager, GitHub Actions secrets) and is never persisted in the working tree.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>The secret value is present in <code>backend/.env</code>, which is tracked. The value has good entropy; the problem is location, not strength.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Treat the current value as burned. Generate a new 64-character hex secret, store it in your deployment environment, and reissue all active tokens. The existing users will be silently logged out on next request, which is the correct behavior for a credential rotation.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>I need to rotate the JWT signing secret for AI-recruiter-screening-system-.
+Read backend/.env and backend/controllers/authController.js to see how JWT_SECRET is loaded.
+Show me the exact lines that use the secret.
+Do not change any code yet. Just tell me:
+  1. The current load path.
+  2. The minimum set of files I need to update to rotate cleanly.
+  3. Whether the auth middleware (backend/middleware/requireAuth.js) reads from the same env var.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>auth-review / rate-limiting-missing <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that login and signup endpoints are protected against credential stuffing and signup spam.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>auth-review</code></li>
+      <li>Files inspected: <code>backend/routes/authRoutes.js</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read the router file in full.</li>
+      <li>Check for <code>express-rate-limit</code> or equivalent middleware on the signup and login routes.</li>
+      <li>Confirm whether any global limiter is registered in <code>backend/server.js</code>.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>router.post("/signup", validateSignup, signup);
+router.post("/login",  validateLogin,  login);
+router.get ("/me",     requireAuth,    me);</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>Login and signup are wrapped with a per-IP rate limiter, e.g. 5 attempts per 15 minutes on login and 10 signups per hour.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>No rate limiter is applied at the router level or in <code>server.js</code>. An attacker can attempt unlimited credentials or sign up thousands of accounts.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Install <code>express-rate-limit</code>. Create a small middleware module that returns a limiter configured for auth routes, then mount it before the validators. Use the default in-memory store; if you scale to multiple instances, swap in a Redis store. Skip /me � it requires a valid token and is naturally bounded.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Add rate limiting to AI-recruiter-screening-system-/backend/routes/authRoutes.js.
+  1. Create backend/middleware/rateLimiter.js that exports an express-rate-limit
+     configured to 5 attempts per 15 minutes per IP, returning 429 with a JSON body.
+  2. Apply it to POST /signup and POST /login, before the validators.
+  3. Update backend/package.json dependencies: add "express-rate-limit": "^7.0.0".
+  4. Do not change any other behavior.
+Show me the diff when done.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>auth-review / jwt-algorithm-not-pinned <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that JWT verification pins the expected algorithm to prevent alg-confusion attacks.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>auth-review</code></li>
+      <li>Files inspected: <code>backend/middleware/requireAuth.js</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>requireAuth.js</code> in full.</li>
+      <li>Locate the <code>jwt.verify</code> call.</li>
+      <li>Check whether the <code>algorithms</code> option is passed.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>payload = jwt.verify(token, process.env.JWT_SECRET);</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>Verification passes an explicit <code>algorithms</code> option, e.g. <code>{ algorithms: ["HS256"] }</code>.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>No <code>algorithms</code> option is passed. The library will accept any algorithm it knows, including historical <code>none</code> in older versions.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Pin the algorithm explicitly. Also pass the same <code>algorithms</code> list to the <code>jwt.sign</code> call in <code>authController.js</code> so sign and verify stay in sync. One-line change in two files.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>In AI-recruiter-screening-system-/backend/middleware/requireAuth.js around line 14,
+change:
+  payload = jwt.verify(token, process.env.JWT_SECRET);
+to:
+  payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
+In AI-recruiter-screening-system-/backend/controllers/authController.js, also add
+{ algorithm: "HS256" } to the jwt.sign options.
+Show me the diff. Do not change anything else.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>auth-review / password-policy-weak <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that the password policy enforces sufficient length and rejects common passwords.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>auth-review</code></li>
+      <li>Files inspected: <code>backend/middleware/validate.js</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>validateSignup</code> in full.</li>
+      <li>Check the minimum length and any complexity rules.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>if (String(password).length &lt; 6) {
+  return res.status(400).json({ message: "Password must be at least 6 characters." });
+}</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>Minimum length is 12 or more, and a small denylist rejects the most common passwords ("123456", "password", "qwerty").</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>Minimum length is 6. "password" and "123456" both pass.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Raise the floor to 12 characters. Add a small denylist inline (a Set of 50 common passwords is enough for this app's scale). Document the new rule in the README so users know what to expect.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Improve the password policy in AI-recruiter-screening-system-/backend/middleware/validate.js.
+  1. Raise the minimum length to 12.
+  2. Add a small denylist of common passwords (at least the top 20 from a public list).
+  3. Do not change the response messages.
+Show me the diff.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>llm-prompt-safety / no-length-cap <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that resume and job-description text is truncated before being inserted into LLM prompts.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>llm-prompt-safety</code></li>
+      <li>Files inspected: <code>backend.py</code> (<code>format_prompt</code>), <code>api.py</code> (<code>/analyze</code>)</li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>format_prompt</code> in <code>backend.py</code>.</li>
+      <li>Trace where <code>resume_text</code> and <code>job_text</code> are inserted into prompts.</li>
+      <li>Check <code>validate_upload</code> for a maximum extracted-text size.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>prompt = template.replace("{" + key + "}", str(value))</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p><code>resume_text</code> and <code>job_text</code> are truncated to a known token budget (e.g. 8k tokens) before substitution, with a visible marker in the prompt that the text was cut.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>No truncation. The full extracted text (up to 10 MB on disk) is substituted verbatim.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Add a <code>truncate_for_prompt(text, max_chars=24000)</code> helper near <code>format_prompt</code>. Call it on both <code>resume_text</code> and <code>job_text</code> in <code>analyze_job_description</code>, <code>analyze_candidate_detail</code>, and <code>process_resume</code>. Append a <code>[truncated]</code> marker when truncation occurs.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Add input length capping to AI-recruiter-screening-system-/backend.py.
+  1. Add a helper truncate_for_prompt(text, max_chars=24000) that returns the
+     first max_chars characters plus a trailing "[truncated]" marker when cut.
+  2. Apply it in analyze_job_description, analyze_candidate_detail, and
+     process_resume, on both resume_text and job_text, before format_prompt.
+  3. Do not change the prompt templates.
+Show me the diff.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>llm-prompt-safety / user-prompts-are-user-editable <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that the prompt templates that the model sees are not user-editable in production.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>llm-prompt-safety</code></li>
+      <li>Files inspected: <code>api.py</code> (<code>/configuration</code> PUT), <code>vector_store/prompt_config.json</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read the <code>/configuration</code> PUT handler in <code>api.py</code>.</li>
+      <li>Check the React UI for prompt editors.</li>
+      <li>Trace where the saved templates are read on the backend.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>return { "configuration": update_configuration(config) }</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>Editable templates are sandboxed: they cannot redefine the system role, the "return JSON only" rule, or introduce new sections. Production mode ignores user-edited templates entirely.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>Any authenticated user can rewrite all four prompt templates via the UI. The new value is loaded verbatim on the next request.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Wrap the user-editable content in clearly delimited blocks that the system prompt explicitly treats as data. Validate saved templates against a small schema: must contain only the original <code>{job_text}</code> / <code>{resume_text}</code> / <code>{score}</code> placeholders. Reject saves that contain words like "system", "ignore", "assistant" outside the literal template.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>In AI-recruiter-screening-system-/api.py, harden update_configuration.
+  1. Read the current implementation.
+  2. Add a validator that, for each *_prompt_template key, checks:
+     - It must contain exactly the allowed placeholders (job_text, resume_text, score).
+     - It must not contain the strings "system", "ignore previous", "you are now",
+       or "disregard" outside the literal default.
+  3. If validation fails, return 400 with a clear message and do not write to disk.
+  4. Add a test in tests/ for the rejection cases.
+Show me the diff.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>frontend-input / dependencies-pinned-to-latest <span class="status fail">Fail</span></h2>
+  <p class="description">Verify that frontend dependencies are pinned to a specific version range, not bare "latest".</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>frontend-input</code></li>
+      <li>Files inspected: <code>frontend/package.json</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>frontend/package.json</code>.</li>
+      <li>Check every dependency for "latest" or no version range.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>"dependencies": {
+  "@vitejs/plugin-react": "latest",
+  "vite": "latest",
+  "react": "latest",
+  "react-dom": "latest",
+  "lucide-react": "latest",
+  "react-router-dom": "^6.26.2"
+}</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>Every dependency uses caret or tilde ranges with a concrete version, e.g. <code>"^4.4.0"</code>.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>Five of six dependencies are pinned to <code>"latest"</code>. <code>package-lock.json</code> exists, so a fresh clone with <code>npm ci</code> is reproducible, but a manifest-only install moves.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Replace <code>"latest"</code> with caret ranges based on the currently resolved versions in <code>package-lock.json</code>. This is a one-time cleanup, then add an <code>npm audit</code> step to CI to catch drift.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Pin dependencies in AI-recruiter-screening-system-/frontend/package.json.
+  1. Open frontend/package-lock.json and find the current resolved version of
+     @vitejs/plugin-react, vite, react, react-dom, and lucide-react.
+  2. Replace each "latest" in the dependencies block with a caret range, e.g. "^4.4.0".
+  3. Do not change any other field.
+Show me the diff.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>test-data-pii / sample-resume-uses-john-doe <span class="status warning">Warning</span></h2>
+  <p class="description">Verify that test fixtures do not contain real-looking PII.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>test-data-pii</code> (safe mode)</li>
+      <li>Files inspected: <code>tests/data/generate_sample.py</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Read <code>generate_sample.py</code>.</li>
+      <li>Identify the name written into the PDF.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>tests/data/generate_sample.py:5   category=real-name   <code class="redacted">[REDACTED: name placeholder]</code></code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>The fixture uses a clearly synthetic name (e.g. "Test Candidate 01").</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>The fixture uses "John Doe", the canonical placeholder. Safe in isolation, but it overlaps with the most common fake identity in real data dumps.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Replace the name with a clearly synthetic string. Regenerate the PDF by running the script. Update any test assertions that grep for the name (none found in this repo).</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Open AI-recruiter-screening-system-/tests/data/generate_sample.py.
+  1. Show me the current line that writes the candidate name into the PDF.
+  2. Replace it with "Test Candidate 01".
+  3. Run the script to regenerate sample_resume.pdf.
+  4. Show me the diff of the .py file and confirm the new PDF is on disk.
+Do not touch the other generated resumes.
+</code></pre>
+  </section>
+</article>
+
+<article class="test-case">
+  <h2>frontend-input / no-dangerouslysetinnerhtml <span class="status pass">Pass</span></h2>
+  <p class="description">Verify that no React component uses unsafe HTML injection sinks.</p>
+  <section class="prereqs">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Mode: <code>frontend-input</code></li>
+      <li>Files inspected: <code>frontend/src/App.jsx</code>, <code>frontend/src/main.jsx</code>, <code>frontend/src/defaultModels.js</code>, <code>frontend/src/defaultPrompts.js</code>, <code>frontend/index.html</code></li>
+    </ul>
+  </section>
+  <section class="steps">
+    <h3>Test steps</h3>
+    <ol>
+      <li>Grep for <code>dangerouslySetInnerHTML</code>, <code>eval</code>, and <code>new Function</code> across the frontend source.</li>
+      <li>Confirm zero matches.</li>
+    </ol>
+  </section>
+  <section class="input">
+    <h3>Input data</h3>
+    <pre><code>(no matches in any inspected file)</code></pre>
+  </section>
+  <section class="expected">
+    <h3>Expected result</h3>
+    <p>No usage of any HTML-injection sink.</p>
+  </section>
+  <section class="actual">
+    <h3>Actual result</h3>
+    <p>None found. React's default escaping is in effect for all model output rendering.</p>
+  </section>
+  <section class="notes">
+    <h3>Enhancement notes</h3>
+    <p>Add <code>react/no-danger</code> to the ESLint config so this stays true after future edits.</p>
+  </section>
+  <section class="codex-prompt">
+    <h3>Codex prompt suggestion</h3>
+    <pre><code>Add an ESLint rule to AI-recruiter-screening-system-/frontend/ that fails the build
+on any use of dangerouslySetInnerHTML.
+  1. If eslint-plugin-react is not installed, install it.
+  2. Add "react/no-danger": "error" to the rules block.
+  3. Run the linter to confirm no current violations.
+  4. Add "lint": "eslint src" to the scripts block in package.json.
+Show me the diff.
+</code></pre>
+  </section>
+</article>
+
+</main>
+
+</body>
+</html>

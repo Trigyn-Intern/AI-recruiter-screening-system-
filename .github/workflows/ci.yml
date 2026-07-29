@@ -1,0 +1,69 @@
+﻿name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Bandit
+        run: |
+          pip install bandit
+
+      - name: Run Bandit
+        run: |
+          bandit -r backend api.py -s B101 --severity-level high --confidence-level high
+
+  dependency-check:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install Dependency Check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+          unzip dependency-check-9.0.9-release.zip
+
+      - name: Cache OWASP Dependency-Check Data
+        uses: actions/cache@v4
+        with:
+          path: ~/.dependency-check-data
+          key: dependency-check-data-v1
+          restore-keys: |
+            dependency-check-data-v1-
+
+      - name: Run Dependency Check
+        run: |
+          ./dependency-check/bin/dependency-check.sh \
+            --project AI-Recruiter-System \
+            --scan . \
+            --format HTML \
+            --failOnCVSS 7 || true
+
+
+
+
+

@@ -1,0 +1,30 @@
+{
+  "name": "ai-recruiter-screening-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Recruiter Screening System",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "cd frontend && npm run build",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/genai": "latest",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.439.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}

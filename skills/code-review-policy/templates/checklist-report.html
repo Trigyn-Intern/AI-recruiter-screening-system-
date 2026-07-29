@@ -1,0 +1,99 @@
+
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Code Review Checklist - 2026-07-13 08:40:18</title><style>  :root { --bg:#fff; --fg:#1a1a1a; --muted:#6b7280; --border:#e5e7eb; --code-bg:#f3f4f6; --pass:#16a34a; --fail:#dc2626; --warn:#d97706; --info:#2563eb; --accent:#0e7490; }  * { box-sizing: border-box; }  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 32px; color: var(--fg); background: var(--bg); line-height: 1.5; }  h1, h2, h3 { margin: 0 0 8px 0; } h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 32px; padding-bottom: 6px; border-bottom: 1px solid var(--border); } h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 16px; }  p, li { font-size: 14px; } .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }  .grid { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; } .grid dt { color: var(--muted); } .grid dd { margin: 0; }  table { border-collapse: collapse; width: 100%; margin-top: 8px; } th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-size: 13px; vertical-align: top; } th { background: #f9fafb; color: var(--muted); font-weight: 600; }  .pill { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; } .pill.pass { background: #dcfce7; color: var(--pass); } .pill.fail { background: #fee2e2; color: var(--fail); } .pill.warn { background: #fef3c7; color: var(--warn); } .pill.na { background: #f3f4f6; color: var(--muted); }  ul, ol { padding-left: 24px; margin: 4px 0 0 0; } li { margin: 2px 0; }  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 12px; }  .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 10px 12px; color: #9a3412; font-size: 13px; }  .checklist-section { margin-top: 24px; } .checklist-section h2 { margin-top: 24px; }  .checkbox { font-family: monospace; color: var(--muted); margin-right: 8px; }  .red-flag { background: #fef2f2; border-left: 3px solid var(--fail); padding: 6px 10px; margin: 6px 0; font-size: 13px; }  .heuristic { background: #ecfeff; border-left: 3px solid var(--accent); padding: 6px 10px; margin: 6px 0; font-size: 13px; }  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }</style></head>
+<body>
+<header><h1>Code Review Checklist</h1><p class="meta">Generated 2026-07-13 08:40:18 by the <code>code-review-policy</code> skill.</p></header>
+<h2>Reviewer Information</h2>
+<dl class="grid">
+<dt>Project Name</dt><dd>-</dd>
+<dt>Repository / Branch</dt><dd>-</dd>
+<dt>Reviewer</dt><dd>-</dd>
+<dt>Date of Review</dt><dd>-</dd>
+</dl>
+<h2>Security Review</h2>
+<p class="note">No security-specific checks were included in this review.</p>
+<h2>Test Coverage</h2><dl class="grid">
+<dt>Are tests present?</dt><dd>-</dd>
+<dt>Test Coverage % (approx)</dt><dd>-</dd>
+<dt>Manual Tests Needed</dt><dd>-</dd></dl>
+<h2>Approval</h2><dl class="grid">
+<dt>Approved by</dt><dd>-</dd>
+<dt>Date of Approval</dt><dd>-</dd>
+<dt>Merge Status</dt><dd><span class="pill na">-</span></dd></dl>
+<h1 style="margin-top:32px">The Complete Code Review Checklist</h1>
+<p class="meta">Tick each box. Leave a one-line note for anything unchecked. Link to a follow-up issue if the fix is out of scope for this PR.</p>
+<div class="checklist-section"><h2>Correctness</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Does the code do what the PR description says it does?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are edge cases handled? (empty input, null values, boundary conditions)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Does it handle errors gracefully - or does it silently fail?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are there any obvious off-by-one errors in loops or array indexing?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Does concurrency introduce race conditions or deadlocks?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are database transactions used correctly? (no partial writes)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is business logic correct, not just technically working?</li>
+</ul></div>
+<div class="checklist-section"><h2>Security</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is user input validated and sanitized before use?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are SQL queries parameterized? (no string concatenation with user data)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are secrets or credentials hardcoded anywhere? (API keys, passwords)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is authentication checked before accessing protected resources?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is authorization enforced - not just is the user logged in but can this user do this?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are file paths validated to prevent path traversal attacks?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is sensitive data (passwords, tokens, PII) logged anywhere?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are dependencies introduced by this PR known-good? (no obviously suspicious packages)</li>
+</ul></div>
+<div class="checklist-section"><h2>Performance</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are there N+1 query patterns? (loop that triggers a database query each iteration)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are expensive operations cached where appropriate?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Does the code handle large inputs without memory issues?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are there unnecessary re-renders or re-computations? (frontend)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is pagination used for list endpoints that could return large datasets?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are database indexes used for the queries this code will run?</li>
+</ul></div>
+<div class="checklist-section"><h2>Testing</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are there tests for the new behavior?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Do existing tests still pass? (check CI results)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are edge cases tested, not just the happy path?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are tests testing behavior, not implementation?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is test data realistic? (tests that only pass with id = 1 may fail in production)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is there a test for the bug that was fixed? (regression test)</li>
+</ul></div>
+<div class="checklist-section"><h2>Readability and Maintainability</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the code readable by someone unfamiliar with this part of the codebase?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are function and variable names descriptive?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are complex sections explained with comments - not what the code does, but why?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the code DRY - or is repetition justified?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are magic numbers replaced with named constants?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the function doing one thing? (single responsibility)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the diff focused? (unrelated changes mixed in?)</li>
+</ul></div>
+<div class="checklist-section"><h2>API and Interface Design</h2><ul>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Does the public API surface make sense? (naming, parameter order, return types)</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are breaking changes documented?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the API consistent with similar patterns in the codebase?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Are deprecated functions or parameters flagged?</li>
+<li><span class="checkbox">[&nbsp;&nbsp;]</span>Is the feature flag or rollout strategy defined for risky changes?</li>
+</ul></div>
+<h3>Red flag patterns to check</h3>
+<div class="red-flag">catch(e) {} - swallowed exceptions</div>
+<div class="red-flag">Unchecked array access without bounds validation</div>
+<div class="red-flag">Missing <code>await</code> on async calls</div>
+<h3>Performance: N+1 queries</h3>
+<div class="heuristic">Performance issues in code review are often subtle. The most common culprit: a loop that queries the database on every iteration.</div>
+<pre><code># Bad: N+1 queries
+for user_id in user_ids:
+    user = db.query(User).filter(User.id == user_id).first()  # 1 query per iteration
+    send_email(user)
+
+# Good: single query
+users = db.query(User).filter(User.id.in_(user_ids)).all()
+for user in users:
+    send_email(user)</code></pre>
+<h3>Testing heuristic</h3>
+<div class="heuristic">If the PR description says "fix X bug," there should be a test that would have caught the bug before the fix.</div>
+<h3>Tooling notes</h3><ul>
+<li><strong>DevPlaybook AI Code Review</strong> - paste your diff and get automated security analysis before human review.</li>
+<li><strong>DevPlaybook Code Diff</strong> - compare before/after versions of changed files when reviewing locally.</li>
+</ul>
+<footer>Generated by the <code>code-review-policy</code> skill from <code>checklist-structured.md</code> and <code>checklist-detailed.md</code>.</footer>
+</body></html>

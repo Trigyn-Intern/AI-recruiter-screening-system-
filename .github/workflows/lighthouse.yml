@@ -1,0 +1,87 @@
+name: lighthouse
+on: [pull_request]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prerequisite: install Ollama
+        # The runner image does not have Ollama pre-installed. Without
+        # this step, the "Boot stack" step below fails with a confusing
+        # "ollama: command not found" error.
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama --version
+
+      - name: Prerequisite: install Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Prerequisite: install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Prerequisite: install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Prerequisite: install backend npm deps
+        run: |
+          cd backend
+          npm install
+          cd ..
+
+      - name: Prerequisite: install frontend npm deps
+        run: |
+          cd frontend
+          npm install
+          cd ..
+
+      - name: Prerequisite: pull Ollama model
+        # The analyzer uses llama3.2; pull it once before the boot
+        # step so the first /analyze request does not time out.
+        run: |
+          ollama serve &
+          sleep 5
+          ollama pull llama3.2
+
+      - name: Boot stack
+        run: |
+          uvicorn api:api --host 127.0.0.1 --port 8000 &
+          (cd backend && npm run dev) &
+          (cd frontend && npm run dev) &
+          sleep 20
+
+      - name: Prerequisite: wait for health endpoints
+        run: |
+          for url in http://127.0.0.1:8000/health http://127.0.0.1:4000/api/health http://127.0.0.1:5173/; do
+            for i in $(seq 1 30); do
+              if curl -fsS "$url" >/dev/null 2>&1; then
+                echo "[lighthouse] $url is up"
+                break
+              fi
+              sleep 1
+            done
+          done
+
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:5173/
+            http://localhost:5173/login
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          budgetPath: .github/lighthouse/budget.json
+          # Promote warn-level assertions to errors so the budget
+          # actually blocks. Without this, a regression that halves
+          # the performance score will not fail the PR.
+          assert: true
+          assertOptions:
+            -Categories:performance=warn
