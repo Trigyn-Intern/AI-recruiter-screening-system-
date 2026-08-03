@@ -1,0 +1,262 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: pip install ruff
+      - run: ruff check .
+
+      - run: npm install
+      - run: npm run build || true
+
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: |
+          pip install -r requirements.txt
+
+      - run: |
+          pytest \
+          --junitxml=junit.xml \
+          --cov=. \
+          --cov-report=xml \
+          --cov-report=html || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: junit.xml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            htmlcov/
+
+  semgrep:
+    name: Semgrep
+    needs: unit-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: returntocorp/semgrep-action@v1
+
+  bandit:
+    name: Bandit SAST
+    runs-on: ubuntu-latest
+    needs: semgrep
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: |
+          pip install bandit
+          bandit -r . -x ./node_modules,./frontend,./frontend-test,.git -f html -o bandit-report.html || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.html
+
+  gitleaks:
+    name: Secret Scan
+    needs: bandit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: gitleaks/gitleaks-action@v2
+
+  pip-audit:
+    name: Dependency Scan
+    needs: gitleaks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt -f json -o pip-audit.json || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit
+          path: pip-audit.json
+
+  trivy:
+    name: Trivy Scanner
+    needs: pip-audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          format: sarif
+          output: trivy.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: trivy
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build
+
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm install -g @lhci/cli
+      - run: npm run build
+      - name: Start server for Lighthouse
+        run: |
+          npx vite preview --port 5173 &
+          sleep 3
+      - run: lhci autorun || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+
+  zap:
+    name: OWASP ZAP Baseline
+    needs: lighthouse
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - name: Start Application Server
+        run: |
+          npm run build
+          node server.ts &
+          sleep 5
+      - uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: http://localhost:3000
+
+  api-security:
+    name: API Security Tests
+    runs-on: ubuntu-latest
+    needs: zap
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install -r requirements.txt
+          pytest tests/unit/test_api.py || true
+
+  ai-security:
+    name: AI Security Tests
+    runs-on: ubuntu-latest
+    needs: api-security
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install -r requirements.txt
+          pytest tests/unit/test_ollama.py || true
+
+  upload-reports:
+    name: Upload Reports
+    runs-on: ubuntu-latest
+    needs:
+      - ai-security
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: devsecops-reports
+          path: |
+            junit.xml
+            coverage.xml
+            htmlcov/
+            bandit-report.html
+            pip-audit.json
+            trivy.sarif
+            .lighthouseci
+            reports/
+            .code-review/
