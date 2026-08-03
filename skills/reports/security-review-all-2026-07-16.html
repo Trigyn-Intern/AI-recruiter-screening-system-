@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Security Review Report - all - 2026-07-16</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+h1 { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.meta-line { font-size: 11px; color: #555; margin-bottom: 12px; }
+.summary-bar { display: flex; gap: 20px; margin-bottom: 14px; font-size: 12px; font-weight: bold; }
+.summary-bar .passed { color: #217346; }
+.summary-bar .failed { color: #c00; }
+.summary-bar .warning { color: #d97706; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+thead th { background: #4472C4; color: #fff; font-weight: bold; font-size: 11px; padding: 6px 5px; border: 1px solid #2F5496; text-align: center; }
+tbody td { border: 1px solid #B4C6E7; padding: 5px 6px; vertical-align: top; }
+tbody tr:nth-child(even) { background: #D6E4F0; }
+tbody tr:hover { background: #FFF2CC; }
+td.pass { color: #217346; font-weight: bold; }
+td.fail { color: #c00; font-weight: bold; }
+td.warning { color: #d97706; font-weight: bold; }
+pre { background: #f3f4f6; padding: 4px; border: 1px solid #ccc; font-family: monospace; white-space: pre-wrap; font-size: 10px; }
+</style>
+</head>
+<body>
+<h1>Security Review Report &mdash; all &mdash; 2026-07-16</h1>
+<div class="meta-line">Generated: 16/07/2026, 14:30:00 &nbsp;|&nbsp; Files: api.py, frontend-test/vite.config.js, start-app.ps1, frontend/src/App.jsx</div>
+<div class="summary-bar">
+  <span class="passed">Pass: 0</span>
+  <span class="failed">Fail: 2</span>
+  <span class="warning">Warning: 2</span>
+</div>
+<table id="report-table">
+  <thead>
+    <tr>
+      <th>Sr No</th><th>CR No</th><th>Name</th><th>Description</th><th>Expected Result</th><th>Actual Result</th><th>Pass/Fail</th><th>Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+  <td>1</td><td>SR-2026-07-16-001</td>
+  <td>vite.config.js: /api/execute endpoint</td>
+  <td>Unauthenticated arbitrary shell command execution via /api/execute. Accepts arbitrary command and cwd from request body, executes via spawn(shell) with no auth or allowlist.</td>
+  <td>Command rejected with 401/403; only allowlisted commands permitted</td>
+  <td>Command executed as dev user; full RCE achieved</td>
+  <td class="fail">Fail</td>
+  <td>Replace generic execute with allowlisted commands; add authentication</td>
+</tr>
+<tr>
+  <td>2</td><td>SR-2026-07-16-002</td>
+  <td>vite.config.js: /api/reports/view endpoint</td>
+  <td>Unauthenticated arbitrary file read. Accepts path query param, resolves against projectRoot, streams file contents. Can read backend/.env with GEMINI_API_KEY.</td>
+  <td>403/401; files outside report artifacts denied</td>
+  <td class="fail">Returns backend/.env contents including GEMINI_API_KEY</td>
+  <td class="fail">Fail</td>
+  <td>Require auth; restrict to explicit allowlist; use proper path containment check</td>
+</tr>
+<tr>
+  <td>3</td><td>SR-2026-07-16-003</td>
+  <td>vite.config.js: path containment bypass</td>
+  <td>Both endpoints use startsWith(projectRoot) for containment. String prefix check insufficient; sibling directory with similar prefix bypasses sandbox.</td>
+  <td>403; proper check rejects traversal</td>
+  <td class="warning">Potential bypass if sibling directory exists with matching prefix</td>
+  <td class="warning">Warning</td>
+  <td>Replace startsWith with path.relative check for leading '..'</td>
+</tr>
+<tr>
+  <td>4</td><td>SR-2026-07-16-004</td>
+  <td>api.py: /api/review endpoint</td>
+  <td>Unauthenticated /api/review reads invoke.txt, treats listed paths as files to read, embeds contents in LLM prompt, returns review with source code.</td>
+  <td>Requires authentication; invoke.txt treated as server config</td>
+  <td class="warning">Returns full source of all files in invoke.txt without auth</td>
+  <td class="warning">Warning</td>
+  <td>Add authentication to /api/review; keep invoke.txt as trusted server config</td>
+</tr>
+  </tbody>
+</table>
+</body>
+</html>

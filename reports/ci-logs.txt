@@ -1,0 +1,1314 @@
+
+--- 0_Bandit Security Scan.txt ---
+﻿2026-07-23T16:59:43.7521476Z Current runner version: '2.336.0'
+2026-07-23T16:59:43.7548459Z ##[group]Runner Image Provisioner
+2026-07-23T16:59:43.7549490Z Hosted Compute Agent
+2026-07-23T16:59:43.7550103Z Version: 20260707.563
+2026-07-23T16:59:43.7550749Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:59:43.7551546Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:59:43.7552236Z Worker ID: {0a84c368-d50b-419d-9bf3-be86c89d6cb9}
+2026-07-23T16:59:43.7552983Z Azure Region: westus
+2026-07-23T16:59:43.7553575Z ##[endgroup]
+2026-07-23T16:59:43.7555202Z ##[group]Operating System
+2026-07-23T16:59:43.7556146Z Ubuntu
+2026-07-23T16:59:43.7556707Z 24.04.4
+2026-07-23T16:59:43.7557210Z LTS
+2026-07-23T16:59:43.7557807Z ##[endgroup]
+2026-07-23T16:59:43.7558395Z ##[group]Runner Image
+2026-07-23T16:59:43.7559031Z Image: ubuntu-24.04
+2026-07-23T16:59:43.7559608Z Version: 20260714.240.1
+2026-07-23T16:59:43.7560915Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:59:43.7562515Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:59:43.7563515Z ##[endgroup]
+2026-07-23T16:59:43.7564708Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:59:43.7567492Z Contents: read
+2026-07-23T16:59:43.7568150Z Metadata: read
+2026-07-23T16:59:43.7568755Z Packages: read
+2026-07-23T16:59:43.7569368Z ##[endgroup]
+2026-07-23T16:59:43.7571612Z Secret source: Actions
+2026-07-23T16:59:43.7572767Z Prepare workflow directory
+2026-07-23T16:59:43.7940975Z Prepare all required actions
+2026-07-23T16:59:43.7987964Z Getting action download info
+2026-07-23T16:59:44.1611612Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:59:44.5674032Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-07-23T16:59:44.7518604Z Complete job name: Bandit Security Scan
+2026-07-23T16:59:44.8423846Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:44.8433808Z ##[group]Run actions/checkout@v4
+2026-07-23T16:59:44.8435066Z with:
+2026-07-23T16:59:44.8436126Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:44.8440962Z   token: ***
+2026-07-23T16:59:44.8441440Z   ssh-strict: true
+2026-07-23T16:59:44.8441909Z   ssh-user: git
+2026-07-23T16:59:44.8442362Z   persist-credentials: true
+2026-07-23T16:59:44.8442847Z   clean: true
+2026-07-23T16:59:44.8443297Z   sparse-checkout-cone-mode: true
+2026-07-23T16:59:44.8443819Z   fetch-depth: 1
+2026-07-23T16:59:44.8444251Z   fetch-tags: false
+2026-07-23T16:59:44.8444693Z   show-progress: true
+2026-07-23T16:59:44.8445150Z   lfs: false
+2026-07-23T16:59:44.8445624Z   submodules: false
+2026-07-23T16:59:44.8446463Z   set-safe-directory: true
+2026-07-23T16:59:44.8447042Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:59:44.8447942Z ##[endgroup]
+2026-07-23T16:59:44.9490882Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:44.9493698Z ##[group]Getting Git version info
+2026-07-23T16:59:44.9495263Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:59:44.9497672Z [command]/usr/bin/git version
+2026-07-23T16:59:44.9536926Z git version 2.54.0
+2026-07-23T16:59:44.9561080Z ##[endgroup]
+2026-07-23T16:59:44.9577512Z Temporarily overriding HOME='/home/runner/work/_temp/0941ad51-7855-4ea8-9a7c-19f9524d1d82' before making global git config changes
+2026-07-23T16:59:44.9579919Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:59:44.9583981Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:59:44.9647737Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:59:44.9650051Z ##[group]Initializing the repository
+2026-07-23T16:59:44.9653048Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:59:44.9781676Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:59:44.9783573Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:59:44.9785117Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:59:44.9786971Z hint: call:
+2026-07-23T16:59:44.9787587Z hint:
+2026-07-23T16:59:44.9788373Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:59:44.9789412Z hint:
+2026-07-23T16:59:44.9790358Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:59:44.9791873Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:59:44.9793064Z hint:
+2026-07-23T16:59:44.9793841Z hint: 	git branch -m <name>
+2026-07-23T16:59:44.9794653Z hint:
+2026-07-23T16:59:44.9795637Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:59:44.9798030Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:59:44.9802560Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:44.9844314Z ##[endgroup]
+2026-07-23T16:59:44.9845571Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:59:44.9849261Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:59:44.9884466Z ##[endgroup]
+2026-07-23T16:59:44.9885769Z ##[group]Setting up auth
+2026-07-23T16:59:44.9893004Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:59:44.9931375Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:59:45.0350323Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:59:45.0409059Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:59:45.0645452Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:59:45.0687666Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:59:45.0931777Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:59:45.0974884Z ##[endgroup]
+2026-07-23T16:59:45.0984837Z ##[group]Fetching the repository
+2026-07-23T16:59:45.0986701Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +04017aa1b47a3db0e4e7040eea03cc77090e8450:refs/remotes/origin/main
+2026-07-23T16:59:45.7481371Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:45.7483905Z  * [new ref]         04017aa1b47a3db0e4e7040eea03cc77090e8450 -> origin/main
+2026-07-23T16:59:45.7518937Z ##[endgroup]
+2026-07-23T16:59:45.7520169Z ##[group]Determining the checkout info
+2026-07-23T16:59:45.7521870Z ##[endgroup]
+2026-07-23T16:59:45.7527984Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:59:45.7577885Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:59:45.7612326Z ##[group]Checking out the ref
+2026-07-23T16:59:45.7616801Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-23T16:59:45.7872505Z Switched to a new branch 'main'
+2026-07-23T16:59:45.7874366Z branch 'main' set up to track 'origin/main'.
+2026-07-23T16:59:45.7890196Z ##[endgroup]
+2026-07-23T16:59:45.7936219Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:59:45.7965105Z 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:59:45.8361212Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:45.8367331Z ##[group]Run actions/setup-python@v5
+2026-07-23T16:59:45.8368455Z with:
+2026-07-23T16:59:45.8369256Z   python-version: 3.10
+2026-07-23T16:59:45.8370213Z   check-latest: false
+2026-07-23T16:59:45.8382222Z   token: ***
+2026-07-23T16:59:45.8383392Z   update-environment: true
+2026-07-23T16:59:45.8384430Z   allow-prereleases: false
+2026-07-23T16:59:45.8385406Z   freethreaded: false
+2026-07-23T16:59:45.8386534Z ##[endgroup]
+2026-07-23T16:59:45.9785563Z ##[group]Installed versions
+2026-07-23T16:59:45.9920015Z (node:2258) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:59:45.9924638Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:59:45.9927479Z Successfully set up CPython (3.10.20)
+2026-07-23T16:59:45.9930511Z ##[endgroup]
+2026-07-23T16:59:46.0140919Z ##[group]Run pip install bandit
+2026-07-23T16:59:46.0142192Z [36;1mpip install bandit[0m
+2026-07-23T16:59:46.0327621Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:59:46.0328707Z env:
+2026-07-23T16:59:46.0329751Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:46.0331527Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+2026-07-23T16:59:46.0333303Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:46.0334885Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:46.0336705Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:46.0338352Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+2026-07-23T16:59:46.0339679Z ##[endgroup]
+2026-07-23T16:59:48.5395499Z Collecting bandit
+2026-07-23T16:59:48.5948346Z   Downloading bandit-1.9.4-py3-none-any.whl.metadata (7.1 kB)
+2026-07-23T16:59:48.6623250Z Collecting PyYAML>=5.3.1 (from bandit)
+2026-07-23T16:59:48.6663535Z   Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-07-23T16:59:48.6879644Z Collecting stevedore>=1.20.0 (from bandit)
+2026-07-23T16:59:48.6936793Z   Downloading stevedore-5.8.0-py3-none-any.whl.metadata (2.3 kB)
+2026-07-23T16:59:48.7352935Z Collecting rich (from bandit)
+2026-07-23T16:59:48.7432241Z   Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+2026-07-23T16:59:48.7681590Z Collecting markdown-it-py>=2.2.0 (from rich->bandit)
+2026-07-23T16:59:48.7721162Z   Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+2026-07-23T16:59:48.7973867Z Collecting pygments<3.0.0,>=2.13.0 (from rich->bandit)
+2026-07-23T16:59:48.8014292Z   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-07-23T16:59:48.8124679Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich->bandit)
+2026-07-23T16:59:48.8163137Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-07-23T16:59:48.8237686Z Downloading bandit-1.9.4-py3-none-any.whl (134 kB)
+2026-07-23T16:59:48.8418197Z Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (770 kB)
+2026-07-23T16:59:48.8542989Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 75.8 MB/s  0:00:00
+2026-07-23T16:59:48.8594753Z Downloading stevedore-5.8.0-py3-none-any.whl (54 kB)
+2026-07-23T16:59:48.8656954Z Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+2026-07-23T16:59:48.8725309Z Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-07-23T16:59:48.8807824Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 180.8 MB/s  0:00:00
+2026-07-23T16:59:48.8853257Z Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+2026-07-23T16:59:48.8925101Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-07-23T16:59:48.9978412Z Installing collected packages: stevedore, PyYAML, pygments, mdurl, markdown-it-py, rich, bandit
+2026-07-23T16:59:50.1021752Z 
+2026-07-23T16:59:50.1041628Z Successfully installed PyYAML-6.0.3 bandit-1.9.4 markdown-it-py-4.2.0 mdurl-0.1.2 pygments-2.20.0 rich-15.0.0 stevedore-5.8.0
+2026-07-23T16:59:50.1701654Z ##[group]Run bandit -r backend api.py -s B101 --severity-level high --confidence-level high
+2026-07-23T16:59:50.1702393Z [36;1mbandit -r backend api.py -s B101 --severity-level high --confidence-level high[0m
+2026-07-23T16:59:50.1765036Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:59:50.1765335Z env:
+2026-07-23T16:59:50.1765616Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:50.1766290Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+2026-07-23T16:59:50.1766762Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:50.1767153Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:50.1767562Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+2026-07-23T16:59:50.1767954Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+2026-07-23T16:59:50.1768286Z ##[endgroup]
+2026-07-23T16:59:50.3881077Z [main]	INFO	profile include tests: None
+2026-07-23T16:59:50.3881921Z [main]	INFO	profile exclude tests: None
+2026-07-23T16:59:50.3882579Z [main]	INFO	cli include tests: None
+2026-07-23T16:59:50.3882950Z [main]	INFO	cli exclude tests: B101
+2026-07-23T16:59:50.3885120Z [main]	INFO	running on Python 3.10.20
+2026-07-23T16:59:50.4506238Z Run started:2026-07-23 16:59:50.450237+00:00
+2026-07-23T16:59:50.4506896Z 
+2026-07-23T16:59:50.4507117Z Test results:
+2026-07-23T16:59:50.4507560Z 	No issues identified.
+2026-07-23T16:59:50.4507779Z 
+2026-07-23T16:59:50.4507885Z Code scanned:
+2026-07-23T16:59:50.4508155Z 	Total lines of code: 472
+2026-07-23T16:59:50.4508512Z 	Total lines skipped (#nosec): 0
+2026-07-23T16:59:50.4509115Z 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+2026-07-23T16:59:50.4509540Z 
+2026-07-23T16:59:50.4509631Z Run metrics:
+2026-07-23T16:59:50.4509864Z 	Total issues (by severity):
+2026-07-23T16:59:50.4510130Z 		Undefined: 0
+2026-07-23T16:59:50.4510370Z 		Low: 3
+2026-07-23T16:59:50.4510574Z 		Medium: 2
+2026-07-23T16:59:50.4510803Z 		High: 0
+2026-07-23T16:59:50.4511042Z 	Total issues (by confidence):
+2026-07-23T16:59:50.4511310Z 		Undefined: 0
+2026-07-23T16:59:50.4511524Z 		Low: 0
+2026-07-23T16:59:50.4511722Z 		Medium: 0
+2026-07-23T16:59:50.4511924Z 		High: 5
+2026-07-23T16:59:50.4512163Z Files skipped (0):
+2026-07-23T16:59:50.4838200Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:50.4839493Z Post job cleanup.
+2026-07-23T16:59:50.6061116Z (node:2296) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:59:50.6061959Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:59:50.6305102Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:50.6307507Z Post job cleanup.
+2026-07-23T16:59:50.7233370Z [command]/usr/bin/git version
+2026-07-23T16:59:50.7279181Z git version 2.54.0
+2026-07-23T16:59:50.7320978Z Temporarily overriding HOME='/home/runner/work/_temp/62a4487b-9ef0-46ab-9f81-382e36443125' before making global git config changes
+2026-07-23T16:59:50.7323133Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:59:50.7328608Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:59:50.7373226Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:59:50.7416347Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:59:50.7714156Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:59:50.7746436Z http.https://github.com/.extraheader
+2026-07-23T16:59:50.7761546Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:59:50.7815024Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:59:50.8149260Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:59:50.8193690Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:59:50.8580546Z Cleaning up orphan processes
+2026-07-23T16:59:50.8908989Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- 1_Dependency Vulnerability Scan.txt ---
+﻿2026-07-23T16:59:43.0306592Z Current runner version: '2.336.0'
+2026-07-23T16:59:43.0327836Z ##[group]Runner Image Provisioner
+2026-07-23T16:59:43.0328628Z Hosted Compute Agent
+2026-07-23T16:59:43.0329126Z Version: 20260707.563
+2026-07-23T16:59:43.0330064Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:59:43.0330715Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:59:43.0331281Z Worker ID: {aa4bf696-79c8-4410-a3e5-3f0bf845fc85}
+2026-07-23T16:59:43.0331857Z Azure Region: centralus
+2026-07-23T16:59:43.0332361Z ##[endgroup]
+2026-07-23T16:59:43.0333536Z ##[group]Operating System
+2026-07-23T16:59:43.0334070Z Ubuntu
+2026-07-23T16:59:43.0334506Z 24.04.4
+2026-07-23T16:59:43.0334932Z LTS
+2026-07-23T16:59:43.0335379Z ##[endgroup]
+2026-07-23T16:59:43.0335819Z ##[group]Runner Image
+2026-07-23T16:59:43.0336317Z Image: ubuntu-24.04
+2026-07-23T16:59:43.0336800Z Version: 20260720.247.2
+2026-07-23T16:59:43.0337802Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:59:43.0339071Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-07-23T16:59:43.0340060Z ##[endgroup]
+2026-07-23T16:59:43.0341056Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:59:43.0342997Z Contents: read
+2026-07-23T16:59:43.0343509Z Metadata: read
+2026-07-23T16:59:43.0343967Z Packages: read
+2026-07-23T16:59:43.0344442Z ##[endgroup]
+2026-07-23T16:59:43.0346143Z Secret source: Actions
+2026-07-23T16:59:43.0347033Z Prepare workflow directory
+2026-07-23T16:59:43.0659471Z Prepare all required actions
+2026-07-23T16:59:43.0696530Z Getting action download info
+2026-07-23T16:59:43.3081553Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:59:44.0327158Z Download action repository 'actions/setup-java@v4' (SHA:c1e323688fd81a25caa38c78aa6df2d33d3e20d9)
+2026-07-23T16:59:44.8065686Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-07-23T16:59:45.3961536Z Complete job name: Dependency Vulnerability Scan
+2026-07-23T16:59:45.4553994Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:45.4560404Z ##[group]Run actions/checkout@v4
+2026-07-23T16:59:45.4560966Z with:
+2026-07-23T16:59:45.4561344Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:45.4563756Z   token: ***
+2026-07-23T16:59:45.4564131Z   ssh-strict: true
+2026-07-23T16:59:45.4564544Z   ssh-user: git
+2026-07-23T16:59:45.4564990Z   persist-credentials: true
+2026-07-23T16:59:45.4565431Z   clean: true
+2026-07-23T16:59:45.4565814Z   sparse-checkout-cone-mode: true
+2026-07-23T16:59:45.4566185Z   fetch-depth: 1
+2026-07-23T16:59:45.4566560Z   fetch-tags: false
+2026-07-23T16:59:45.4567060Z   show-progress: true
+2026-07-23T16:59:45.4567704Z   lfs: false
+2026-07-23T16:59:45.4568134Z   submodules: false
+2026-07-23T16:59:45.4568673Z   set-safe-directory: true
+2026-07-23T16:59:45.4569046Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:59:45.4570401Z ##[endgroup]
+2026-07-23T16:59:45.5454157Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:45.5455699Z ##[group]Getting Git version info
+2026-07-23T16:59:45.5456376Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:59:45.5457262Z [command]/usr/bin/git version
+2026-07-23T16:59:45.5791336Z git version 2.54.0
+2026-07-23T16:59:45.5820799Z ##[endgroup]
+2026-07-23T16:59:45.5828927Z Temporarily overriding HOME='/home/runner/work/_temp/2d867bef-c27c-423a-ac72-456f9ccde354' before making global git config changes
+2026-07-23T16:59:45.5834266Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:59:45.5835245Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:59:45.5865548Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:59:45.5869906Z ##[group]Initializing the repository
+2026-07-23T16:59:45.5875436Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:59:45.7504065Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:59:45.7505253Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:59:45.7505980Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:59:45.7506481Z hint: call:
+2026-07-23T16:59:45.7506860Z hint:
+2026-07-23T16:59:45.7507337Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:59:45.7507805Z hint:
+2026-07-23T16:59:45.7508327Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:59:45.7509109Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:59:45.7509769Z hint:
+2026-07-23T16:59:45.7510106Z hint: 	git branch -m <name>
+2026-07-23T16:59:45.7510487Z hint:
+2026-07-23T16:59:45.7510888Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:59:45.7511569Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:59:45.7516233Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:45.7548793Z ##[endgroup]
+2026-07-23T16:59:45.7549846Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:59:45.7553030Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:59:45.7582188Z ##[endgroup]
+2026-07-23T16:59:45.7582919Z ##[group]Setting up auth
+2026-07-23T16:59:45.7588489Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:59:45.7616018Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:59:45.7861397Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:59:45.7886552Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:59:45.8047352Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:59:45.8073859Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:59:45.8234561Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:59:45.8262384Z ##[endgroup]
+2026-07-23T16:59:45.8263249Z ##[group]Fetching the repository
+2026-07-23T16:59:45.8270205Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +04017aa1b47a3db0e4e7040eea03cc77090e8450:refs/remotes/origin/main
+2026-07-23T16:59:46.5408314Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:59:46.5409695Z  * [new ref]         04017aa1b47a3db0e4e7040eea03cc77090e8450 -> origin/main
+2026-07-23T16:59:46.5428569Z ##[endgroup]
+2026-07-23T16:59:46.5429562Z ##[group]Determining the checkout info
+2026-07-23T16:59:46.5430425Z ##[endgroup]
+2026-07-23T16:59:46.5437402Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:59:46.5481099Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:59:46.5504647Z ##[group]Checking out the ref
+2026-07-23T16:59:46.5509382Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-23T16:59:46.5710829Z Switched to a new branch 'main'
+2026-07-23T16:59:46.5711490Z branch 'main' set up to track 'origin/main'.
+2026-07-23T16:59:46.5715340Z ##[endgroup]
+2026-07-23T16:59:46.5745798Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:59:46.5765767Z 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:59:46.5983378Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:59:46.5984910Z ##[group]Run actions/setup-java@v4
+2026-07-23T16:59:46.5985143Z with:
+2026-07-23T16:59:46.5985324Z   distribution: temurin
+2026-07-23T16:59:46.5985519Z   java-version: 17
+2026-07-23T16:59:46.5985708Z   java-package: jdk
+2026-07-23T16:59:46.5985892Z   check-latest: false
+2026-07-23T16:59:46.5986080Z   server-id: github
+2026-07-23T16:59:46.5986282Z   server-username: GITHUB_ACTOR
+2026-07-23T16:59:46.5986497Z   server-password: GITHUB_TOKEN
+2026-07-23T16:59:46.5986708Z   overwrite-settings: true
+2026-07-23T16:59:46.5986907Z   job-status: success
+2026-07-23T16:59:46.5988888Z   token: ***
+2026-07-23T16:59:46.5989065Z ##[endgroup]
+2026-07-23T16:59:46.7414355Z ##[group]Installed distributions
+2026-07-23T16:59:46.7457640Z Resolved Java 17.0.19+10 from tool-cache
+2026-07-23T16:59:46.7458111Z Setting Java 17.0.19+10 as the default
+2026-07-23T16:59:46.7465814Z (node:2034) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:59:46.7466669Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:59:46.7468214Z Creating toolchains.xml for JDK version 17 from temurin
+2026-07-23T16:59:46.7527338Z Writing to /home/runner/.m2/toolchains.xml
+2026-07-23T16:59:46.7527674Z 
+2026-07-23T16:59:46.7527800Z Java configuration:
+2026-07-23T16:59:46.7528122Z   Distribution: temurin
+2026-07-23T16:59:46.7528401Z   Version: 17.0.19+10
+2026-07-23T16:59:46.7528843Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T16:59:46.7529379Z 
+2026-07-23T16:59:46.7529796Z ##[endgroup]
+2026-07-23T16:59:46.7550797Z Creating settings.xml with server-id: github
+2026-07-23T16:59:46.7551333Z Writing to /home/runner/.m2/settings.xml
+2026-07-23T16:59:46.7641882Z ##[group]Run sudo apt-get update
+2026-07-23T16:59:46.7642219Z [36;1msudo apt-get update[0m
+2026-07-23T16:59:46.7642470Z [36;1msudo apt-get install -y wget unzip[0m
+2026-07-23T16:59:46.7642728Z [36;1m[0m
+2026-07-23T16:59:46.7643191Z [36;1mwget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip[0m
+2026-07-23T16:59:46.7643902Z [36;1munzip dependency-check-9.0.9-release.zip[0m
+2026-07-23T16:59:46.7674344Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:59:46.7674908Z env:
+2026-07-23T16:59:46.7675200Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T16:59:46.7675626Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T16:59:46.7675935Z ##[endgroup]
+2026-07-23T16:59:46.8363830Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-07-23T16:59:46.8892215Z Hit:6 https://packages.microsoft.com/repos/azure-cli noble InRelease
+2026-07-23T16:59:46.8896482Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-07-23T16:59:46.9686460Z Get:8 https://dl.google.com/linux/chrome-stable/deb stable InRelease [2548 B]
+2026-07-23T16:59:46.9874802Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [236 kB]
+2026-07-23T16:59:46.9962520Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-07-23T16:59:46.9996688Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [203 kB]
+2026-07-23T16:59:47.0022743Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-07-23T16:59:47.0080548Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-07-23T16:59:47.0096754Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-07-23T16:59:47.0693389Z Get:11 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages [1417 B]
+2026-07-23T16:59:47.1104316Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1136 kB]
+2026-07-23T16:59:47.1161142Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [275 kB]
+2026-07-23T16:59:47.1189889Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [181 kB]
+2026-07-23T16:59:47.1230865Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1676 kB]
+2026-07-23T16:59:47.1276446Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [333 kB]
+2026-07-23T16:59:47.1299981Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+2026-07-23T16:59:47.1325207Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1336 kB]
+2026-07-23T16:59:47.1389934Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [298 kB]
+2026-07-23T16:59:47.1412235Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [45.4 kB]
+2026-07-23T16:59:47.1426969Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [12.1 kB]
+2026-07-23T16:59:47.1890779Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-07-23T16:59:47.1905304Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5784 B]
+2026-07-23T16:59:47.1919566Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [32.5 kB]
+2026-07-23T16:59:47.1936749Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [12.6 kB]
+2026-07-23T16:59:47.1990048Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [870 kB]
+2026-07-23T16:59:47.2031861Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [194 kB]
+2026-07-23T16:59:47.2046461Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [46.3 kB]
+2026-07-23T16:59:47.2056157Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1197 kB]
+2026-07-23T16:59:47.2107226Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [238 kB]
+2026-07-23T16:59:47.2122508Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+2026-07-23T16:59:47.2133026Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1185 kB]
+2026-07-23T16:59:47.2196323Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [273 kB]
+2026-07-23T16:59:54.4051588Z Fetched 10.6 MB in 1s (8537 kB/s)
+2026-07-23T16:59:55.0766560Z Reading package lists...
+2026-07-23T16:59:55.1075205Z Reading package lists...
+2026-07-23T16:59:55.2545003Z Building dependency tree...
+2026-07-23T16:59:55.2550679Z Reading state information...
+2026-07-23T16:59:55.4699035Z unzip is already the newest version (6.0-28ubuntu4.1).
+2026-07-23T16:59:55.4699779Z The following packages will be upgraded:
+2026-07-23T16:59:55.4700077Z   wget
+2026-07-23T16:59:55.4838191Z 1 upgraded, 0 newly installed, 0 to remove and 65 not upgraded.
+2026-07-23T16:59:55.4838619Z Need to get 334 kB of archives.
+2026-07-23T16:59:55.4839031Z After this operation, 0 B of additional disk space will be used.
+2026-07-23T16:59:55.5322647Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-07-23T16:59:55.5323180Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 wget amd64 1.21.4-1ubuntu4.4 [334 kB]
+2026-07-23T16:59:55.7558756Z Fetched 334 kB in 0s (5338 kB/s)
+2026-07-23T16:59:55.8150605Z (Reading database ... 
+2026-07-23T16:59:55.8151642Z (Reading database ... 5%
+2026-07-23T16:59:55.8152649Z (Reading database ... 10%
+2026-07-23T16:59:55.8153044Z (Reading database ... 15%
+2026-07-23T16:59:55.8153677Z (Reading database ... 20%
+2026-07-23T16:59:55.8153996Z (Reading database ... 25%
+2026-07-23T16:59:55.8154279Z (Reading database ... 30%
+2026-07-23T16:59:55.8154553Z (Reading database ... 35%
+2026-07-23T16:59:55.8154872Z (Reading database ... 40%
+2026-07-23T16:59:55.8155162Z (Reading database ... 45%
+2026-07-23T16:59:55.8155556Z (Reading database ... 50%
+2026-07-23T16:59:55.8188765Z (Reading database ... 55%
+2026-07-23T16:59:55.9519336Z (Reading database ... 60%
+2026-07-23T16:59:56.1978146Z (Reading database ... 65%
+2026-07-23T16:59:56.4440465Z (Reading database ... 70%
+2026-07-23T16:59:56.6807307Z (Reading database ... 75%
+2026-07-23T16:59:56.8569305Z (Reading database ... 80%
+2026-07-23T16:59:57.2573185Z (Reading database ... 85%
+2026-07-23T16:59:57.3948701Z (Reading database ... 90%
+2026-07-23T16:59:57.5633676Z (Reading database ... 95%
+2026-07-23T16:59:57.5634411Z (Reading database ... 100%
+2026-07-23T16:59:57.5634986Z (Reading database ... 202954 files and directories currently installed.)
+2026-07-23T16:59:57.5676209Z Preparing to unpack .../wget_1.21.4-1ubuntu4.4_amd64.deb ...
+2026-07-23T16:59:57.5806817Z Unpacking wget (1.21.4-1ubuntu4.4) over (1.21.4-1ubuntu4.3) ...
+2026-07-23T16:59:57.6511311Z Setting up wget (1.21.4-1ubuntu4.4) ...
+2026-07-23T16:59:57.6561451Z Processing triggers for install-info (7.1-3build2) ...
+2026-07-23T16:59:58.2322394Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-07-23T16:59:58.2344175Z Not building database; man-db/auto-update is not 'true'.
+2026-07-23T16:59:59.1384700Z 
+2026-07-23T16:59:59.1385360Z Running kernel seems to be up-to-date.
+2026-07-23T16:59:59.1385907Z 
+2026-07-23T16:59:59.1386238Z No services need to be restarted.
+2026-07-23T16:59:59.1386461Z 
+2026-07-23T16:59:59.1386583Z No containers need to be restarted.
+2026-07-23T16:59:59.1386781Z 
+2026-07-23T16:59:59.1386952Z No user sessions are running outdated binaries.
+2026-07-23T16:59:59.1387153Z 
+2026-07-23T16:59:59.1387345Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-07-23T16:59:59.9435659Z --2026-07-23 16:59:59--  https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+2026-07-23T16:59:59.9633724Z Resolving github.com (github.com)... 140.82.114.3
+2026-07-23T16:59:59.9916844Z Connecting to github.com (github.com)|140.82.114.3|:443... connected.
+2026-07-23T17:00:00.1812428Z HTTP request sent, awaiting response... 302 Found
+2026-07-23T17:00:00.1818162Z Location: https://release-assets.githubusercontent.com/github-production-release-asset/917205905/869b88e6-2211-4ef4-bc6d-7209d4c9c4a6?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-07-23T17%3A53%3A42Z&rscd=attachment%3B+filename%3Ddependency-check-9.0.9-release.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-07-23T16%3A53%3A25Z&ske=2026-07-23T17%3A53%3A42Z&sks=b&skv=2018-11-09&sig=LgxZEGvOtQXU86vnhdAsF5yNgICYqO9XBY0ma122VDk%3D&jwt=*** [following]
+2026-07-23T17:00:00.1825621Z --2026-07-23 17:00:00--  https://release-assets.githubusercontent.com/github-production-release-asset/917205905/869b88e6-2211-4ef4-bc6d-7209d4c9c4a6?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-07-23T17%3A53%3A42Z&rscd=attachment%3B+filename%3Ddependency-check-9.0.9-release.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-07-23T16%3A53%3A25Z&ske=2026-07-23T17%3A53%3A42Z&sks=b&skv=2018-11-09&sig=LgxZEGvOtQXU86vnhdAsF5yNgICYqO9XBY0ma122VDk%3D&jwt=***
+2026-07-23T17:00:00.1861048Z Resolving release-assets.githubusercontent.com (release-assets.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
+2026-07-23T17:00:00.1993665Z Connecting to release-assets.githubusercontent.com (release-assets.githubusercontent.com)|185.199.108.133|:443... connected.
+2026-07-23T17:00:00.2845808Z HTTP request sent, awaiting response... 200 OK
+2026-07-23T17:00:00.2846769Z Length: 33280215 (32M) [application/octet-stream]
+2026-07-23T17:00:00.2848196Z Saving to: ‘dependency-check-9.0.9-release.zip’
+2026-07-23T17:00:00.2885506Z 
+2026-07-23T17:00:00.3028279Z      0K .......... .......... .......... .......... ..........  0% 2.71M 12s
+2026-07-23T17:00:00.3071444Z     50K .......... .......... .......... .......... ..........  0% 11.2M 7s
+2026-07-23T17:00:00.3174643Z    100K .......... .......... .......... .......... ..........  0% 4.74M 7s
+2026-07-23T17:00:00.3264421Z    150K .......... .......... .......... .......... ..........  0% 5.43M 7s
+2026-07-23T17:00:00.3281650Z    200K .......... .......... .......... .......... ..........  0% 28.6M 6s
+2026-07-23T17:00:00.3322217Z    250K .......... .......... .......... .......... ..........  0% 12.0M 5s
+2026-07-23T17:00:00.3393468Z    300K .......... .......... .......... .......... ..........  1% 6.86M 5s
+2026-07-23T17:00:00.3434171Z    350K .......... .......... .......... .......... ..........  1% 12.0M 5s
+2026-07-23T17:00:00.3451121Z    400K .......... .......... .......... .......... ..........  1% 28.2M 4s
+2026-07-23T17:00:00.3458026Z    450K .......... .......... .......... .......... ..........  1% 70.9M 4s
+2026-07-23T17:00:00.3531290Z    500K .......... .......... .......... .......... ..........  1% 6.69M 4s
+2026-07-23T17:00:00.3535739Z    550K .......... .......... .......... .......... ..........  1%  105M 4s
+2026-07-23T17:00:00.3563212Z    600K .......... .......... .......... .......... ..........  1% 17.8M 4s
+2026-07-23T17:00:00.3580889Z    650K .......... .......... .......... .......... ..........  2% 27.6M 3s
+2026-07-23T17:00:00.3652344Z    700K .......... .......... .......... .......... ..........  2% 6.84M 3s
+2026-07-23T17:00:00.3661830Z    750K .......... .......... .......... .......... ..........  2% 51.4M 3s
+2026-07-23T17:00:00.3691575Z    800K .......... .......... .......... .......... ..........  2% 16.5M 3s
+2026-07-23T17:00:00.3692415Z    850K .......... .......... .......... .......... ..........  2%  388M 3s
+2026-07-23T17:00:00.3709814Z    900K .......... .......... .......... .......... ..........  2% 29.1M 3s
+2026-07-23T17:00:00.3783125Z    950K .......... .......... .......... .......... ..........  3% 6.65M 3s
+2026-07-23T17:00:00.3785687Z   1000K .......... .......... .......... .......... ..........  3%  191M 3s
+2026-07-23T17:00:00.3786167Z   1050K .......... .......... .......... .......... ..........  3%  500M 3s
+2026-07-23T17:00:00.3792839Z   1100K .......... .......... .......... .......... ..........  3% 75.7M 3s
+2026-07-23T17:00:00.3798959Z   1150K .......... .......... .......... .......... ..........  3% 80.3M 2s
+2026-07-23T17:00:00.3821228Z   1200K .......... .......... .......... .......... ..........  3% 21.9M 2s
+2026-07-23T17:00:00.3838821Z   1250K .......... .......... .......... .......... ..........  3% 28.3M 2s
+2026-07-23T17:00:00.3841710Z   1300K .......... .......... .......... .......... ..........  4%  154M 2s
+2026-07-23T17:00:00.3845353Z   1350K .......... .......... .......... .......... ..........  4%  132M 2s
+2026-07-23T17:00:00.3914661Z   1400K .......... .......... .......... .......... ..........  4% 7.06M 2s
+2026-07-23T17:00:00.3917690Z   1450K .......... .......... .......... .......... ..........  4%  159M 2s
+2026-07-23T17:00:00.3918684Z   1500K .......... .......... .......... .......... ..........  4%  443M 2s
+2026-07-23T17:00:00.3923299Z   1550K .......... .......... .......... .......... ..........  4%  107M 2s
+2026-07-23T17:00:00.3930036Z   1600K .......... .......... .......... .......... ..........  5% 71.5M 2s
+2026-07-23T17:00:00.3950301Z   1650K .......... .......... .......... .......... ..........  5% 24.1M 2s
+2026-07-23T17:00:00.3967311Z   1700K .......... .......... .......... .......... ..........  5% 29.3M 2s
+2026-07-23T17:00:00.3969922Z   1750K .......... .......... .......... .......... ..........  5%  182M 2s
+2026-07-23T17:00:00.3970836Z   1800K .......... .......... .......... .......... ..........  5%  347M 2s
+2026-07-23T17:00:00.3975184Z   1850K .......... .......... .......... .......... ..........  5%  117M 2s
+2026-07-23T17:00:00.4041711Z   1900K .......... .......... .......... .......... ..........  5% 7.40M 2s
+2026-07-23T17:00:00.4045051Z   1950K .......... .......... .......... .......... ..........  6%  140M 2s
+2026-07-23T17:00:00.4046321Z   2000K .......... .......... .......... .......... ..........  6%  265M 2s
+2026-07-23T17:00:00.4050236Z   2050K .......... .......... .......... .......... ..........  6%  130M 2s
+2026-07-23T17:00:00.4053805Z   2100K .......... .......... .......... .......... ..........  6%  142M 2s
+2026-07-23T17:00:00.4057811Z   2150K .......... .......... .......... .......... ..........  6%  145M 2s
+2026-07-23T17:00:00.4058531Z   2200K .......... .......... .......... .......... ..........  6%  420M 2s
+2026-07-23T17:00:00.4061528Z   2250K .......... .......... .......... .......... ..........  7%  152M 2s
+2026-07-23T17:00:00.4064957Z   2300K .......... .......... .......... .......... ..........  7%  151M 2s
+2026-07-23T17:00:00.4068818Z   2350K .......... .......... .......... .......... ..........  7%  121M 2s
+2026-07-23T17:00:00.4081975Z   2400K .......... .......... .......... .......... ..........  7% 38.3M 2s
+2026-07-23T17:00:00.4095869Z   2450K .......... .......... .......... .......... ..........  7% 35.6M 1s
+2026-07-23T17:00:00.4096703Z   2500K .......... .......... .......... .......... ..........  7%  273M 1s
+2026-07-23T17:00:00.4099774Z   2550K .......... .......... .......... .......... ..........  7%  195M 1s
+2026-07-23T17:00:00.4103950Z   2600K .......... .......... .......... .......... ..........  8%  114M 1s
+2026-07-23T17:00:00.4106772Z   2650K .......... .......... .......... .......... ..........  8%  162M 1s
+2026-07-23T17:00:00.4107609Z   2700K .......... .......... .......... .......... ..........  8%  520M 1s
+2026-07-23T17:00:00.4176523Z   2750K .......... .......... .......... .......... ..........  8% 7.18M 1s
+2026-07-23T17:00:00.4177177Z   2800K .......... .......... .......... .......... ..........  8%  377M 1s
+2026-07-23T17:00:00.4179284Z   2850K .......... .......... .......... .......... ..........  8%  252M 1s
+2026-07-23T17:00:00.4181321Z   2900K .......... .......... .......... .......... ..........  9%  216M 1s
+2026-07-23T17:00:00.4182329Z   2950K .......... .......... .......... .......... ..........  9%  436M 1s
+2026-07-23T17:00:00.4184812Z   3000K .......... .......... .......... .......... ..........  9%  193M 1s
+2026-07-23T17:00:00.4187234Z   3050K .......... .......... .......... .......... ..........  9%  211M 1s
+2026-07-23T17:00:00.4188722Z   3100K .......... .......... .......... .......... ..........  9%  355M 1s
+2026-07-23T17:00:00.4190871Z   3150K .......... .......... .......... .......... ..........  9%  201M 1s
+2026-07-23T17:00:00.4191734Z   3200K .......... .......... .......... .......... ..........  9%  467M 1s
+2026-07-23T17:00:00.4194325Z   3250K .......... .......... .......... .......... .......... 10%  214M 1s
+2026-07-23T17:00:00.4196308Z   3300K .......... .......... .......... .......... .......... 10%  234M 1s
+2026-07-23T17:00:00.4210487Z   3350K .......... .......... .......... .......... .......... 10% 35.2M 1s
+2026-07-23T17:00:00.4211328Z   3400K .......... .......... .......... .......... .......... 10%  436M 1s
+2026-07-23T17:00:00.4213371Z   3450K .......... .......... .......... .......... .......... 10%  255M 1s
+2026-07-23T17:00:00.4224857Z   3500K .......... .......... .......... .......... .......... 10% 42.3M 1s
+2026-07-23T17:00:00.4230544Z   3550K .......... .......... .......... .......... .......... 11% 84.3M 1s
+2026-07-23T17:00:00.4238453Z   3600K .......... .......... .......... .......... .......... 11% 61.4M 1s
+2026-07-23T17:00:00.4239230Z   3650K .......... .......... .......... .......... .......... 11%  715M 1s
+2026-07-23T17:00:00.4300610Z   3700K .......... .......... .......... .......... .......... 11% 8.04M 1s
+2026-07-23T17:00:00.4300939Z   3750K .......... .......... .......... .......... .......... 11%  536M 1s
+2026-07-23T17:00:00.4307949Z   3800K .......... .......... .......... .......... .......... 11% 69.6M 1s
+2026-07-23T17:00:00.4308934Z   3850K .......... .......... .......... .......... .......... 11%  401M 1s
+2026-07-23T17:00:00.4310758Z   3900K .......... .......... .......... .......... .......... 12%  334M 1s
+2026-07-23T17:00:00.4312392Z   3950K .......... .......... .......... .......... .......... 12%  265M 1s
+2026-07-23T17:00:00.4313081Z   4000K .......... .......... .......... .......... .......... 12%  648M 1s
+2026-07-23T17:00:00.4315059Z   4050K .......... .......... .......... .......... .......... 12%  258M 1s
+2026-07-23T17:00:00.4316902Z   4100K .......... .......... .......... .......... .......... 12%  274M 1s
+2026-07-23T17:00:00.4317805Z   4150K .......... .......... .......... .......... .......... 12%  487M 1s
+2026-07-23T17:00:00.4319504Z   4200K .......... .......... .......... .......... .......... 13%  343M 1s
+2026-07-23T17:00:00.4320284Z   4250K .......... .......... .......... .......... .......... 13%  413M 1s
+2026-07-23T17:00:00.4322219Z   4300K .......... .......... .......... .......... .......... 13%  271M 1s
+2026-07-23T17:00:00.4323876Z   4350K .......... .......... .......... .......... .......... 13%  291M 1s
+2026-07-23T17:00:00.4325534Z   4400K .......... .......... .......... .......... .......... 13%  300M 1s
+2026-07-23T17:00:00.4327145Z   4450K .......... .......... .......... .......... .......... 13%  364M 1s
+2026-07-23T17:00:00.4327745Z   4500K .......... .......... .......... .......... .......... 13%  604M 1s
+2026-07-23T17:00:00.4329785Z   4550K .......... .......... .......... .......... .......... 14%  316M 1s
+2026-07-23T17:00:00.4330572Z   4600K .......... .......... .......... .......... .......... 14%  419M 1s
+2026-07-23T17:00:00.4331647Z   4650K .......... .......... .......... .......... .......... 14%  357M 1s
+2026-07-23T17:00:00.4333080Z   4700K .......... .......... .......... .......... .......... 14%  395M 1s
+2026-07-23T17:00:00.4334448Z   4750K .......... .......... .......... .......... .......... 14%  372M 1s
+2026-07-23T17:00:00.4336026Z   4800K .......... .......... .......... .......... .......... 14%  329M 1s
+2026-07-23T17:00:00.4336679Z   4850K .......... .......... .......... .......... .......... 15%  495M 1s
+2026-07-23T17:00:00.4339757Z   4900K .......... .......... .......... .......... .......... 15%  199M 1s
+2026-07-23T17:00:00.4341735Z   4950K .......... .......... .......... .......... .......... 15%  233M 1s
+2026-07-23T17:00:00.4342487Z   5000K .......... .......... .......... .......... .......... 15%  411M 1s
+2026-07-23T17:00:00.4353533Z   5050K .......... .......... .......... .......... .......... 15% 44.0M 1s
+2026-07-23T17:00:00.4359542Z   5100K .......... .......... .......... .......... .......... 15% 83.4M 1s
+2026-07-23T17:00:00.4367498Z   5150K .......... .......... .......... .......... .......... 15% 62.1M 1s
+2026-07-23T17:00:00.4369919Z   5200K .......... .......... .......... .......... .......... 16%  206M 1s
+2026-07-23T17:00:00.4370473Z   5250K .......... .......... .......... .......... .......... 16%  496M 1s
+2026-07-23T17:00:00.4430336Z   5300K .......... .......... .......... .......... .......... 16% 8.27M 1s
+2026-07-23T17:00:00.4431960Z   5350K .......... .......... .......... .......... .......... 16%  261M 1s
+2026-07-23T17:00:00.4432503Z   5400K .......... .......... .......... .......... .......... 16%  976M 1s
+2026-07-23T17:00:00.4433300Z   5450K .......... .......... .......... .......... .......... 16%  633M 1s
+2026-07-23T17:00:00.4437221Z   5500K .......... .......... .......... .......... .......... 17%  113M 1s
+2026-07-23T17:00:00.4440467Z   5550K .......... .......... .......... .......... .......... 17%  156M 1s
+2026-07-23T17:00:00.4440921Z   5600K .......... .......... .......... .......... .......... 17%  889M 1s
+2026-07-23T17:00:00.4441801Z   5650K .......... .......... .......... .......... .......... 17%  482M 1s
+2026-07-23T17:00:00.4442914Z   5700K .......... .......... .......... .......... .......... 17%  669M 1s
+2026-07-23T17:00:00.4443875Z   5750K .......... .......... .......... .......... .......... 17%  401M 1s
+2026-07-23T17:00:00.4444331Z   5800K .......... .......... .......... .......... .......... 17%  750M 1s
+2026-07-23T17:00:00.4445656Z   5850K .......... .......... .......... .......... .......... 18%  421M 1s
+2026-07-23T17:00:00.4446604Z   5900K .......... .......... .......... .......... .......... 18%  480M 1s
+2026-07-23T17:00:00.4448808Z   5950K .......... .......... .......... .......... .......... 18%  266M 1s
+2026-07-23T17:00:00.4449362Z   6000K .......... .......... .......... .......... .......... 18%  472M 1s
+2026-07-23T17:00:00.4450597Z   6050K .......... .......... .......... .......... .......... 18%  541M 1s
+2026-07-23T17:00:00.4451201Z   6100K .......... .......... .......... .......... .......... 18%  573M 1s
+2026-07-23T17:00:00.4451995Z   6150K .......... .......... .......... .......... .......... 19%  647M 1s
+2026-07-23T17:00:00.4452798Z   6200K .......... .......... .......... .......... .......... 19%  508M 1s
+2026-07-23T17:00:00.4453663Z   6250K .......... .......... .......... .......... .......... 19%  690M 1s
+2026-07-23T17:00:00.4459398Z   6300K .......... .......... .......... .......... .......... 19% 86.9M 1s
+2026-07-23T17:00:00.4460347Z   6350K .......... .......... .......... .......... .......... 19%  492M 1s
+2026-07-23T17:00:00.4461143Z   6400K .......... .......... .......... .......... .......... 19%  579M 1s
+2026-07-23T17:00:00.4461890Z   6450K .......... .......... .......... .......... .......... 19%  571M 1s
+2026-07-23T17:00:00.4463194Z   6500K .......... .......... .......... .......... .......... 20%  638M 1s
+2026-07-23T17:00:00.4463811Z   6550K .......... .......... .......... .......... .......... 20%  702M 1s
+2026-07-23T17:00:00.4464653Z   6600K .......... .......... .......... .......... .......... 20%  732M 1s
+2026-07-23T17:00:00.4465860Z   6650K .......... .......... .......... .......... .......... 20%  315M 1s
+2026-07-23T17:00:00.4466497Z   6700K .......... .......... .......... .......... .......... 20%  568M 1s
+2026-07-23T17:00:00.4467491Z   6750K .......... .......... .......... .......... .......... 20%  472M 1s
+2026-07-23T17:00:00.4471414Z   6800K .......... .......... .......... .......... .......... 21%  142M 1s
+2026-07-23T17:00:00.4472062Z   6850K .......... .......... .......... .......... .......... 21%  786M 1s
+2026-07-23T17:00:00.4481999Z   6900K .......... .......... .......... .......... .......... 21% 47.6M 1s
+2026-07-23T17:00:00.4482853Z   6950K .......... .......... .......... .......... .......... 21%  481M 1s
+2026-07-23T17:00:00.4487961Z   7000K .......... .......... .......... .......... .......... 21% 97.6M 1s
+2026-07-23T17:00:00.4499315Z   7050K .......... .......... .......... .......... .......... 21% 43.9M 1s
+2026-07-23T17:00:00.4499779Z   7100K .......... .......... .......... .......... .......... 21%  790M 1s
+2026-07-23T17:00:00.4501133Z   7150K .......... .......... .......... .......... .......... 22%  423M 1s
+2026-07-23T17:00:00.4560169Z   7200K .......... .......... .......... .......... .......... 22% 8.33M 1s
+2026-07-23T17:00:00.4560642Z   7250K .......... .......... .......... .......... .......... 22%  372M 1s
+2026-07-23T17:00:00.4561255Z   7300K .......... .......... .......... .......... .......... 22%  626M 1s
+2026-07-23T17:00:00.4562052Z   7350K .......... .......... .......... .......... .......... 22%  681M 1s
+2026-07-23T17:00:00.4564679Z   7400K .......... .......... .......... .......... .......... 22%  637M 1s
+2026-07-23T17:00:00.4567222Z   7450K .......... .......... .......... .......... .......... 23%  634M 1s
+2026-07-23T17:00:00.4568055Z   7500K .......... .......... .......... .......... .......... 23%  991M 1s
+2026-07-23T17:00:00.4568842Z   7550K .......... .......... .......... .......... .......... 23%  473M 1s
+2026-07-23T17:00:00.4569666Z   7600K .......... .......... .......... .......... .......... 23%  841M 1s
+2026-07-23T17:00:00.4570143Z   7650K .......... .......... .......... .......... .......... 23%  852M 1s
+2026-07-23T17:00:00.4571392Z   7700K .......... .......... .......... .......... .......... 23%  358M 1s
+2026-07-23T17:00:00.4571821Z   7750K .......... .......... .......... .......... .......... 23%  442M 1s
+2026-07-23T17:00:00.4572258Z   7800K .......... .......... .......... .......... .......... 24%  423M 1s
+2026-07-23T17:00:00.4572709Z   7850K .......... .......... .......... .......... .......... 24%  536M 1s
+2026-07-23T17:00:00.4573164Z   7900K .......... .......... .......... .......... .......... 24%  480M 1s
+2026-07-23T17:00:00.4574987Z   7950K .......... .......... .......... .......... .......... 24%  163M 1s
+2026-07-23T17:00:00.4576102Z   8000K .......... .......... .......... .......... .......... 24%  540M 1s
+2026-07-23T17:00:00.4576901Z   8050K .......... .......... .......... .......... .......... 24%  531M 1s
+2026-07-23T17:00:00.4577402Z   8100K .......... .......... .......... .......... .......... 25%  590M 1s
+2026-07-23T17:00:00.4578476Z   8150K .......... .......... .......... .......... .......... 25%  564M 1s
+2026-07-23T17:00:00.4579837Z   8200K .......... .......... .......... .......... .......... 25%  456M 1s
+2026-07-23T17:00:00.4580720Z   8250K .......... .......... .......... .......... .......... 25%  409M 1s
+2026-07-23T17:00:00.4581519Z   8300K .......... .......... .......... .......... .......... 25%  539M 1s
+2026-07-23T17:00:00.4583009Z   8350K .......... .......... .......... .......... .......... 25%  350M 0s
+2026-07-23T17:00:00.4583966Z   8400K .......... .......... .......... .......... .......... 25%  467M 0s
+2026-07-23T17:00:00.4585091Z   8450K .......... .......... .......... .......... .......... 26%  472M 0s
+2026-07-23T17:00:00.4585962Z   8500K .......... .......... .......... .......... .......... 26%  507M 0s
+2026-07-23T17:00:00.4587317Z   8550K .......... .......... .......... .......... .......... 26%  430M 0s
+2026-07-23T17:00:00.4587943Z   8600K .......... .......... .......... .......... .......... 26%  634M 0s
+2026-07-23T17:00:00.4588619Z   8650K .......... .......... .......... .......... .......... 26%  627M 0s
+2026-07-23T17:00:00.4589846Z   8700K .......... .......... .......... .......... .......... 26%  463M 0s
+2026-07-23T17:00:00.4591045Z   8750K .......... .......... .......... .......... .......... 27%  348M 0s
+2026-07-23T17:00:00.4592322Z   8800K .......... .......... .......... .......... .......... 27%  634M 0s
+2026-07-23T17:00:00.4592994Z   8850K .......... .......... .......... .......... .......... 27%  556M 0s
+2026-07-23T17:00:00.4593481Z   8900K .......... .......... .......... .......... .......... 27%  640M 0s
+2026-07-23T17:00:00.4594355Z   8950K .......... .......... .......... .......... .......... 27%  502M 0s
+2026-07-23T17:00:00.4595608Z   9000K .......... .......... .......... .......... .......... 27%  454M 0s
+2026-07-23T17:00:00.4596657Z   9050K .......... .......... .......... .......... .......... 27%  452M 0s
+2026-07-23T17:00:00.4597728Z   9100K .......... .......... .......... .......... .......... 28%  454M 0s
+2026-07-23T17:00:00.4598989Z   9150K .......... .......... .......... .......... .......... 28%  388M 0s
+2026-07-23T17:00:00.4601161Z   9200K .......... .......... .......... .......... .......... 28%  332M 0s
+2026-07-23T17:00:00.4601887Z   9250K .......... .......... .......... .......... .......... 28%  584M 0s
+2026-07-23T17:00:00.4602238Z   9300K .......... .......... .......... .......... .......... 28%  441M 0s
+2026-07-23T17:00:00.4603313Z   9350K .......... .......... .......... .......... .......... 28%  455M 0s
+2026-07-23T17:00:00.4604138Z   9400K .......... .......... .......... .......... .......... 29%  596M 0s
+2026-07-23T17:00:00.4605023Z   9450K .......... .......... .......... .......... .......... 29%  606M 0s
+2026-07-23T17:00:00.4605954Z   9500K .......... .......... .......... .......... .......... 29%  513M 0s
+2026-07-23T17:00:00.4607139Z   9550K .......... .......... .......... .......... .......... 29%  411M 0s
+2026-07-23T17:00:00.4607893Z   9600K .......... .......... .......... .......... .......... 29%  600M 0s
+2026-07-23T17:00:00.4608769Z   9650K .......... .......... .......... .......... .......... 29%  557M 0s
+2026-07-23T17:00:00.4609813Z   9700K .......... .......... .......... .......... .......... 29%  481M 0s
+2026-07-23T17:00:00.4611002Z   9750K .......... .......... .......... .......... .......... 30%  473M 0s
+2026-07-23T17:00:00.4611863Z   9800K .......... .......... .......... .......... .......... 30%  476M 0s
+2026-07-23T17:00:00.4612877Z   9850K .......... .......... .......... .......... .......... 30%  481M 0s
+2026-07-23T17:00:00.4613802Z   9900K .......... .......... .......... .......... .......... 30%  549M 0s
+2026-07-23T17:00:00.4614921Z   9950K .......... .......... .......... .......... .......... 30%  409M 0s
+2026-07-23T17:00:00.4616243Z  10000K .......... .......... .......... .......... .......... 30%  413M 0s
+2026-07-23T17:00:00.4617063Z  10050K .......... .......... .......... .......... .......... 31%  512M 0s
+2026-07-23T17:00:00.4628282Z  10100K .......... .......... .......... .......... .......... 31% 45.1M 0s
+2026-07-23T17:00:00.4630247Z  10150K .......... .......... .......... .......... .......... 31%  238M 0s
+2026-07-23T17:00:00.4949560Z  10200K .......... .......... .......... .......... .......... 31% 1.54M 0s
+2026-07-23T17:00:00.4950070Z  10250K .......... .......... .......... .......... .......... 31%  435M 0s
+2026-07-23T17:00:00.4953570Z  10300K .......... .......... .......... .......... .......... 31%  117M 0s
+2026-07-23T17:00:00.4955855Z  10350K .......... .......... .......... .......... .......... 31%  177M 0s
+2026-07-23T17:00:00.4961876Z  10400K .......... .......... .......... .......... .......... 32% 86.2M 0s
+2026-07-23T17:00:00.4966063Z  10450K .......... .......... .......... .......... .......... 32%  117M 0s
+2026-07-23T17:00:00.4966507Z  10500K .......... .......... .......... .......... .......... 32%  606M 0s
+2026-07-23T17:00:00.4973266Z  10550K .......... .......... .......... .......... .......... 32% 72.4M 0s
+2026-07-23T17:00:00.4977025Z  10600K .......... .......... .......... .......... .......... 32%  134M 0s
+2026-07-23T17:00:00.4977481Z  10650K .......... .......... .......... .......... .......... 32%  676M 0s
+2026-07-23T17:00:00.4980097Z  10700K .......... .......... .......... .......... .......... 33%  435M 0s
+2026-07-23T17:00:00.4983353Z  10750K .......... .......... .......... .......... .......... 33%  553M 0s
+2026-07-23T17:00:00.4984212Z  10800K .......... .......... .......... .......... .......... 33%  519M 0s
+2026-07-23T17:00:00.4989620Z  10850K .......... .......... .......... .......... .......... 33%  628M 0s
+2026-07-23T17:00:00.4991803Z  10900K .......... .......... .......... .......... .......... 33%  836M 0s
+2026-07-23T17:00:00.4992258Z  10950K .......... .......... .......... .......... .......... 33%  984M 0s
+2026-07-23T17:00:00.4992648Z  11000K .......... .......... .......... .......... .......... 33%  732M 0s
+2026-07-23T17:00:00.4992948Z  11050K .......... .......... .......... .......... .......... 34%  913M 0s
+2026-07-23T17:00:00.4993304Z  11100K .......... .......... .......... .......... .......... 34%  862M 0s
+2026-07-23T17:00:00.4993729Z  11150K .......... .......... .......... .......... .......... 34%  728M 0s
+2026-07-23T17:00:00.4994179Z  11200K .......... .......... .......... .......... .......... 34%  931M 0s
+2026-07-23T17:00:00.4994487Z  11250K .......... .......... .......... .......... .......... 34%  933M 0s
+2026-07-23T17:00:00.4994791Z  11300K .......... .......... .......... .......... .......... 34%  915M 0s
+2026-07-23T17:00:00.4995093Z  11350K .......... .......... .......... .......... .......... 35%  968M 0s
+2026-07-23T17:00:00.4995394Z  11400K .......... .......... .......... .......... .......... 35%  955M 0s
+2026-07-23T17:00:00.4995697Z  11450K .......... .......... .......... .......... .......... 35% 1.01G 0s
+2026-07-23T17:00:00.4996001Z  11500K .......... .......... .......... .......... .......... 35% 1000M 0s
+2026-07-23T17:00:00.4996531Z  11550K .......... .......... .......... .......... .......... 35%  466M 0s
+2026-07-23T17:00:00.4997219Z  11600K .......... .......... .......... .......... .......... 35%  570M 0s
+2026-07-23T17:00:00.4998616Z  11650K .......... .......... .......... .......... .......... 35%  888M 0s
+2026-07-23T17:00:00.4999821Z  11700K .......... .......... .......... .......... .......... 36%  491M 0s
+2026-07-23T17:00:00.5000877Z  11750K .......... .......... .......... .......... .......... 36%  452M 0s
+2026-07-23T17:00:00.5001337Z  11800K .......... .......... .......... .......... .......... 36%  107M 0s
+2026-07-23T17:00:00.5002003Z  11850K .......... .......... .......... .......... .......... 36%  379M 0s
+2026-07-23T17:00:00.5002636Z  11900K .......... .......... .......... .......... .......... 36%  558M 0s
+2026-07-23T17:00:00.5005740Z  11950K .......... .......... .......... .......... .......... 36%  374M 0s
+2026-07-23T17:00:00.5006895Z  12000K .......... .......... .......... .......... .......... 37%  832M 0s
+2026-07-23T17:00:00.5007782Z  12050K .......... .......... .......... .......... .......... 37%  972M 0s
+2026-07-23T17:00:00.5009009Z  12100K .......... .......... .......... .......... .......... 37%  953M 0s
+2026-07-23T17:00:00.5009791Z  12150K .......... .......... .......... .......... .......... 37%  896M 0s
+2026-07-23T17:00:00.5010567Z  12200K .......... .......... .......... .......... .......... 37%  961M 0s
+2026-07-23T17:00:00.5011211Z  12250K .......... .......... .......... .......... .......... 37%  989M 0s
+2026-07-23T17:00:00.5011936Z  12300K .......... .......... .......... .......... .......... 37%  500M 0s
+2026-07-23T17:00:00.5012552Z  12350K .......... .......... .......... .......... .......... 38%  684M 0s
+2026-07-23T17:00:00.5013499Z  12400K .......... .......... .......... .......... .......... 38%  680M 0s
+2026-07-23T17:00:00.5014621Z  12450K .......... .......... .......... .......... .......... 38%  734M 0s
+2026-07-23T17:00:00.5015186Z  12500K .......... .......... .......... .......... .......... 38%  869M 0s
+2026-07-23T17:00:00.5016603Z  12550K .......... .......... .......... .......... .......... 38%  528M 0s
+2026-07-23T17:00:00.5017486Z  12600K .......... .......... .......... .......... .......... 38%  942M 0s
+2026-07-23T17:00:00.5018271Z  12650K .......... .......... .......... .......... .......... 39%  547M 0s
+2026-07-23T17:00:00.5019431Z  12700K .......... .......... .......... .......... .......... 39%  862M 0s
+2026-07-23T17:00:00.5019883Z  12750K .......... .......... .......... .......... .......... 39%  725M 0s
+2026-07-23T17:00:00.5020289Z  12800K .......... .......... .......... .......... .......... 39%  964M 0s
+2026-07-23T17:00:00.5020700Z  12850K .......... .......... .......... .......... .......... 39%  857M 0s
+2026-07-23T17:00:00.5021122Z  12900K .......... .......... .......... .......... .......... 39%  850M 0s
+2026-07-23T17:00:00.5021429Z  12950K .......... .......... .......... .......... .......... 39%  430M 0s
+2026-07-23T17:00:00.5021733Z  13000K .......... .......... .......... .......... .......... 40%  769M 0s
+2026-07-23T17:00:00.5022041Z  13050K .......... .......... .......... .......... .......... 40%  931M 0s
+2026-07-23T17:00:00.5022340Z  13100K .......... .......... .......... .......... .......... 40%  895M 0s
+2026-07-23T17:00:00.5022647Z  13150K .......... .......... .......... .......... .......... 40%  514M 0s
+2026-07-23T17:00:00.5022952Z  13200K .......... .......... .......... .......... .......... 40%  680M 0s
+2026-07-23T17:00:00.5023245Z  13250K .......... .......... .......... .......... .......... 40%  916M 0s
+2026-07-23T17:00:00.5023547Z  13300K .......... .......... .......... .......... .......... 41%  946M 0s
+2026-07-23T17:00:00.5024148Z  13350K .......... .......... .......... .......... .......... 41%  907M 0s
+2026-07-23T17:00:00.5024720Z  13400K .......... .......... .......... .......... .......... 41%  953M 0s
+2026-07-23T17:00:00.5025469Z  13450K .......... .......... .......... .......... .......... 41%  440M 0s
+2026-07-23T17:00:00.5026386Z  13500K .......... .......... .......... .......... .......... 41% 93.8M 0s
+2026-07-23T17:00:00.5027728Z  13550K .......... .......... .......... .......... .......... 41%  368M 0s
+2026-07-23T17:00:00.5028403Z  13600K .......... .......... .......... .......... .......... 41%  490M 0s
+2026-07-23T17:00:00.5029274Z  13650K .......... .......... .......... .......... .......... 42%  510M 0s
+2026-07-23T17:00:00.5030952Z  13700K .......... .......... .......... .......... .......... 42%  453M 0s
+2026-07-23T17:00:00.5032576Z  13750K .......... .......... .......... .......... .......... 42%  432M 0s
+2026-07-23T17:00:00.5033051Z  13800K .......... .......... .......... .......... .......... 42%  603M 0s
+2026-07-23T17:00:00.5033491Z  13850K .......... .......... .......... .......... .......... 42%  527M 0s
+2026-07-23T17:00:00.5034062Z  13900K .......... .......... .......... .......... .......... 42%  578M 0s
+2026-07-23T17:00:00.5034906Z  13950K .......... .......... .......... .......... .......... 43%  443M 0s
+2026-07-23T17:00:00.5035801Z  14000K .......... .......... .......... .......... .......... 43%  544M 0s
+2026-07-23T17:00:00.5078017Z  14050K .......... .......... .......... .......... .......... 43% 11.7M 0s
+2026-07-23T17:00:00.5078656Z  14100K .......... .......... .......... .......... .......... 43%  457M 0s
+2026-07-23T17:00:00.5079450Z  14150K .......... .......... .......... .......... .......... 43%  661M 0s
+2026-07-23T17:00:00.5089981Z  14200K .......... .......... .......... .......... .......... 43% 60.3M 0s
+2026-07-23T17:00:00.5090866Z  14250K .......... .......... .......... .......... .......... 43%  729M 0s
+2026-07-23T17:00:00.5091172Z  14300K .......... .......... .......... .......... .......... 44% 1.02G 0s
+2026-07-23T17:00:00.5091475Z  14350K .......... .......... .......... .......... .......... 44%  521M 0s
+2026-07-23T17:00:00.5093487Z  14400K .......... .......... .......... .......... .......... 44%  533M 0s
+2026-07-23T17:00:00.5093899Z  14450K .......... .......... .......... .......... .......... 44%  710M 0s
+2026-07-23T17:00:00.5095437Z  14500K .......... .......... .......... .......... .......... 44% 1.05G 0s
+2026-07-23T17:00:00.5096477Z  14550K .......... .......... .......... .......... .......... 44% 1.08G 0s
+2026-07-23T17:00:00.5096948Z  14600K .......... .......... .......... .......... .......... 45%  993M 0s
+2026-07-23T17:00:00.5097599Z  14650K .......... .......... .......... .......... .......... 45%  781M 0s
+2026-07-23T17:00:00.5098040Z  14700K .......... .......... .......... .......... .......... 45% 1.02G 0s
+2026-07-23T17:00:00.5098503Z  14750K .......... .......... .......... .......... .......... 45%  306M 0s
+2026-07-23T17:00:00.5098955Z  14800K .......... .......... .......... .......... .......... 45%  470M 0s
+2026-07-23T17:00:00.5099546Z  14850K .......... .......... .......... .......... .......... 45%  501M 0s
+2026-07-23T17:00:00.5100049Z  14900K .......... .......... .......... .......... .......... 45%  675M 0s
+2026-07-23T17:00:00.5104522Z  14950K .......... .......... .......... .......... .......... 46% 90.1M 0s
+2026-07-23T17:00:00.5105012Z  15000K .......... .......... .......... .......... .......... 46%  612M 0s
+2026-07-23T17:00:00.5105457Z  15050K .......... .......... .......... .......... .......... 46%  788M 0s
+2026-07-23T17:00:00.5105897Z  15100K .......... .......... .......... .......... .......... 46%  580M 0s
+2026-07-23T17:00:00.5108455Z  15150K .......... .......... .......... .......... .......... 46%  187M 0s
+2026-07-23T17:00:00.5109072Z  15200K .......... .......... .......... .......... .......... 46%  514M 0s
+2026-07-23T17:00:00.5111057Z  15250K .......... .......... .......... .......... .......... 47%  417M 0s
+2026-07-23T17:00:00.5111974Z  15300K .......... .......... .......... .......... .......... 47%  468M 0s
+2026-07-23T17:00:00.5112884Z  15350K .......... .......... .......... .......... .......... 47%  528M 0s
+2026-07-23T17:00:00.5113880Z  15400K .......... .......... .......... .......... .......... 47%  586M 0s
+2026-07-23T17:00:00.5114959Z  15450K .......... .......... .......... .......... .......... 47%  674M 0s
+2026-07-23T17:00:00.5116174Z  15500K .......... .......... .......... .......... .......... 47%  642M 0s
+2026-07-23T17:00:00.5116934Z  15550K .......... .......... .......... .......... .......... 47%  483M 0s
+2026-07-23T17:00:00.5117540Z  15600K .......... .......... .......... .......... .......... 48%  741M 0s
+2026-07-23T17:00:00.5118255Z  15650K .......... .......... .......... .......... .......... 48%  852M 0s
+2026-07-23T17:00:00.5118998Z  15700K .......... .......... .......... .......... .......... 48%  724M 0s
+2026-07-23T17:00:00.5120722Z  15750K .......... .......... .......... .......... .......... 48%  654M 0s
+2026-07-23T17:00:00.5121374Z  15800K .......... .......... .......... .......... .......... 48%  815M 0s
+2026-07-23T17:00:00.5122176Z  15850K .......... .......... .......... .......... .......... 48%  870M 0s
+2026-07-23T17:00:00.5130675Z  15900K .......... .......... .......... .......... .......... 49%  466M 0s
+2026-07-23T17:00:00.5151413Z  15950K .......... .......... .......... .......... .......... 49%  726M 0s
+2026-07-23T17:00:00.5151916Z  16000K .......... .......... .......... .......... .......... 49%  912M 0s
+2026-07-23T17:00:00.5152360Z  16050K .......... .......... .......... .......... .......... 49%  835M 0s
+2026-07-23T17:00:00.5153086Z  16100K .......... .......... .......... .......... .......... 49%  920M 0s
+2026-07-23T17:00:00.5153939Z  16150K .......... .......... .......... .......... .......... 49% 1.01G 0s
+2026-07-23T17:00:00.5154234Z  16200K .......... .......... .......... .......... .......... 49%  994M 0s
+2026-07-23T17:00:00.5154544Z  16250K .......... .......... .......... .......... .......... 50%  986M 0s
+2026-07-23T17:00:00.5154851Z  16300K .......... .......... .......... .......... .......... 50%  950M 0s
+2026-07-23T17:00:00.5155152Z  16350K .......... .......... .......... .......... .......... 50%  720M 0s
+2026-07-23T17:00:00.5155457Z  16400K .......... .......... .......... .......... .......... 50%  880M 0s
+2026-07-23T17:00:00.5155771Z  16450K .......... .......... .......... .......... .......... 50% 1024M 0s
+2026-07-23T17:00:00.5156079Z  16500K .......... .......... .......... .......... .......... 50%  948M 0s
+2026-07-23T17:00:00.5156381Z  16550K .......... .......... .......... .......... .......... 51%  871M 0s
+2026-07-23T17:00:00.5156796Z  16600K .......... .......... .......... .......... .......... 51% 1.07G 0s
+2026-07-23T17:00:00.5157102Z  16650K .......... .......... .......... .......... .......... 51%  934M 0s
+2026-07-23T17:00:00.5157589Z  16700K .......... .......... .......... .......... .......... 51%  887M 0s
+2026-07-23T17:00:00.5158067Z  16750K .......... .......... .......... .......... .......... 51%  439M 0s
+2026-07-23T17:00:00.5158460Z  16800K .......... .......... .......... .......... .......... 51%  920M 0s
+2026-07-23T17:00:00.5158763Z  16850K .......... .......... .......... .......... .......... 51%  921M 0s
+2026-07-23T17:00:00.5159776Z  16900K .......... .......... .......... .......... .......... 52% 1018M 0s
+2026-07-23T17:00:00.5160695Z  16950K .......... .......... .......... .......... .......... 52%  893M 0s
+2026-07-23T17:00:00.5161155Z  17000K .......... .......... .......... .......... .......... 52%  910M 0s
+2026-07-23T17:00:00.5161591Z  17050K .......... .......... .......... .......... .......... 52% 1017M 0s
+2026-07-23T17:00:00.5161935Z  17100K .......... .......... .......... .......... .......... 52% 1.06G 0s
+2026-07-23T17:00:00.5162710Z  17150K .......... .......... .......... .......... .......... 52%  778M 0s
+2026-07-23T17:00:00.5163769Z  17200K .......... .......... .......... .......... .......... 53% 1.06G 0s
+2026-07-23T17:00:00.5164436Z  17250K .......... .......... .......... .......... .......... 53% 1.06G 0s
+2026-07-23T17:00:00.5164760Z  17300K .......... .......... .......... .......... .......... 53% 1.02G 0s
+2026-07-23T17:00:00.5165062Z  17350K .......... .......... .......... .......... .......... 53% 1.03G 0s
+2026-07-23T17:00:00.5165373Z  17400K .......... .......... .......... .......... .......... 53%  983M 0s
+2026-07-23T17:00:00.5165927Z  17450K .......... .......... .......... .......... .......... 53%  987M 0s
+2026-07-23T17:00:00.5166353Z  17500K .......... .......... .......... .......... .......... 53%  901M 0s
+2026-07-23T17:00:00.5166655Z  17550K .......... .......... .......... .......... .......... 54%  715M 0s
+2026-07-23T17:00:00.5166959Z  17600K .......... .......... .......... .......... .......... 54% 1010M 0s
+2026-07-23T17:00:00.5167255Z  17650K .......... .......... .......... .......... .......... 54%  899M 0s
+2026-07-23T17:00:00.5167558Z  17700K .......... .......... .......... .......... .......... 54%  782M 0s
+2026-07-23T17:00:00.5167853Z  17750K .......... .......... .......... .......... .......... 54%  877M 0s
+2026-07-23T17:00:00.5168148Z  17800K .......... .......... .......... .......... .......... 54%  689M 0s
+2026-07-23T17:00:00.5168441Z  17850K .......... .......... .......... .......... .......... 55%  991M 0s
+2026-07-23T17:00:00.5168741Z  17900K .......... .......... .......... .......... .......... 55%  892M 0s
+2026-07-23T17:00:00.5169040Z  17950K .......... .......... .......... .......... .......... 55%  764M 0s
+2026-07-23T17:00:00.5169461Z  18000K .......... .......... .......... .......... .......... 55% 1.03G 0s
+2026-07-23T17:00:00.5169759Z  18050K .......... .......... .......... .......... .......... 55%  981M 0s
+2026-07-23T17:00:00.5170061Z  18100K .......... .......... .......... .......... .......... 55%  900M 0s
+2026-07-23T17:00:00.5170359Z  18150K .......... .......... .......... .......... .......... 55%  950M 0s
+2026-07-23T17:00:00.5170660Z  18200K .......... .......... .......... .......... .......... 56%  920M 0s
+2026-07-23T17:00:00.5170957Z  18250K .......... .......... .......... .......... .......... 56%  903M 0s
+2026-07-23T17:00:00.5171259Z  18300K .......... .......... .......... .......... .......... 56%  606M 0s
+2026-07-23T17:00:00.5171559Z  18350K .......... .......... .......... .......... .......... 56%  807M 0s
+2026-07-23T17:00:00.5171859Z  18400K .......... .......... .......... .......... .......... 56%  981M 0s
+2026-07-23T17:00:00.5172166Z  18450K .......... .......... .......... .......... .......... 56% 1.05G 0s
+2026-07-23T17:00:00.5172469Z  18500K .......... .......... .......... .......... .......... 57% 1.05G 0s
+2026-07-23T17:00:00.5172840Z  18550K .......... .......... .......... .......... .......... 57% 1021M 0s
+2026-07-23T17:00:00.5173144Z  18600K .......... .......... .......... .......... .......... 57%  571M 0s
+2026-07-23T17:00:00.5173443Z  18650K .......... .......... .......... .......... .......... 57%  883M 0s
+2026-07-23T17:00:00.5173749Z  18700K .......... .......... .......... .......... .......... 57%  522M 0s
+2026-07-23T17:00:00.5174070Z  18750K .......... .......... .......... .......... .......... 57%  407M 0s
+2026-07-23T17:00:00.5174375Z  18800K .......... .......... .......... .......... .......... 57%  961M 0s
+2026-07-23T17:00:00.5174673Z  18850K .......... .......... .......... .......... .......... 58% 1.02G 0s
+2026-07-23T17:00:00.5174974Z  18900K .......... .......... .......... .......... .......... 58%  906M 0s
+2026-07-23T17:00:00.5175274Z  18950K .......... .......... .......... .......... .......... 58% 1.04G 0s
+2026-07-23T17:00:00.5175574Z  19000K .......... .......... .......... .......... .......... 58% 1.06G 0s
+2026-07-23T17:00:00.5175879Z  19050K .......... .......... .......... .......... .......... 58% 1006M 0s
+2026-07-23T17:00:00.5176176Z  19100K .......... .......... .......... .......... .......... 58% 1.05G 0s
+2026-07-23T17:00:00.5176470Z  19150K .......... .......... .......... .......... .......... 59%  787M 0s
+2026-07-23T17:00:00.5176764Z  19200K .......... .......... .......... .......... .......... 59% 1.01G 0s
+2026-07-23T17:00:00.5177069Z  19250K .......... .......... .......... .......... .......... 59% 1.02G 0s
+2026-07-23T17:00:00.5177366Z  19300K .......... .......... .......... .......... .......... 59%  456M 0s
+2026-07-23T17:00:00.5177663Z  19350K .......... .......... .......... .......... .......... 59%  581M 0s
+2026-07-23T17:00:00.5178021Z  19400K .......... .......... .......... .......... .......... 59%  749M 0s
+2026-07-23T17:00:00.5178323Z  19450K .......... .......... .......... .......... .......... 59%  929M 0s
+2026-07-23T17:00:00.5178624Z  19500K .......... .......... .......... .......... .......... 60% 1.01G 0s
+2026-07-23T17:00:00.5178927Z  19550K .......... .......... .......... .......... .......... 60%  786M 0s
+2026-07-23T17:00:00.5179306Z  19600K .......... .......... .......... .......... .......... 60%  247M 0s
+2026-07-23T17:00:00.5179612Z  19650K .......... .......... .......... .......... .......... 60%  786M 0s
+2026-07-23T17:00:00.5179909Z  19700K .......... .......... .......... .......... .......... 60% 1013M 0s
+2026-07-23T17:00:00.5180208Z  19750K .......... .......... .......... .......... .......... 60% 1.05G 0s
+2026-07-23T17:00:00.5206306Z  19800K .......... .......... .......... .......... .......... 61% 12.1M 0s
+2026-07-23T17:00:00.5206789Z  19850K .......... .......... .......... .......... .......... 61%  816M 0s
+2026-07-23T17:00:00.5209556Z  19900K .......... .......... .......... .......... .......... 61%  226M 0s
+2026-07-23T17:00:00.5210137Z  19950K .......... .......... .......... .......... .......... 61%  391M 0s
+2026-07-23T17:00:00.5210934Z  20000K .......... .......... .......... .......... .......... 61%  644M 0s
+2026-07-23T17:00:00.5211874Z  20050K .......... .......... .......... .......... .......... 61%  557M 0s
+2026-07-23T17:00:00.5212339Z  20100K .......... .......... .......... .......... .......... 61%  737M 0s
+2026-07-23T17:00:00.5213007Z  20150K .......... .......... .......... .......... .......... 62%  614M 0s
+2026-07-23T17:00:00.5213765Z  20200K .......... .......... .......... .......... .......... 62%  662M 0s
+2026-07-23T17:00:00.5214513Z  20250K .......... .......... .......... .......... .......... 62%  673M 0s
+2026-07-23T17:00:00.5215304Z  20300K .......... .......... .......... .......... .......... 62%  629M 0s
+2026-07-23T17:00:00.5217254Z  20350K .......... .......... .......... .......... .......... 62%  260M 0s
+2026-07-23T17:00:00.5218017Z  20400K .......... .......... .......... .......... .......... 62%  634M 0s
+2026-07-23T17:00:00.5604326Z  20450K .......... .......... .......... .......... .......... 63% 1.27M 0s
+2026-07-23T17:00:00.5606570Z  20500K .......... .......... .......... .......... .......... 63%  228M 0s
+2026-07-23T17:00:00.5607169Z  20550K .......... .......... .......... .......... .......... 63%  547M 0s
+2026-07-23T17:00:00.5607590Z  20600K .......... .......... .......... .......... .......... 63%  576M 0s
+2026-07-23T17:00:00.5610246Z  20650K .......... .......... .......... .......... .......... 63%  234M 0s
+2026-07-23T17:00:00.5610803Z  20700K .......... .......... .......... .......... .......... 63%  385M 0s
+2026-07-23T17:00:00.5611717Z  20750K .......... .......... .......... .......... .......... 63%  518M 0s
+2026-07-23T17:00:00.5612531Z  20800K .......... .......... .......... .......... .......... 64%  575M 0s
+2026-07-23T17:00:00.5613447Z  20850K .......... .......... .......... .......... .......... 64%  553M 0s
+2026-07-23T17:00:00.5614272Z  20900K .......... .......... .......... .......... .......... 64%  594M 0s
+2026-07-23T17:00:00.5615047Z  20950K .......... .......... .......... .......... .......... 64%  636M 0s
+2026-07-23T17:00:00.5615812Z  21000K .......... .......... .......... .......... .......... 64%  607M 0s
+2026-07-23T17:00:00.5616627Z  21050K .......... .......... .......... .......... .......... 64%  613M 0s
+2026-07-23T17:00:00.5617615Z  21100K .......... .......... .......... .......... .......... 65%  441M 0s
+2026-07-23T17:00:00.5618447Z  21150K .......... .......... .......... .......... .......... 65%  637M 0s
+2026-07-23T17:00:00.5619419Z  21200K .......... .......... .......... .......... .......... 65%  655M 0s
+2026-07-23T17:00:00.5620705Z  21250K .......... .......... .......... .......... .......... 65%  351M 0s
+2026-07-23T17:00:00.5622444Z  21300K .......... .......... .......... .......... .......... 65%  412M 0s
+2026-07-23T17:00:00.5623298Z  21350K .......... .......... .......... .......... .......... 65%  325M 0s
+2026-07-23T17:00:00.5624165Z  21400K .......... .......... .......... .......... .......... 65%  547M 0s
+2026-07-23T17:00:00.5624935Z  21450K .......... .......... .......... .......... .......... 66%  678M 0s
+2026-07-23T17:00:00.5625926Z  21500K .......... .......... .......... .......... .......... 66%  481M 0s
+2026-07-23T17:00:00.5626693Z  21550K .......... .......... .......... .......... .......... 66%  627M 0s
+2026-07-23T17:00:00.5627506Z  21600K .......... .......... .......... .......... .......... 66%  622M 0s
+2026-07-23T17:00:00.5628296Z  21650K .......... .......... .......... .......... .......... 66%  660M 0s
+2026-07-23T17:00:00.5629070Z  21700K .......... .......... .......... .......... .......... 66%  642M 0s
+2026-07-23T17:00:00.5629936Z  21750K .......... .......... .......... .......... .......... 67%  522M 0s
+2026-07-23T17:00:00.5630806Z  21800K .......... .......... .......... .......... .......... 67%  625M 0s
+2026-07-23T17:00:00.5638532Z  21850K .......... .......... .......... .......... .......... 67% 68.3M 0s
+2026-07-23T17:00:00.5642565Z  21900K .......... .......... .......... .......... .......... 67%  110M 0s
+2026-07-23T17:00:00.5643847Z  21950K .......... .......... .......... .......... .......... 67%  335M 0s
+2026-07-23T17:00:00.5649104Z  22000K .......... .......... .......... .......... .......... 67% 94.5M 0s
+2026-07-23T17:00:00.5653337Z  22050K .......... .......... .......... .......... .......... 67%  117M 0s
+2026-07-23T17:00:00.5659259Z  22100K .......... .......... .......... .......... .......... 68% 82.0M 0s
+2026-07-23T17:00:00.5660922Z  22150K .......... .......... .......... .......... .......... 68%  297M 0s
+2026-07-23T17:00:00.5666885Z  22200K .......... .......... .......... .......... .......... 68% 80.9M 0s
+2026-07-23T17:00:00.5670993Z  22250K .......... .......... .......... .......... .......... 68%  128M 0s
+2026-07-23T17:00:00.5674147Z  22300K .......... .......... .......... .......... .......... 68%  140M 0s
+2026-07-23T17:00:00.5679481Z  22350K .......... .......... .......... .......... .......... 68% 96.8M 0s
+2026-07-23T17:00:00.5680117Z  22400K .......... .......... .......... .......... .......... 69%  453M 0s
+2026-07-23T17:00:00.5681769Z  22450K .......... .......... .......... .......... .......... 69%  520M 0s
+2026-07-23T17:00:00.5689218Z  22500K .......... .......... .......... .......... .......... 69% 65.6M 0s
+2026-07-23T17:00:00.5696085Z  22550K .......... .......... .......... .......... .......... 69% 72.8M 0s
+2026-07-23T17:00:00.5696665Z  22600K .......... .......... .......... .......... .......... 69%  368M 0s
+2026-07-23T17:00:00.5702992Z  22650K .......... .......... .......... .......... .......... 69% 80.4M 0s
+2026-07-23T17:00:00.5707497Z  22700K .......... .......... .......... .......... .......... 69%  106M 0s
+2026-07-23T17:00:00.5713547Z  22750K .......... .......... .......... .......... .......... 70% 82.4M 0s
+2026-07-23T17:00:00.5716966Z  22800K .......... .......... .......... .......... .......... 70%  141M 0s
+2026-07-23T17:00:00.5717496Z  22850K .......... .......... .......... .......... .......... 70%  563M 0s
+2026-07-23T17:00:00.5725731Z  22900K .......... .......... .......... .......... .......... 70% 64.1M 0s
+2026-07-23T17:00:00.5732291Z  22950K .......... .......... .......... .......... .......... 70% 80.0M 0s
+2026-07-23T17:00:00.5740286Z  23000K .......... .......... .......... .......... .......... 70% 60.8M 0s
+2026-07-23T17:00:00.5741356Z  23050K .......... .......... .......... .......... .......... 71%  429M 0s
+2026-07-23T17:00:00.5741857Z  23100K .......... .......... .......... .......... .......... 71%  390M 0s
+2026-07-23T17:00:00.5745636Z  23150K .......... .......... .......... .......... .......... 71%  132M 0s
+2026-07-23T17:00:00.5750249Z  23200K .......... .......... .......... .......... .......... 71%  118M 0s
+2026-07-23T17:00:00.5751798Z  23250K .......... .......... .......... .......... .......... 71%  250M 0s
+2026-07-23T17:00:00.5753909Z  23300K .......... .......... .......... .......... .......... 71%  241M 0s
+2026-07-23T17:00:00.5757128Z  23350K .......... .......... .......... .......... .......... 71%  159M 0s
+2026-07-23T17:00:00.5762298Z  23400K .......... .......... .......... .......... .......... 72% 97.5M 0s
+2026-07-23T17:00:00.5762884Z  23450K .......... .......... .......... .......... .......... 72%  480M 0s
+2026-07-23T17:00:00.5770063Z  23500K .......... .......... .......... .......... .......... 72% 73.3M 0s
+2026-07-23T17:00:00.5770521Z  23550K .......... .......... .......... .......... .......... 72%  377M 0s
+2026-07-23T17:00:00.5779366Z  23600K .......... .......... .......... .......... .......... 72% 59.0M 0s
+2026-07-23T17:00:00.5780121Z  23650K .......... .......... .......... .......... .......... 72%  428M 0s
+2026-07-23T17:00:00.5781441Z  23700K .......... .......... .......... .......... .......... 73%  425M 0s
+2026-07-23T17:00:00.5782029Z  23750K .......... .......... .......... .......... .......... 73%  577M 0s
+2026-07-23T17:00:00.5784934Z  23800K .......... .......... .......... .......... .......... 73%  178M 0s
+2026-07-23T17:00:00.5788678Z  23850K .......... .......... .......... .......... .......... 73%  152M 0s
+2026-07-23T17:00:00.5789278Z  23900K .......... .......... .......... .......... .......... 73%  429M 0s
+2026-07-23T17:00:00.5793891Z  23950K .......... .......... .......... .......... .......... 73%  109M 0s
+2026-07-23T17:00:00.5794917Z  24000K .......... .......... .......... .......... .......... 73%  381M 0s
+2026-07-23T17:00:00.5795659Z  24050K .......... .......... .......... .......... .......... 74%  589M 0s
+2026-07-23T17:00:00.5798115Z  24100K .......... .......... .......... .......... .......... 74%  215M 0s
+2026-07-23T17:00:00.5798894Z  24150K .......... .......... .......... .......... .......... 74%  529M 0s
+2026-07-23T17:00:00.5800209Z  24200K .......... .......... .......... .......... .......... 74%  499M 0s
+2026-07-23T17:00:00.5803024Z  24250K .......... .......... .......... .......... .......... 74%  160M 0s
+2026-07-23T17:00:00.5808482Z  24300K .......... .......... .......... .......... .......... 74% 96.9M 0s
+2026-07-23T17:00:00.5811298Z  24350K .......... .......... .......... .......... .......... 75%  257M 0s
+2026-07-23T17:00:00.5812568Z  24400K .......... .......... .......... .......... .......... 75%  268M 0s
+2026-07-23T17:00:00.5813168Z  24450K .......... .......... .......... .......... .......... 75%  356M 0s
+2026-07-23T17:00:00.5816248Z  24500K .......... .......... .......... .......... .......... 75%  174M 0s
+2026-07-23T17:00:00.5817422Z  24550K .......... .......... .......... .......... .......... 75%  465M 0s
+2026-07-23T17:00:00.5818333Z  24600K .......... .......... .......... .......... .......... 75%  438M 0s
+2026-07-23T17:00:00.5818822Z  24650K .......... .......... .......... .......... .......... 75%  577M 0s
+2026-07-23T17:00:00.5823090Z  24700K .......... .......... .......... .......... .......... 76%  120M 0s
+2026-07-23T17:00:00.5826347Z  24750K .......... .......... .......... .......... .......... 76%  172M 0s
+2026-07-23T17:00:00.5827446Z  24800K .......... .......... .......... .......... .......... 76%  568M 0s
+2026-07-23T17:00:00.5828279Z  24850K .......... .......... .......... .......... .......... 76%  377M 0s
+2026-07-23T17:00:00.5830473Z  24900K .......... .......... .......... .......... .......... 76%  269M 0s
+2026-07-23T17:00:00.5831187Z  24950K .......... .......... .......... .......... .......... 76%  446M 0s
+2026-07-23T17:00:00.5834534Z  25000K .......... .......... .......... .......... .......... 77%  146M 0s
+2026-07-23T17:00:00.5837026Z  25050K .......... .......... .......... .......... .......... 77%  237M 0s
+2026-07-23T17:00:00.5837694Z  25100K .......... .......... .......... .......... .......... 77%  357M 0s
+2026-07-23T17:00:00.5840432Z  25150K .......... .......... .......... .......... .......... 77%  208M 0s
+2026-07-23T17:00:00.5841001Z  25200K .......... .......... .......... .......... .......... 77%  514M 0s
+2026-07-23T17:00:00.5842724Z  25250K .......... .......... .......... .......... .......... 77%  294M 0s
+2026-07-23T17:00:00.5844885Z  25300K .......... .......... .......... .......... .......... 77%  236M 0s
+2026-07-23T17:00:00.5846284Z  25350K .......... .......... .......... .......... .......... 78%  379M 0s
+2026-07-23T17:00:00.5848272Z  25400K .......... .......... .......... .......... .......... 78%  247M 0s
+2026-07-23T17:00:00.5848766Z  25450K .......... .......... .......... .......... .......... 78%  535M 0s
+2026-07-23T17:00:00.5850905Z  25500K .......... .......... .......... .......... .......... 78%  262M 0s
+2026-07-23T17:00:00.5853418Z  25550K .......... .......... .......... .......... .......... 78%  200M 0s
+2026-07-23T17:00:00.5854263Z  25600K .......... .......... .......... .......... .......... 78%  416M 0s
+2026-07-23T17:00:00.5857029Z  25650K .......... .......... .......... .......... .......... 79%  221M 0s
+2026-07-23T17:00:00.5858659Z  25700K .......... .......... .......... .......... .......... 79%  293M 0s
+2026-07-23T17:00:00.5860188Z  25750K .......... .......... .......... .......... .......... 79%  294M 0s
+2026-07-23T17:00:00.5861279Z  25800K .......... .......... .......... .......... .......... 79%  404M 0s
+2026-07-23T17:00:00.5863087Z  25850K .......... .......... .......... .......... .......... 79%  254M 0s
+2026-07-23T17:00:00.5865587Z  25900K .......... .......... .......... .......... .......... 79%  203M 0s
+2026-07-23T17:00:00.5868109Z  25950K .......... .......... .......... .......... .......... 79%  188M 0s
+2026-07-23T17:00:00.5870461Z  26000K .......... .......... .......... .......... .......... 80%  213M 0s
+2026-07-23T17:00:00.5872348Z  26050K .......... .......... .......... .......... .......... 80%  248M 0s
+2026-07-23T17:00:00.5873041Z  26100K .......... .......... .......... .......... .......... 80%  598M 0s
+2026-07-23T17:00:00.5876420Z  26150K .......... .......... .......... .......... .......... 80%  165M 0s
+2026-07-23T17:00:00.5877394Z  26200K .......... .......... .......... .......... .......... 80%  366M 0s
+2026-07-23T17:00:00.5879703Z  26250K .......... .......... .......... .......... .......... 80%  350M 0s
+2026-07-23T17:00:00.5880164Z  26300K .......... .......... .......... .......... .......... 81%  607M 0s
+2026-07-23T17:00:00.5881971Z  26350K .......... .......... .......... .......... .......... 81%  236M 0s
+2026-07-23T17:00:00.5883083Z  26400K .......... .......... .......... .......... .......... 81%  333M 0s
+2026-07-23T17:00:00.5885105Z  26450K .......... .......... .......... .......... .......... 81%  273M 0s
+2026-07-23T17:00:00.5886136Z  26500K .......... .......... .......... .......... .......... 81%  381M 0s
+2026-07-23T17:00:00.5892049Z  26550K .......... .......... .......... .......... .......... 81% 90.9M 0s
+2026-07-23T17:00:00.5895942Z  26600K .......... .......... .......... .......... .......... 81%  115M 0s
+2026-07-23T17:00:00.5900561Z  26650K .......... .......... .......... .......... .......... 82%  110M 0s
+2026-07-23T17:00:00.5901411Z  26700K .......... .......... .......... .......... .......... 82%  399M 0s
+2026-07-23T17:00:00.5902934Z  26750K .......... .......... .......... .......... .......... 82%  358M 0s
+2026-07-23T17:00:00.5905304Z  26800K .......... .......... .......... .......... .......... 82%  202M 0s
+2026-07-23T17:00:00.5908413Z  26850K .......... .......... .......... .......... .......... 82%  162M 0s
+2026-07-23T17:00:00.5910388Z  26900K .......... .......... .......... .......... .......... 82%  237M 0s
+2026-07-23T17:00:00.5911358Z  26950K .......... .......... .......... .......... .......... 83%  428M 0s
+2026-07-23T17:00:00.5916385Z  27000K .......... .......... .......... .......... .......... 83% 99.9M 0s
+2026-07-23T17:00:00.5920001Z  27050K .......... .......... .......... .......... .......... 83%  139M 0s
+2026-07-23T17:00:00.5922635Z  27100K .......... .......... .......... .......... .......... 83%  178M 0s
+2026-07-23T17:00:00.5927771Z  27150K .......... .......... .......... .......... .......... 83% 98.2M 0s
+2026-07-23T17:00:00.5929358Z  27200K .......... .......... .......... .......... .......... 83%  312M 0s
+2026-07-23T17:00:00.5930593Z  27250K .......... .......... .......... .......... .......... 83%  353M 0s
+2026-07-23T17:00:00.5931405Z  27300K .......... .......... .......... .......... .......... 84%  579M 0s
+2026-07-23T17:00:00.5932803Z  27350K .......... .......... .......... .......... .......... 84%  353M 0s
+2026-07-23T17:00:00.5933566Z  27400K .......... .......... .......... .......... .......... 84%  579M 0s
+2026-07-23T17:00:00.5936629Z  27450K .......... .......... .......... .......... .......... 84%  174M 0s
+2026-07-23T17:00:00.5937852Z  27500K .......... .......... .......... .......... .......... 84%  321M 0s
+2026-07-23T17:00:00.5941231Z  27550K .......... .......... .......... .......... .......... 84%  160M 0s
+2026-07-23T17:00:00.5942309Z  27600K .......... .......... .......... .......... .......... 85%  358M 0s
+2026-07-23T17:00:00.5942961Z  27650K .......... .......... .......... .......... .......... 85%  733M 0s
+2026-07-23T17:00:00.5947502Z  27700K .......... .......... .......... .......... .......... 85%  111M 0s
+2026-07-23T17:00:00.5948432Z  27750K .......... .......... .......... .......... .......... 85%  710M 0s
+2026-07-23T17:00:00.5950047Z  27800K .......... .......... .......... .......... .......... 85%  257M 0s
+2026-07-23T17:00:00.5950683Z  27850K .......... .......... .......... .......... .......... 85%  753M 0s
+2026-07-23T17:00:00.5957049Z  27900K .......... .......... .......... .......... .......... 85% 82.9M 0s
+2026-07-23T17:00:00.5957659Z  27950K .......... .......... .......... .......... .......... 86%  420M 0s
+2026-07-23T17:00:00.5958356Z  28000K .......... .......... .......... .......... .......... 86%  704M 0s
+2026-07-23T17:00:00.5961927Z  28050K .......... .......... .......... .......... .......... 86%  139M 0s
+2026-07-23T17:00:00.5963765Z  28100K .......... .......... .......... .......... .......... 86%  397M 0s
+2026-07-23T17:00:00.5964275Z  28150K .......... .......... .......... .......... .......... 86%  688M 0s
+2026-07-23T17:00:00.5967356Z  28200K .......... .......... .......... .......... .......... 86%  169M 0s
+2026-07-23T17:00:00.5967835Z  28250K .......... .......... .......... .......... .......... 87%  633M 0s
+2026-07-23T17:00:00.5970355Z  28300K .......... .......... .......... .......... .......... 87%  252M 0s
+2026-07-23T17:00:00.5971208Z  28350K .......... .......... .......... .......... .......... 87%  518M 0s
+2026-07-23T17:00:00.5972363Z  28400K .......... .......... .......... .......... .......... 87%  618M 0s
+2026-07-23T17:00:00.5973179Z  28450K .......... .......... .......... .......... .......... 87%  343M 0s
+2026-07-23T17:00:00.5976978Z  28500K .......... .......... .......... .......... .......... 87%  127M 0s
+2026-07-23T17:00:00.5978383Z  28550K .......... .......... .......... .......... .......... 87%  299M 0s
+2026-07-23T17:00:00.5979530Z  28600K .......... .......... .......... .......... .......... 88%  458M 0s
+2026-07-23T17:00:00.5980633Z  28650K .......... .......... .......... .......... .......... 88%  357M 0s
+2026-07-23T17:00:00.5982117Z  28700K .......... .......... .......... .......... .......... 88%  336M 0s
+2026-07-23T17:00:00.5983031Z  28750K .......... .......... .......... .......... .......... 88%  449M 0s
+2026-07-23T17:00:00.5984774Z  28800K .......... .......... .......... .......... .......... 88%  303M 0s
+2026-07-23T17:00:00.5988576Z  28850K .......... .......... .......... .......... .......... 88%  134M 0s
+2026-07-23T17:00:00.5989920Z  28900K .......... .......... .......... .......... .......... 89%  285M 0s
+2026-07-23T17:00:00.5992966Z  28950K .......... .......... .......... .......... .......... 89%  202M 0s
+2026-07-23T17:00:00.5994212Z  29000K .......... .......... .......... .......... .......... 89%  400M 0s
+2026-07-23T17:00:00.5994810Z  29050K .......... .......... .......... .......... .......... 89%  479M 0s
+2026-07-23T17:00:00.5996926Z  29100K .......... .......... .......... .......... .......... 89%  249M 0s
+2026-07-23T17:00:00.5998242Z  29150K .......... .......... .......... .......... .......... 89%  316M 0s
+2026-07-23T17:00:00.6001195Z  29200K .......... .......... .......... .......... .......... 89%  188M 0s
+2026-07-23T17:00:00.6002070Z  29250K .......... .......... .......... .......... .......... 90%  620M 0s
+2026-07-23T17:00:00.6003370Z  29300K .......... .......... .......... .......... .......... 90%  272M 0s
+2026-07-23T17:00:00.6005688Z  29350K .......... .......... .......... .......... .......... 90%  260M 0s
+2026-07-23T17:00:00.6007048Z  29400K .......... .......... .......... .......... .......... 90%  319M 0s
+2026-07-23T17:00:00.6010172Z  29450K .......... .......... .......... .......... .......... 90%  161M 0s
+2026-07-23T17:00:00.6011029Z  29500K .......... .......... .......... .......... .......... 90%  421M 0s
+2026-07-23T17:00:00.6012814Z  29550K .......... .......... .......... .......... .......... 91%  274M 0s
+2026-07-23T17:00:00.6014253Z  29600K .......... .......... .......... .......... .......... 91%  360M 0s
+2026-07-23T17:00:00.6017100Z  29650K .......... .......... .......... .......... .......... 91%  170M 0s
+2026-07-23T17:00:00.6019050Z  29700K .......... .......... .......... .......... .......... 91%  357M 0s
+2026-07-23T17:00:00.6019701Z  29750K .......... .......... .......... .......... .......... 91%  487M 0s
+2026-07-23T17:00:00.6023551Z  29800K .......... .......... .......... .......... .......... 91%  124M 0s
+2026-07-23T17:00:00.6024557Z  29850K .......... .......... .......... .......... .......... 91%  391M 0s
+2026-07-23T17:00:00.6026089Z  29900K .......... .......... .......... .......... .......... 92%  341M 0s
+2026-07-23T17:00:00.6026934Z  29950K .......... .......... .......... .......... .......... 92%  795M 0s
+2026-07-23T17:00:00.6027871Z  30000K .......... .......... .......... .......... .......... 92%  393M 0s
+2026-07-23T17:00:00.6030490Z  30050K .......... .......... .......... .......... .......... 92%  216M 0s
+2026-07-23T17:00:00.6031985Z  30100K .......... .......... .......... .......... .......... 92%  271M 0s
+2026-07-23T17:00:00.6032908Z  30150K .......... .......... .......... .......... .......... 92%  471M 0s
+2026-07-23T17:00:00.6035860Z  30200K .......... .......... .......... .......... .......... 93%  177M 0s
+2026-07-23T17:00:00.6037283Z  30250K .......... .......... .......... .......... .......... 93%  419M 0s
+2026-07-23T17:00:00.6040204Z  30300K .......... .......... .......... .......... .......... 93%  148M 0s
+2026-07-23T17:00:00.6042626Z  30350K .......... .......... .......... .......... .......... 93%  222M 0s
+2026-07-23T17:00:00.6043397Z  30400K .......... .......... .......... .......... .......... 93%  528M 0s
+2026-07-23T17:00:00.6047152Z  30450K .......... .......... .......... .......... .......... 93%  130M 0s
+2026-07-23T17:00:00.6048226Z  30500K .......... .......... .......... .......... .......... 93%  458M 0s
+2026-07-23T17:00:00.6049285Z  30550K .......... .......... .......... .......... .......... 94%  474M 0s
+2026-07-23T17:00:00.6053324Z  30600K .......... .......... .......... .......... .......... 94%  120M 0s
+2026-07-23T17:00:00.6054715Z  30650K .......... .......... .......... .......... .......... 94%  370M 0s
+2026-07-23T17:00:00.6502311Z  30700K .......... .......... .......... .......... .......... 94% 1.10M 0s
+2026-07-23T17:00:00.6503798Z  30750K .......... .......... .......... .......... .......... 94%  194M 0s
+2026-07-23T17:00:00.6504621Z  30800K .......... .......... .......... .......... .......... 94%  448M 0s
+2026-07-23T17:00:00.6505313Z  30850K .......... .......... .......... .......... .......... 95%  689M 0s
+2026-07-23T17:00:00.6506756Z  30900K .......... .......... .......... .......... .......... 95%  318M 0s
+2026-07-23T17:00:00.6509275Z  30950K .......... .......... .......... .......... .......... 95%  169M 0s
+2026-07-23T17:00:00.6511562Z  31000K .......... .......... .......... .......... .......... 95%  203M 0s
+2026-07-23T17:00:00.6514120Z  31050K .......... .......... .......... .......... .......... 95%  230M 0s
+2026-07-23T17:00:00.6514996Z  31100K .......... .......... .......... .......... .......... 95%  428M 0s
+2026-07-23T17:00:00.6516004Z  31150K .......... .......... .......... .......... .......... 95%  516M 0s
+2026-07-23T17:00:00.6517136Z  31200K .......... .......... .......... .......... .......... 96%  308M 0s
+2026-07-23T17:00:00.6520186Z  31250K .......... .......... .......... .......... .......... 96%  246M 0s
+2026-07-23T17:00:00.6521088Z  31300K .......... .......... .......... .......... .......... 96%  395M 0s
+2026-07-23T17:00:00.6521624Z  31350K .......... .......... .......... .......... .......... 96%  809M 0s
+2026-07-23T17:00:00.6522430Z  31400K .......... .......... .......... .......... .......... 96%  599M 0s
+2026-07-23T17:00:00.6523224Z  31450K .......... .......... .......... .......... .......... 96%  677M 0s
+2026-07-23T17:00:00.6523863Z  31500K .......... .......... .......... .......... .......... 97%  414M 0s
+2026-07-23T17:00:00.6524758Z  31550K .......... .......... .......... .......... .......... 97%  740M 0s
+2026-07-23T17:00:00.6525280Z  31600K .......... .......... .......... .......... .......... 97%  702M 0s
+2026-07-23T17:00:00.6525966Z  31650K .......... .......... .......... .......... .......... 97%  629M 0s
+2026-07-23T17:00:00.6526784Z  31700K .......... .......... .......... .......... .......... 97%  567M 0s
+2026-07-23T17:00:00.6527654Z  31750K .......... .......... .......... .......... .......... 97%  628M 0s
+2026-07-23T17:00:00.6528237Z  31800K .......... .......... .......... .......... .......... 97%  591M 0s
+2026-07-23T17:00:00.6529074Z  31850K .......... .......... .......... .......... .......... 98%  712M 0s
+2026-07-23T17:00:00.6530360Z  31900K .......... .......... .......... .......... .......... 98%  461M 0s
+2026-07-23T17:00:00.6530874Z  31950K .......... .......... .......... .......... .......... 98%  799M 0s
+2026-07-23T17:00:00.6531600Z  32000K .......... .......... .......... .......... .......... 98%  538M 0s
+2026-07-23T17:00:00.6532216Z  32050K .......... .......... .......... .......... .......... 98%  670M 0s
+2026-07-23T17:00:00.6533161Z  32100K .......... .......... .......... .......... .......... 98%  678M 0s
+2026-07-23T17:00:00.6534027Z  32150K .......... .......... .......... .......... .......... 99%  677M 0s
+2026-07-23T17:00:00.6534743Z  32200K .......... .......... .......... .......... .......... 99%  713M 0s
+2026-07-23T17:00:00.6535294Z  32250K .......... .......... .......... .......... .......... 99%  629M 0s
+2026-07-23T17:00:00.6536057Z  32300K .......... .......... .......... .......... .......... 99%  503M 0s
+2026-07-23T17:00:00.6536957Z  32350K .......... .......... .......... .......... .......... 99%  675M 0s
+2026-07-23T17:00:00.6537763Z  32400K .......... .......... .......... .......... .......... 99%  545M 0s
+2026-07-23T17:00:00.6538435Z  32450K .......... .......... .......... .......... .......... 99%  656M 0s
+2026-07-23T17:00:00.6538908Z  32500K                                                       100%  400G=0.4s
+2026-07-23T17:00:00.6539346Z 
+2026-07-23T17:00:00.6540251Z 2026-07-23 17:00:00 (86.0 MB/s) - ‘dependency-check-9.0.9-release.zip’ saved [33280215/33280215]
+2026-07-23T17:00:00.6540663Z 
+2026-07-23T17:00:00.6567926Z Archive:  dependency-check-9.0.9-release.zip
+2026-07-23T17:00:00.6568455Z    creating: dependency-check/
+2026-07-23T17:00:00.6568918Z    creating: dependency-check/bin/
+2026-07-23T17:00:00.6569389Z    creating: dependency-check/lib/
+2026-07-23T17:00:00.6570154Z    creating: dependency-check/plugins/
+2026-07-23T17:00:00.6570534Z    creating: dependency-check/licenses/
+2026-07-23T17:00:00.6571001Z    creating: dependency-check/licenses/commons-cli/
+2026-07-23T17:00:00.6571712Z   inflating: dependency-check/bin/completion-for-dependency-check.sh  
+2026-07-23T17:00:00.6572480Z   inflating: dependency-check/bin/dependency-check.sh  
+2026-07-23T17:00:00.6573003Z   inflating: dependency-check/bin/dependency-check.bat  
+2026-07-23T17:00:00.6574478Z   inflating: dependency-check/lib/aho-corasick-double-array-trie-1.2.3.jar  
+2026-07-23T17:00:00.6575530Z   inflating: dependency-check/lib/android-json-0.0.20131108.vaadin1.jar  
+2026-07-23T17:00:00.6577875Z   inflating: dependency-check/lib/annotations-24.1.0.jar  
+2026-07-23T17:00:00.6720397Z   inflating: dependency-check/lib/ant-1.10.14.jar  
+2026-07-23T17:00:00.6743499Z   inflating: dependency-check/lib/bcpg-jdk18on-1.71.jar  
+2026-07-23T17:00:00.7106100Z   inflating: dependency-check/lib/bcprov-jdk18on-1.71.jar  
+2026-07-23T17:00:00.7120157Z   inflating: dependency-check/lib/checker-qual-3.37.0.jar  
+2026-07-23T17:00:00.7135869Z   inflating: dependency-check/lib/commons-beanutils-1.9.4.jar  
+2026-07-23T17:00:00.7139753Z   inflating: dependency-check/lib/commons-cli-1.6.0.jar  
+2026-07-23T17:00:00.7176439Z   inflating: dependency-check/lib/commons-collections-3.2.2.jar  
+2026-07-23T17:00:00.7222729Z   inflating: dependency-check/lib/commons-collections4-4.4.jar  
+2026-07-23T17:00:00.7288643Z   inflating: dependency-check/lib/commons-compress-1.25.0.jar  
+2026-07-23T17:00:00.7302509Z   inflating: dependency-check/lib/commons-dbcp2-2.11.0.jar  
+2026-07-23T17:00:00.7315139Z   inflating: dependency-check/lib/commons-digester-2.1.jar  
+2026-07-23T17:00:00.7346491Z   inflating: dependency-check/lib/commons-io-2.15.0.jar  
+2026-07-23T17:00:00.7379790Z   inflating: dependency-check/lib/commons-jcs3-core-3.2.jar  
+2026-07-23T17:00:00.7419410Z   inflating: dependency-check/lib/commons-lang3-3.14.0.jar  
+2026-07-23T17:00:00.7423624Z   inflating: dependency-check/lib/commons-logging-1.2.jar  
+2026-07-23T17:00:00.7433382Z   inflating: dependency-check/lib/commons-pool2-2.12.0.jar  
+2026-07-23T17:00:00.7448757Z   inflating: dependency-check/lib/commons-text-1.11.0.jar  
+2026-07-23T17:00:00.7461494Z   inflating: dependency-check/lib/commons-validator-1.7.jar  
+2026-07-23T17:00:00.7467295Z   inflating: dependency-check/lib/compiler-0.9.6.jar  
+2026-07-23T17:00:00.7469675Z   inflating: dependency-check/lib/cpe-parser-2.0.3.jar  
+2026-07-23T17:00:00.7472606Z   inflating: dependency-check/lib/dependency-check-cli-9.0.9.jar  
+2026-07-23T17:00:00.7537653Z   inflating: dependency-check/lib/dependency-check-core-9.0.9.jar  
+2026-07-23T17:00:00.7541530Z   inflating: dependency-check/lib/dependency-check-utils-9.0.9.jar  
+2026-07-23T17:00:00.7542906Z   inflating: dependency-check/lib/error_prone_annotations-2.21.1.jar  
+2026-07-23T17:00:00.7543844Z   inflating: dependency-check/lib/failureaccess-1.0.1.jar  
+2026-07-23T17:00:00.7559225Z   inflating: dependency-check/lib/gson-2.9.0.jar  
+2026-07-23T17:00:00.7743209Z   inflating: dependency-check/lib/guava-32.1.3-jre.jar  
+2026-07-23T17:00:00.7897147Z   inflating: dependency-check/lib/h2-2.1.214.jar  
+2026-07-23T17:00:00.7947576Z   inflating: dependency-check/lib/httpclient5-5.2.1.jar  
+2026-07-23T17:00:00.8000699Z   inflating: dependency-check/lib/httpcore5-5.2.jar  
+2026-07-23T17:00:00.8014835Z   inflating: dependency-check/lib/httpcore5-h2-5.2.jar  
+2026-07-23T17:00:00.8015822Z   inflating: dependency-check/lib/j2objc-annotations-2.8.jar  
+2026-07-23T17:00:00.8020878Z   inflating: dependency-check/lib/jackson-annotations-2.16.0.jar  
+2026-07-23T17:00:00.8056842Z   inflating: dependency-check/lib/jackson-core-2.16.0.jar  
+2026-07-23T17:00:00.8156544Z   inflating: dependency-check/lib/jackson-databind-2.16.0.jar  
+2026-07-23T17:00:00.8160144Z   inflating: dependency-check/lib/jackson-dataformat-yaml-2.16.0.jar  
+2026-07-23T17:00:00.8168228Z   inflating: dependency-check/lib/jackson-datatype-jsr310-2.16.0.jar  
+2026-07-23T17:00:00.8181995Z   inflating: dependency-check/lib/jackson-module-afterburner-2.16.0.jar  
+2026-07-23T17:00:00.8186203Z   inflating: dependency-check/lib/jackson-module-blackbird-2.16.0.jar  
+2026-07-23T17:00:00.8187589Z   inflating: dependency-check/lib/jakarta.transaction-api-1.3.3.jar  
+2026-07-23T17:00:00.8191621Z   inflating: dependency-check/lib/javax.activation-api-1.2.0.jar  
+2026-07-23T17:00:00.8192200Z   inflating: dependency-check/lib/javax.inject-1.jar  
+2026-07-23T17:00:00.8200487Z   inflating: dependency-check/lib/javax.json-1.1.4.jar  
+2026-07-23T17:00:00.8207913Z   inflating: dependency-check/lib/javax.ws.rs-api-2.0.1.jar  
+2026-07-23T17:00:00.8216008Z   inflating: dependency-check/lib/jaxb-api-2.3.1.jar  
+2026-07-23T17:00:00.8217303Z   inflating: dependency-check/lib/jcl-over-slf4j-1.7.28.jar  
+2026-07-23T17:00:00.8218019Z   inflating: dependency-check/lib/jcs3-slf4j-1.0.5.jar  
+2026-07-23T17:00:00.8222258Z   inflating: dependency-check/lib/jdiagnostics-1.0.7.jar  
+2026-07-23T17:00:00.8227719Z   inflating: dependency-check/lib/jmustache-1.15.jar  
+2026-07-23T17:00:00.8268005Z   inflating: dependency-check/lib/joda-time-2.10.4.jar  
+2026-07-23T17:00:00.8295968Z   inflating: dependency-check/lib/jsoup-1.16.2.jar  
+2026-07-23T17:00:00.8297542Z   inflating: dependency-check/lib/jsr305-3.0.2.jar  
+2026-07-23T17:00:00.8298304Z   inflating: dependency-check/lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar  
+2026-07-23T17:00:00.8312782Z   inflating: dependency-check/lib/logback-classic-1.2.11.jar  
+2026-07-23T17:00:00.8340384Z   inflating: dependency-check/lib/logback-core-1.2.11.jar  
+2026-07-23T17:00:00.8453359Z   inflating: dependency-check/lib/lucene-analyzers-common-8.11.2.jar  
+2026-07-23T17:00:00.8671760Z   inflating: dependency-check/lib/lucene-core-8.11.2.jar  
+2026-07-23T17:00:00.8695303Z   inflating: dependency-check/lib/lucene-queries-8.11.2.jar  
+2026-07-23T17:00:00.8718791Z   inflating: dependency-check/lib/lucene-queryparser-8.11.2.jar  
+2026-07-23T17:00:00.8733920Z   inflating: dependency-check/lib/lucene-sandbox-8.11.2.jar  
+2026-07-23T17:00:00.8734629Z   inflating: dependency-check/lib/minlog-1.3.1.jar  
+2026-07-23T17:00:00.8745929Z   inflating: dependency-check/lib/open-vulnerability-clients-5.1.1.jar  
+2026-07-23T17:00:00.8748072Z   inflating: dependency-check/lib/ossindex-service-api-1.8.2.jar  
+2026-07-23T17:00:00.8751621Z   inflating: dependency-check/lib/ossindex-service-client-1.8.2.jar  
+2026-07-23T17:00:00.8753664Z   inflating: dependency-check/lib/package-url-java-1.1.1.jar  
+2026-07-23T17:00:00.8755254Z   inflating: dependency-check/lib/packager-core-0.19.0.jar  
+2026-07-23T17:00:00.8766406Z   inflating: dependency-check/lib/packager-rpm-0.19.0.jar  
+2026-07-23T17:00:00.8767794Z   inflating: dependency-check/lib/packageurl-java-1.4.1.jar  
+2026-07-23T17:00:00.8775211Z   inflating: dependency-check/lib/pecoff4j-0.0.2.1.jar  
+2026-07-23T17:00:00.8777708Z   inflating: dependency-check/lib/retirejs-core-3.0.4.jar  
+2026-07-23T17:00:00.8780673Z   inflating: dependency-check/lib/semver4j-5.2.2.jar  
+2026-07-23T17:00:00.8783478Z   inflating: dependency-check/lib/slf4j-api-1.7.36.jar  
+2026-07-23T17:00:00.8803920Z   inflating: dependency-check/lib/snakeyaml-2.2.jar  
+2026-07-23T17:00:00.8805287Z   inflating: dependency-check/lib/spotbugs-annotations-4.8.0.jar  
+2026-07-23T17:00:00.8809478Z   inflating: dependency-check/lib/toml4j-0.7.2.jar  
+2026-07-23T17:00:00.8842198Z   inflating: dependency-check/lib/velocity-engine-core-2.3.jar  
+2026-07-23T17:00:00.8849558Z   inflating: dependency-check/lib/xz-1.9.jar  
+2026-07-23T17:00:00.8850786Z   inflating: dependency-check/LICENSE.txt  
+2026-07-23T17:00:00.8851362Z   inflating: dependency-check/NOTICE.txt  
+2026-07-23T17:00:00.8852608Z   inflating: dependency-check/licenses/commons-cli/LICENSE.txt  
+2026-07-23T17:00:00.8852980Z   inflating: dependency-check/README.md  
+2026-07-23T17:00:00.8922484Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T17:00:00.8923595Z ##[group]Run actions/cache@v4
+2026-07-23T17:00:00.8923875Z with:
+2026-07-23T17:00:00.8924136Z   path: ~/.dependency-check-data
+2026-07-23T17:00:00.8924448Z   key: dependency-check-data-v1
+2026-07-23T17:00:00.8924777Z   restore-keys: dependency-check-data-v1-
+
+2026-07-23T17:00:00.8925107Z   enableCrossOsArchive: false
+2026-07-23T17:00:00.8925486Z   fail-on-cache-miss: false
+2026-07-23T17:00:00.8925750Z   lookup-only: false
+2026-07-23T17:00:00.8926046Z   save-always: false
+2026-07-23T17:00:00.8926312Z env:
+2026-07-23T17:00:00.8926642Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T17:00:00.8927230Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T17:00:00.8927615Z ##[endgroup]
+2026-07-23T17:00:00.9802276Z (node:2636) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T17:00:00.9803204Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T17:00:01.1360659Z Cache not found for input keys: dependency-check-data-v1, dependency-check-data-v1-
+2026-07-23T17:00:01.1426340Z ##[group]Run ./dependency-check/bin/dependency-check.sh \
+2026-07-23T17:00:01.1426773Z [36;1m./dependency-check/bin/dependency-check.sh \[0m
+2026-07-23T17:00:01.1427189Z [36;1m  --project AI-Recruiter-System \[0m
+2026-07-23T17:00:01.1427518Z [36;1m  --scan . \[0m
+2026-07-23T17:00:01.1427783Z [36;1m  --format HTML \[0m
+2026-07-23T17:00:01.1428092Z [36;1m  --failOnCVSS 7 || true[0m
+2026-07-23T17:00:01.1453403Z shell: /usr/bin/bash -e {0}
+2026-07-23T17:00:01.1453754Z env:
+2026-07-23T17:00:01.1454170Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T17:00:01.1454786Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-07-23T17:00:01.1455166Z ##[endgroup]
+2026-07-23T17:00:03.0273637Z [INFO] Checking for updates
+2026-07-23T17:00:03.0329672Z [WARN] An NVD API Key was not provided - it is highly recommended to use an NVD API key as the update can take a VERY long time without an API Key
+2026-07-23T17:00:03.8149037Z [ERROR] Error updating the NVD Data; the NVD returned a 403 or 404 error
+2026-07-23T17:00:03.8149818Z 
+2026-07-23T17:00:03.8150344Z Consider using an NVD API Key; see https://github.com/jeremylong/DependencyCheck?tab=readme-ov-file#nvd-api-key-highly-recommended
+2026-07-23T17:00:03.8151175Z org.owasp.dependencycheck.data.update.exception.UpdateException: Error updating the NVD Data; the NVD returned a 403 or 404 error
+2026-07-23T17:00:03.8151592Z 
+2026-07-23T17:00:03.8151988Z Consider using an NVD API Key; see https://github.com/jeremylong/DependencyCheck?tab=readme-ov-file#nvd-api-key-highly-recommended
+2026-07-23T17:00:03.8152694Z 	at org.owasp.dependencycheck.data.update.NvdApiDataSource.processApi(NvdApiDataSource.java:387)
+2026-07-23T17:00:03.8153338Z 	at org.owasp.dependencycheck.data.update.NvdApiDataSource.update(NvdApiDataSource.java:116)
+2026-07-23T17:00:03.8153921Z 	at org.owasp.dependencycheck.Engine.doUpdates(Engine.java:906)
+2026-07-23T17:00:03.8154422Z 	at org.owasp.dependencycheck.Engine.initializeAndUpdateDatabase(Engine.java:711)
+2026-07-23T17:00:03.8154956Z 	at org.owasp.dependencycheck.Engine.analyzeDependencies(Engine.java:637)
+2026-07-23T17:00:03.8155417Z 	at org.owasp.dependencycheck.App.runScan(App.java:262)
+2026-07-23T17:00:03.8155806Z 	at org.owasp.dependencycheck.App.run(App.java:194)
+2026-07-23T17:00:03.8156215Z 	at org.owasp.dependencycheck.App.main(App.java:89)
+2026-07-23T17:00:04.1386356Z [INFO] Updating CISA Known Exploited Vulnerability list: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+2026-07-23T17:00:04.6093031Z [INFO] Begin database defrag
+2026-07-23T17:00:05.1072052Z [INFO] End database defrag (502 ms)
+2026-07-23T17:00:05.1080829Z [WARN] Unable to update 1 or more Cached Web DataSource, using local data instead. Results may not include recent vulnerabilities.
+2026-07-23T17:00:05.1081869Z [ERROR] Unable to continue dependency-check analysis.
+2026-07-23T17:00:05.1132276Z [ERROR] One or more fatal errors occurred
+2026-07-23T17:00:05.1133274Z [ERROR] Error updating the NVD Data; the NVD returned a 403 or 404 error
+2026-07-23T17:00:05.1133969Z 
+2026-07-23T17:00:05.1134960Z Consider using an NVD API Key; see https://github.com/jeremylong/DependencyCheck?tab=readme-ov-file#nvd-api-key-highly-recommended
+2026-07-23T17:00:05.1136338Z [ERROR] No documents exist
+2026-07-23T17:00:05.1270552Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T17:00:05.1271616Z Post job cleanup.
+2026-07-23T17:00:05.2164392Z (node:2714) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T17:00:05.2165107Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T17:00:05.2254359Z [warning]Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.
+2026-07-23T17:00:05.2352107Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T17:00:05.2353168Z Post job cleanup.
+2026-07-23T17:00:05.3444172Z (node:2727) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T17:00:05.3445136Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T17:00:05.3600521Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T17:00:05.3602302Z Post job cleanup.
+2026-07-23T17:00:05.4430405Z [command]/usr/bin/git version
+2026-07-23T17:00:05.4458318Z git version 2.54.0
+2026-07-23T17:00:05.4493482Z Temporarily overriding HOME='/home/runner/work/_temp/02927ca9-e39e-473d-b6ff-8dd3e91dc633' before making global git config changes
+2026-07-23T17:00:05.4494613Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T17:00:05.4499788Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T17:00:05.4529759Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T17:00:05.4557029Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T17:00:05.4731716Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T17:00:05.4748214Z http.https://github.com/.extraheader
+2026-07-23T17:00:05.4757579Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T17:00:05.4782579Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T17:00:05.4953064Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T17:00:05.4977997Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T17:00:05.5266034Z Cleaning up orphan processes
+2026-07-23T17:00:05.5511037Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, actions/checkout@v4, actions/setup-java@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- Bandit Security Scan/system.txt ---
+2026-07-23T16:59:40.0620000Z Evaluating security-scan.if
+2026-07-23T16:59:40.0620000Z Evaluating: success()
+2026-07-23T16:59:40.0620000Z Result: true
+2026-07-23T16:59:40.0700000Z Requested labels: ubuntu-latest
+2026-07-23T16:59:40.0700000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/heads/main
+2026-07-23T16:59:40.0700000Z Waiting for a runner to pick up this job...
+2026-07-23T16:59:40.4230000Z Job is waiting for a hosted runner to come online.
+2026-07-23T16:59:40.4230000Z Job is about to start running on the hosted runner: GitHub Actions 1000000711
+--- Dependency Vulnerability Scan/system.txt ---
+2026-07-23T16:59:40.0680000Z Requested labels: ubuntu-latest
+2026-07-23T16:59:40.0680000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/heads/main
+2026-07-23T16:59:40.0680000Z Waiting for a runner to pick up this job...
+2026-07-23T16:59:40.0620000Z Evaluating dependency-check.if
+2026-07-23T16:59:40.0620000Z Evaluating: success()
+2026-07-23T16:59:40.0620000Z Result: true
+2026-07-23T16:59:40.4220000Z Job is waiting for a hosted runner to come online.
+2026-07-23T16:59:40.4220000Z Job is about to start running on the hosted runner: GitHub Actions 1000000710

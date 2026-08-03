@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CI Summary &mdash; CI Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1d18;
+    --panel: #15241f;
+    --border: rgba(255,255,255,0.08);
+    --text: #e6efe9;
+    --muted: #9bb1a8;
+    --accent: #82b4a7;
+    --pass: #4caf73;
+    --fail: #d96b6b;
+    --warn: #d9a26b;
+    --code-bg: #0b1310;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+  header.page { border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 28px; }
+  header.page h1 { margin: 0; font-size: 24px; letter-spacing: 0.02em; }
+  header.page p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+  .verdict { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px;
+              font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .verdict.pass { background: rgba(76,175,115,0.18); color: var(--pass); }
+  .verdict.fail { background: rgba(217,107,107,0.18); color: var(--fail); }
+  .verdict.warn { background: rgba(217,162,107,0.18); color: var(--warn); }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+              gap: 14px; margin-bottom: 32px; }
+  .summary .item { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+                    padding: 14px 16px; }
+  .summary .item h4 { margin: 0; color: var(--muted); font-size: 11px;
+                       text-transform: uppercase; letter-spacing: 0.06em; }
+  .summary .item p { margin: 6px 0 0; font-size: 18px; font-weight: 600; color: var(--text); }
+  .summary .item small { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+           padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .card.error { border-color: rgba(217,107,107,0.4); }
+  .card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h3 { margin: 0; font-size: 14px; color: #fff; }
+  .card .desc { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .card dl { margin: 6px 0 0; display: grid; grid-template-columns: 90px 1fr; gap: 2px 12px;
+              font-size: 12.5px; }
+  .card dt { color: var(--muted); }
+  .card dd { margin: 0; word-break: break-all; }
+  .card h4 { margin: 8px 0 4px; color: var(--muted); font-size: 11px;
+              text-transform: uppercase; letter-spacing: 0.06em; }
+  .card ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+  .card code { background: var(--code-bg); border: 1px solid var(--border); padding: 1px 6px;
+                border-radius: 4px; font-size: 11.5px; color: var(--accent); }
+  .card p.error { margin: 0; color: var(--fail); font-size: 12.5px; }
+  .card.empty { text-align: center; color: var(--muted); }
+  .status { font-size: 10px; padding: 1px 8px; border-radius: 999px; font-weight: 700;
+             text-transform: uppercase; letter-spacing: 0.05em; }
+  .status-ok { background: rgba(76,175,115,0.18); color: var(--pass); }
+  .status-error { background: rgba(217,107,107,0.18); color: var(--fail); }
+  footer { margin-top: 32px; color: var(--muted); font-size: 11.5px; text-align: center; }
+  a { color: var(--accent); }
+  .meta-grid { display: grid; gap: 4px 16px; grid-template-columns: 130px 1fr;
+                font-size: 13px; margin-top: 12px; }
+  .meta-grid dt { color: var(--muted); }
+  .meta-grid dd { margin: 0; word-break: break-all; }
+</style>
+</head>
+<body>
+<main>
+  <header class="page">
+    <h1>CI Summary &mdash; ci.yml</h1>
+    <p>
+      Run <a href="https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/30027492036">#30027492036</a>
+      on <strong>main</strong>
+      <span class="verdict pass">SUCCESS</span>
+    </p>
+    <dl class="meta-grid">
+      <dt>Repository</dt><dd>Trigyn-Intern/AI-recruiter-screening-system-</dd>
+      <dt>Workflow</dt><dd>ci.yml</dd>
+      <dt>Trigger</dt><dd>workflow_dispatch</dd>
+      <dt>Commit</dt><dd><code>04017aa1b47a</code></dd>
+      <dt>Started</dt><dd>2026-07-23T16:59:37Z</dd>
+      <dt>Updated</dt><dd>2026-07-23T17:00:07Z</dd>
+      <dt>Actor</dt><dd>rishabatra1802</dd>
+      <dt>Logs</dt><dd><code>reports/ci-logs.txt</code> (123.3 KB)</dd>
+    </dl>
+  </header>
+
+  <section class="summary" aria-label="Run totals">
+    <div class="item"><h4>Artifacts</h4><p>0</p></div>
+    <div class="item"><h4>Files</h4><p>0</p></div>
+    <div class="item"><h4>Downloaded</h4><p>0 B</p></div>
+    <div class="item"><h4>Fetched at</h4><p>2026-08-03T07:21:22+00:00</p></div>
+  </section>
+
+  <h2 style="margin-bottom:14px;font-size:16px;">Artifacts</h2>
+  <div class="cards">
+    <section class="card empty"><p>No artifacts were produced by this run.</p></section>
+  </div>
+
+  <footer>
+    Generated by <code>scripts/fetch_ci.py</code>. Open this file directly in any browser; no network required.
+  </footer>
+</main>
+</body>
+</html>

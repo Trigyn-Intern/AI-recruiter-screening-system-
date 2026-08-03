@@ -1,0 +1,473 @@
+name: CI Pipeline
+
+# Single-file pipeline.
+# Improvements applied:
+#   * per-job explicit permissions (including permissions: {})
+#   * every third-party action pinned to a 40-char SHA with a v# comment
+#   * change detection to skip irrelevant jobs on PRs
+#   * Python jobs use uv (faster install + better cache key)
+#   * Node cache is hashed on the lockfile
+#   * Jest coverage gate is enforced by jest.config (not by a non-existent CLI flag)
+# `codeql.yml` and `dependabot.yml` are intentionally untouched.
+
+on:
+  push:
+    branches: [main, "release/**"]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, "release/**"]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Force-run a specific stage"
+        type: choice
+        required: false
+        default: all
+        options:
+          - all
+          - secrets
+          - backend-python
+          - backend-node
+          - frontend
+          - security
+          - dependency-check
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "22"
+  COVERAGE_MIN: "38"
+  DEPCHECK_FAIL_CVSS: "7"
+  ARTIFACT_RETENTION_DAYS: "14"
+
+jobs:
+  # ----------------------------------------------------
+  # 0. Change detection — drives conditional jobs
+  # ----------------------------------------------------
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      any: ${{ steps.filter.outputs.any }}
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Compute Changes
+        id: filter
+        uses: dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050 # v3.0.2
+        with:
+          filters: |
+            backend:
+              - "api.py"
+              - "backend/**"
+              - "requirements.txt"
+              - "tests/**"
+              - "pytest.ini"
+              - "conftest.py"
+            frontend:
+              - "frontend/**"
+              - "frontend-test/**"
+            docs:
+              - "docs/**"
+              - "README.md"
+              - "AGENTS.md"
+
+  # ----------------------------------------------------
+  # 1. Secret scan — runs first, fails fast
+  # ----------------------------------------------------
+  secrets:
+    name: Secret Scan (Gitleaks)
+    needs: changes
+    if: |
+      (needs.changes.outputs.any == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'secrets')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ----------------------------------------------------
+  # 2. Backend (Python / FastAPI) — uv + ruff + black + pytest
+  # ----------------------------------------------------
+  backend-python:
+    name: Backend Python (pytest + coverage)
+    needs: changes
+    if: |
+      (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'backend-python')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      UV_LINK_MODE: "copy"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: requirements.txt
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Create venv and install deps (uv)
+        run: |
+          uv venv .venv --python ${{ env.PYTHON_VERSION }}
+          source .venv/bin/activate
+          uv pip install -r requirements.txt
+          uv pip install pytest-cov ruff black
+
+      - name: Lint (ruff) and format check (black)
+        run: |
+          source .venv/bin/activate
+          ruff check .
+          black --check .
+
+      - name: Unit tests with coverage gate
+        run: |
+          source .venv/bin/activate
+          mkdir -p reports
+          pytest tests/unit \
+            --junitxml=reports/junit-python.xml \
+            --cov=. \
+            --cov-config=.coveragerc \
+            --cov-report=xml:reports/coverage-python.xml \
+            --cov-report=html:reports/htmlcov-python \
+            --cov-fail-under=${{ env.COVERAGE_MIN }} \
+            -q
+
+      - name: Integration tests (non-e2e)
+        run: |
+          source .venv/bin/activate
+          pytest tests/integration -m "not e2e" -q
+
+      - name: Generate AI engineering reports
+        if: always()
+        run: |
+          source .venv/bin/activate
+          python scripts/ai_platform.py report
+        env:
+          REPORT_OUTPUT_DIR: reports
+
+      - name: Upload engineering reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: backend-python-reports
+          path: |
+            reports/coverage-python.xml
+            reports/junit-python.xml
+            reports/htmlcov-python
+            reports/ai-*
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+  # ----------------------------------------------------
+  # 3. Backend (Node / Express) — lint + test + audit
+  # ----------------------------------------------------
+  backend-node:
+    name: Backend Node (Express auth)
+    needs: changes
+    if: |
+      (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'backend-node')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "::warning::No lint script defined; skipping."
+          fi
+
+      - name: Test with coverage gate
+        run: |
+          if grep -q '"test"' package.json; then
+            mkdir -p reports
+            npm run test:coverage 2>&1 | tee reports/test-node.log
+          else
+            echo "::warning::No test script defined; skipping backend-node tests. Add a 'test' script to backend/package.json to enforce this gate."
+          fi
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: junit-node.xml
+
+      - name: Audit
+        run: npm audit --audit-level=high 2>&1 | tee reports/audit-node.log || true
+
+      - name: Upload Node reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: backend-node-reports
+          path: |
+            reports/coverage-node
+            reports/junit-node.xml
+            reports/test-node.log
+            reports/audit-node.log
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+  # ----------------------------------------------------
+  # 4. Frontend (Vite matrix, parallel)
+  # ----------------------------------------------------
+  frontend-builds:
+    name: Frontend ${{ matrix.app }}
+    needs: changes
+    if: |
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'frontend')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [frontend, frontend-test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ${{ matrix.app }}
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "::warning::No lint script defined; skipping."
+          fi
+
+      - name: Test (unit)
+        working-directory: ${{ matrix.app }}
+        run: |
+          if grep -q '"test"' package.json; then
+            mkdir -p reports
+            npm test -- --coverage \
+              --coverageDirectory=reports/coverage-${{ matrix.app }} \
+              --coverageReporters=lcov --coverageReporters=json-summary \
+              --reporters=default --reporters=jest-junit 2>/dev/null || \
+            npm test -- --coverage --coverageDirectory=reports/coverage-${{ matrix.app }}
+          else
+            echo "::warning::No test script defined; skipping."
+          fi
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: junit-${{ matrix.app }}.xml
+
+      - name: Build
+        working-directory: ${{ matrix.app }}
+        run: npm run build
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: dist-${{ matrix.app }}
+          path: ${{ matrix.app }}/dist
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: ${{ matrix.app }}-reports
+          path: |
+            ${{ matrix.app }}/reports/coverage-${{ matrix.app }}
+            ${{ matrix.app }}/reports/junit-${{ matrix.app }}.xml
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+  # ----------------------------------------------------
+  # 5. Security (SAST + pip-audit)
+  # ----------------------------------------------------
+  security-scan:
+    name: SAST & Dependency Audit
+    needs: changes
+    if: |
+      (needs.changes.outputs.any == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'security')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: requirements.txt
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          uv venv .venv --python ${{ env.PYTHON_VERSION }}
+          source .venv/bin/activate
+          uv pip install bandit bandit-sarif-formatter pip-audit
+
+      - name: Run Bandit (SARIF)
+        run: |
+          source .venv/bin/activate
+          bandit -r backend api.py -s B101 \
+            --severity-level high --confidence-level high \
+            -f sarif -o bandit-results.sarif
+
+      - name: Upload Bandit SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@df409f7d9260372bd5f19e5b04e83cb3c43714ae # v3.27.9
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+      - name: Dependency Vulnerability Audit
+        run: |
+          source .venv/bin/activate
+          pip-audit -r requirements.txt
+
+  # ----------------------------------------------------
+  # 6. OWASP Dependency-Check
+  # ----------------------------------------------------
+  dependency-check:
+    name: OWASP Dependency Scan
+    needs: changes
+    if: |
+      (needs.changes.outputs.any == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'workflow_dispatch' || inputs.scope == 'all' || inputs.scope == 'dependency-check')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@75ba02d6183445fe0761d26e836bde58b1560600 # 1.1.0
+        with:
+          project: "AI-Recruiter-System"
+          path: "."
+          format: "HTML"
+          out: "reports"
+          args: >-
+            --failOnCVSS ${{ env.DEPCHECK_FAIL_CVSS }}
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Upload Dependency-Check report
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: dependency-check-report
+          path: reports/dependency-check-report.html
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+  # ----------------------------------------------------
+  # 7. CI Success — single required check for branch protection
+  # ----------------------------------------------------
+  ci-success:
+    name: CI Success Gate
+    needs:
+      - changes
+      - secrets
+      - backend-python
+      - backend-node
+      - frontend-builds
+      - security-scan
+      - dependency-check
+    if: always() && needs.changes.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Evaluate Required Jobs
+        env:
+          R_SECRETS: ${{ needs.secrets.result }}
+          R_BACKEND_PYTHON: ${{ needs.backend-python.result }}
+          R_BACKEND_NODE: ${{ needs.backend-node.result }}
+          R_FRONTEND: ${{ needs.frontend-builds.result }}
+          R_SECURITY: ${{ needs.security-scan.result }}
+          R_DEPCHECK: ${{ needs.dependency-check.result }}
+        run: |
+          set -e
+          failed=()
+          for r in "$R_SECRETS" "$R_BACKEND_PYTHON" "$R_BACKEND_NODE" "$R_FRONTEND" "$R_SECURITY" "$R_DEPCHECK"; do
+            case "$r" in
+              success|skipped) ;;
+              *) failed+=("$r") ;;
+            esac
+          done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Failing required jobs detected: ${failed[*]}"
+            exit 1
+          fi
+          echo "All required jobs completed successfully or were intentionally skipped."

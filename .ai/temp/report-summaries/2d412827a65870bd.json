@@ -1,0 +1,42 @@
+{
+  "summary": {
+    "overall_assessment": "The report provides a moderate overall security posture with critical issues requiring immediate attention.",
+    "key_findings": [
+      "Full-project security review covered various languages and file types.",
+      "18 items passed, 4 failed, and 2 warnings issued across 9 modules.",
+      "Current verdict is 'Request Changes' due to four high-severity findings.",
+      "Authentication, Secrets Management, and Configuration Review areas are marked as 'Failed'.",
+      "Overall security posture is moderate despite sound local-first privacy design and robust auth API attack rejection."
+    ],
+    "critical_issues": [
+      "Secrets are committed in tracked .env files (SR-001).",
+      "bcrypt cost factor is set to 8, violating the project policy of 12 (SR-002).",
+      "A stored XSS sink exists in the React frontend via dangerouslySetInnerHTML for user-supplied resume text (SR-003).",
+      "Missing rate limiting on /login and /register endpoints leaves credential-stuffing attacks unmitigated (SR-004)."
+    ],
+    "medium_issues": [
+      "JWT verification path is not pinned to ['HS256'] (SR-005).",
+      "CI coverage gate is set to 38%, significantly below the documented 80% threshold (SR-006).",
+      "JWT algorithms are not explicitly pinned, which can lead to algorithm confusion attacks (OWASP A07).",
+      "Frontend JWT storage in localStorage is less secure than httpOnly cookies (SR-013).",
+      "The code coverage minimum (COVERAGE_MIN) is low and should be increased for better quality assurance."
+    ],
+    "recommendations": [
+      "Rotate all committed secrets; move real values to gitignored local .env files and GitHub Actions secrets.",
+      "Increase bcrypt cost factor to 12 and centralize the bcrypt call in a single helper.",
+      "Remove dangerouslySetInnerHTML for resume text; render plain text or sanitize with DOMPurify.",
+      "Implement express-rate-limit on /login (5 req/min) and /register (stricter) with per-account backoff.",
+      "Pin JWT verify() algorithm to ['HS256'] and add a unit test that asserts a 'none' token is rejected."
+    ],
+    "positive_observations": [
+      "Prompt safety, secrets hygiene, frontend hardening, configuration, CI hygiene, and test data items passed.",
+      "Resume and JD text is truncated before prompt composition, with output validated against a strict JSON schema (SR-007).",
+      "React output rendering is generally safe by default, with only one identified dangerouslySetInnerHTML sink (SR-008).",
+      ".env.example files properly document all required keys (SR-010)."
+    ],
+    "final_verdict": "While showing strong security practices in CI/CD and data handling, the project has several high-severity vulnerabilities related to authentication, secret management, and configuration. These must be prioritized for remediation to significantly improve the application's overall security posture."
+  },
+  "source_hash": "d8dadb62c126e7825f21208beac89528",
+  "chunk_count": 3,
+  "cached_at": "2026-07-28T19:35:58Z"
+}

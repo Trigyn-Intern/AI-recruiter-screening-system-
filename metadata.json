@@ -1,0 +1,8 @@
+{
+  "name": "AI Recruiter Screening System",
+  "description": "Imported from GitHub: Trigyn-Intern/AI-recruiter-screening-system-",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

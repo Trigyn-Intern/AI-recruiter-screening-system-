@@ -1,0 +1,78 @@
+# Data-driven scenario matrix for the AI Recruiter Screening System.
+#
+# Each row describes one full Playwright run: which Ollama model the analyzer
+# uses, which JD is pasted in, which resumes are uploaded, and optional
+# expectations on the top-ranked resume (and minimum acceptable score).
+#
+# Adding a scenario is just a new row here; the test framework, runner, and
+# CI all pick it up automatically.
+scenarios:
+  - id: python_ml_llama32
+    model: llama3.2
+    jd_file: jds/jd_python_ml.txt
+    resume_files:
+      - resumes/resume_strong_python.pdf
+      - resumes/resume_data_engineer.pdf
+      - resumes/resume_frontend.pdf
+      - resumes/resume_junior.pdf
+    expected_resume: resume_strong_python.pdf
+    expected_min_score: 50
+
+  - id: data_engineer_llama32
+    model: llama3.2
+    jd_file: jds/jd_data_engineer.txt
+    resume_files:
+      - resumes/resume_strong_python.pdf
+      - resumes/resume_data_engineer.pdf
+      - resumes/resume_frontend.pdf
+      - resumes/resume_junior.pdf
+    expected_resume: resume_data_engineer.pdf
+    expected_min_score: 45
+
+  - id: frontend_react_llama32
+    model: llama3.2
+    jd_file: jds/jd_frontend_react.txt
+    resume_files:
+      - resumes/resume_strong_python.pdf
+      - resumes/resume_data_engineer.pdf
+      - resumes/resume_frontend.pdf
+      - resumes/resume_junior.pdf
+    expected_resume: resume_frontend.pdf
+    expected_min_score: 45
+
+  - id: python_ml_junior_check
+    model: llama3.2
+    jd_file: jds/jd_python_ml.txt
+    resume_files:
+      - resumes/resume_junior.pdf
+    expected_resume: resume_junior.pdf
+    expected_min_score: 30
+
+  - id: data_engineer_cross_check
+    model: llama3.2
+    jd_file: jds/jd_data_engineer.txt
+    resume_files:
+      - resumes/resume_strong_python.pdf
+      - resumes/resume_data_engineer.pdf
+    expected_resume: resume_data_engineer.pdf
+    expected_min_score: 40
+
+  - id: frontend_react_junior_check
+    model: llama3.2
+    jd_file: jds/jd_frontend_react.txt
+    resume_files:
+      - resumes/resume_junior.pdf
+    expected_resume: resume_junior.pdf
+    expected_min_score: 30
+
+  - id: comprehensive_ranking_suite
+    model: llama3.2
+    jd_file: jds/jd_python_ml.txt
+    resume_files:
+      - resumes/resume_strong_python.pdf
+      - resumes/resume_data_engineer.pdf
+      - resumes/resume_frontend.pdf
+      - resumes/resume_junior.pdf
+    expected_resume: resume_strong_python.pdf
+    expected_min_score: 60
+
