@@ -5,7 +5,7 @@ def test_valid_pdf():
     fake_pdf = io.BytesIO(b"%PDF-1.4 test content")
     fake_pdf.name = "resume.pdf"
 
-    valid, msg = validate_upload(fake_pdf)
+    valid, _ = validate_upload(fake_pdf)
 
     assert valid is True
 
@@ -24,7 +24,7 @@ def test_fake_pdf():
     fake_pdf = io.BytesIO(b"NOTPDF")
     fake_pdf.name = "resume.pdf"
 
-    valid, msg = validate_upload(fake_pdf)
+    valid, _ = validate_upload(fake_pdf)
 
     assert valid is False
 
@@ -35,6 +35,6 @@ def test_large_file():
     fake_file = io.BytesIO(big_content)
     fake_file.name = "large.pdf"
 
-    valid, msg = validate_upload(fake_file)
+    valid, _ = validate_upload(fake_file)
 
     assert valid is False
