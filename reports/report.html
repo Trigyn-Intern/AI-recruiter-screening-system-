@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scenario Matrix Report - AI Recruiter Screening System</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  background: #fff;
+  padding: 20px;
+}
+h1 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #1F4E79;
+}
+.meta-line {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 15px;
+}
+.summary-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.summary-box {
+  border: 1px solid #B4C6E7;
+  padding: 8px 14px;
+  border-radius: 4px;
+  min-width: 130px;
+  text-align: center;
+  background: #F2F5F9;
+}
+.summary-box span {
+  display: block;
+  font-size: 18px;
+  margin-top: 3px;
+}
+.pass-box span { color: #217346; }
+.fail-box span { color: #C00000; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+  margin-top: 10px;
+}
+thead th {
+  background: #4472C4;
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 7px 6px;
+  border: 1px solid #2F5496;
+  text-align: center;
+  vertical-align: middle;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+tbody td {
+  border: 1px solid #B4C6E7;
+  padding: 6px 7px;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+tbody tr:nth-child(even) { background: #D6E4F0; }
+tbody tr:nth-child(odd) { background: #fff; }
+tbody tr:hover { background: #FFF2CC; }
+td.center { text-align: center; }
+td.bold { font-weight: bold; }
+td.pass { color: #217346; font-weight: bold; text-align: center; }
+td.fail { color: #C00000; font-weight: bold; text-align: center; }
+td.email-cell { font-size: 10px; }
+
+/* Column widths */
+th:nth-child(1), td:nth-child(1) { width: 40px; }
+th:nth-child(2), td:nth-child(2) { width: 65px; }
+th:nth-child(3), td:nth-child(3) { width: 130px; }
+th:nth-child(4), td:nth-child(4) { width: 170px; }
+th:nth-child(5), td:nth-child(5) { width: 160px; }
+th:nth-child(6), td:nth-child(6) { width: 210px; }
+th:nth-child(7), td:nth-child(7) { width: 150px; }
+th:nth-child(8), td:nth-child(8) { width: 150px; }
+th:nth-child(9), td:nth-child(9) { width: 150px; }
+th:nth-child(10), td:nth-child(10) { width: 60px; }
+th:nth-child(11), td:nth-child(11) { width: 190px; }
+th:nth-child(12), td:nth-child(12) { width: 210px; }
+th:nth-child(13), td:nth-child(13) { width: 130px; }
+</style>
+</head>
+<body>
+
+<h1>AI Recruiter Screening System — Scenario Matrix Report</h1>
+<div class="meta-line">
+  Generated: 2026-08-02 | Framework: Playwright + Pytest + FastAPI + Ollama (llama3.2) | Suite: tests/data/scenarios.yaml
+</div>
+
+<div class="summary-bar">
+  <div class="summary-box">
+    Total Scenarios
+    <span>7</span>
+  </div>
+  <div class="summary-box pass-box">
+    Passed
+    <span>7</span>
+  </div>
+  <div class="summary-box fail-box">
+    Failed
+    <span>0</span>
+  </div>
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>Sr No</th>
+  <th>CR No</th>
+  <th>Scenario Name</th>
+  <th>Description</th>
+  <th>Pre-requisite</th>
+  <th>Test Steps</th>
+  <th>Input Data</th>
+  <th>Expected Result</th>
+  <th>Actual Result</th>
+  <th>Status</th>
+  <th>New Enhancement</th>
+  <th>Email Notification</th>
+  <th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="center">1</td>
+  <td class="center">102423</td>
+  <td class="bold">Python Ml Llama32</td>
+  <td>End-to-end recruiter screening test for Python Machine Learning role using llama3.2 model.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_python_ml.txt)<br>3. Upload 4 resume PDFs<br>4. Run screening analysis</td>
+  <td>Model: llama3.2<br>JD: jd_python_ml.txt<br>Resumes: 4 files (strong python, data engineer, frontend, junior)</td>
+  <td>Top resume: resume_strong_python.pdf<br>Minimum score: &gt;= 50</td>
+  <td>Top resume: resume_strong_python.pdf<br>Score: 88 (Grade A)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario python_ml_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - python_ml_llama32<br><br>Hi Recruiter,<br>Screening test for 'python_ml_llama32' completed successfully.<br>Model: llama3.2<br>Top Resume: resume_strong_python.pdf<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-python_ml_llama32<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">2</td>
+  <td class="center">102423</td>
+  <td class="bold">Data Engineer Llama32</td>
+  <td>End-to-end recruiter screening test for Data Engineer role using llama3.2 model.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_data_engineer.txt)<br>3. Upload 4 resume PDFs<br>4. Run screening analysis</td>
+  <td>Model: llama3.2<br>JD: jd_data_engineer.txt<br>Resumes: 4 files</td>
+  <td>Top resume: resume_data_engineer.pdf<br>Minimum score: &gt;= 45</td>
+  <td>Top resume: resume_data_engineer.pdf<br>Score: 85 (Grade A)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario data_engineer_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - data_engineer_llama32<br><br>Hi Recruiter,<br>Screening test for 'data_engineer_llama32' completed successfully.<br>Model: llama3.2<br>Top Resume: resume_data_engineer.pdf<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-data_engineer_llama32<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">3</td>
+  <td class="center">102423</td>
+  <td class="bold">Frontend React Llama32</td>
+  <td>End-to-end recruiter screening test for Frontend React role using llama3.2 model.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_frontend_react.txt)<br>3. Upload 4 resume PDFs<br>4. Run screening analysis</td>
+  <td>Model: llama3.2<br>JD: jd_frontend_react.txt<br>Resumes: 4 files</td>
+  <td>Top resume: resume_frontend.pdf<br>Minimum score: &gt;= 45</td>
+  <td>Top resume: resume_frontend.pdf<br>Score: 82 (Grade A)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario frontend_react_llama32 passed successfully.<br>2. Model version verified, no drift detected.<br>3. Automated Playwright wait-for-load checks passed.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - frontend_react_llama32<br><br>Hi Recruiter,<br>Screening test for 'frontend_react_llama32' completed successfully.<br>Model: llama3.2<br>Top Resume: resume_frontend.pdf<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-frontend_react_llama32<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">4</td>
+  <td class="center">102423</td>
+  <td class="bold">Python Ml Junior Check</td>
+  <td>Junior resume screening test against Python ML job description using llama3.2 model.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_python_ml.txt)<br>3. Upload resume_junior.pdf<br>4. Run analysis</td>
+  <td>Model: llama3.2<br>JD: jd_python_ml.txt<br>Resumes: 1 file (junior)</td>
+  <td>Top resume: resume_junior.pdf<br>Minimum score: &gt;= 30</td>
+  <td>Top resume: resume_junior.pdf<br>Score: 48 (Grade C)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario python_ml_junior_check passed successfully.<br>2. Junior scoring baseline verified.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - python_ml_junior_check<br><br>Hi Recruiter,<br>Screening test for 'python_ml_junior_check' completed successfully.<br>Model: llama3.2<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-python_ml_junior_check<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">5</td>
+  <td class="center">102423</td>
+  <td class="bold">Data Engineer Cross Check</td>
+  <td>Cross-functional resume screening test for Data Engineer role.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_data_engineer.txt)<br>3. Upload 2 resume PDFs<br>4. Run analysis</td>
+  <td>Model: llama3.2<br>JD: jd_data_engineer.txt<br>Resumes: 2 files</td>
+  <td>Top resume: resume_data_engineer.pdf<br>Minimum score: &gt;= 40</td>
+  <td>Top resume: resume_data_engineer.pdf<br>Score: 81 (Grade A)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario data_engineer_cross_check passed successfully.<br>2. Cross-matching rules verified.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - data_engineer_cross_check<br><br>Hi Recruiter,<br>Screening test for 'data_engineer_cross_check' completed successfully.<br>Model: llama3.2<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-data_engineer_cross_check<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">6</td>
+  <td class="center">102423</td>
+  <td class="bold">Frontend React Junior Check</td>
+  <td>Junior resume screening test against Frontend React role.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_frontend_react.txt)<br>3. Upload resume_junior.pdf<br>4. Run analysis</td>
+  <td>Model: llama3.2<br>JD: jd_frontend_react.txt<br>Resumes: 1 file (junior)</td>
+  <td>Top resume: resume_junior.pdf<br>Minimum score: &gt;= 30</td>
+  <td>Top resume: resume_junior.pdf<br>Score: 52 (Grade B)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario frontend_react_junior_check passed successfully.<br>2. Frontend junior score band verified.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - frontend_react_junior_check<br><br>Hi Recruiter,<br>Screening test for 'frontend_react_junior_check' completed successfully.<br>Model: llama3.2<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-frontend_react_junior_check<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+<tr>
+  <td class="center">7</td>
+  <td class="center">102423</td>
+  <td class="bold">Comprehensive Ranking Suite</td>
+  <td>Comprehensive end-to-end multi-resume ranking verification suite.</td>
+  <td>1. Ollama service running<br>2. FastAPI analyzer on :8000<br>3. Auth API on :4000</td>
+  <td>1. Boot services<br>2. Submit JD (jd_python_ml.txt)<br>3. Upload 4 resume PDFs<br>4. Run full ranking suite</td>
+  <td>Model: llama3.2<br>JD: jd_python_ml.txt<br>Resumes: 4 files</td>
+  <td>Top resume: resume_strong_python.pdf<br>Minimum score: &gt;= 60</td>
+  <td>Top resume: resume_strong_python.pdf<br>Score: 91 (Grade A+)<br>Matched successfully</td>
+  <td class="pass">Pass</td>
+  <td>1. Scenario comprehensive_ranking_suite passed successfully.<br>2. Full batch ranking verified.</td>
+  <td class="email-cell">Subject: AI Recruiter Screening Test Passed - comprehensive_ranking_suite<br><br>Hi Recruiter,<br>Screening test for 'comprehensive_ranking_suite' completed successfully.<br>Model: llama3.2<br>Status: PASSED</td>
+  <td>1. Case ID: 10560-comprehensive_ranking_suite<br>2. Config: tests/data/scenarios.yaml</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

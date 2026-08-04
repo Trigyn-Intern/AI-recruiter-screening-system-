@@ -1,0 +1,27 @@
+Data Engineer
+
+Join our data platform team to keep our analytics pipelines fast, trustworthy, and
+self-service. You will design batch and streaming architectures and partner with analytics
+and product engineering to land trustworthy data in our warehouse.
+
+Responsibilities
+- Build batch and streaming pipelines with Airflow, dbt, Spark, and Kafka.
+- Model and optimise datasets in PostgreSQL, BigQuery, and Snowflake.
+- Maintain our data lake on AWS S3 with Parquet, Iceberg, or Delta layouts.
+- Define SLAs, data contracts, and observability with Great Expectations and Monte Carlo.
+- Partner with analysts and ML engineers to ship trustworthy features.
+
+Required experience
+- 4+ years building production data pipelines.
+- Expert SQL and strong Python.
+- Hands-on with Spark, Kafka, and Airflow (or Dagster).
+- Comfort with one cloud provider (AWS, GCP, or Azure) and Terraform.
+- Working knowledge of data modeling (3NF, star schema, slowly changing dimensions).
+
+Nice to have
+- Streaming-first systems (Kafka, Flink, Kinesis).
+- Experience with dbt, Great Expectations, or DataHub.
+- Familiarity with ML feature stores.
+
+Education
+- BS in Computer Science, Information Systems, or equivalent experience.

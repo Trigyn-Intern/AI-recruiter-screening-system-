@@ -1,0 +1,16 @@
+[
+  {
+    "path": "/*",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 250 },
+      { "resourceType": "stylesheet", "budget": 50 },
+      { "resourceType": "image", "budget": 200 },
+      { "resourceType": "total", "budget": 500 }
+    ],
+    "timings": [
+      { "metric": "interactive", "budget": 3000 },
+      { "metric": "first-contentful-paint", "budget": 1500 },
+      { "metric": "largest-contentful-paint", "budget": 2500 }
+    ]
+  }
+]

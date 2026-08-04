@@ -1,0 +1,6 @@
+{
+  "name": "AI Recruiter Screening System",
+  "description": "AI-powered candidate resume screening, job description analysis, and recruiter testing workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

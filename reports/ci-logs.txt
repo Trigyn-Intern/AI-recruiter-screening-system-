@@ -1,0 +1,1994 @@
+
+--- 0_CI Success Gate.txt ---
+﻿2026-07-23T16:57:25.8777055Z Current runner version: '2.335.1'
+2026-07-23T16:57:25.8810215Z ##[group]Runner Image Provisioner
+2026-07-23T16:57:25.8811502Z Hosted Compute Agent
+2026-07-23T16:57:25.8812542Z Version: 20260707.563
+2026-07-23T16:57:25.8813578Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:57:25.8814797Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:57:25.8816257Z Worker ID: {31870aaf-74da-4d2d-b336-865ce2378504}
+2026-07-23T16:57:25.8817480Z Azure Region: eastus
+2026-07-23T16:57:25.8818427Z ##[endgroup]
+2026-07-23T16:57:25.8821022Z ##[group]Operating System
+2026-07-23T16:57:25.8822023Z Ubuntu
+2026-07-23T16:57:25.8822992Z 24.04.4
+2026-07-23T16:57:25.8823828Z LTS
+2026-07-23T16:57:25.8824709Z ##[endgroup]
+2026-07-23T16:57:25.8825933Z ##[group]Runner Image
+2026-07-23T16:57:25.8826923Z Image: ubuntu-24.04
+2026-07-23T16:57:25.8827973Z Version: 20260720.247.2
+2026-07-23T16:57:25.8830074Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:57:25.8832831Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-07-23T16:57:25.8834482Z ##[endgroup]
+2026-07-23T16:57:25.8836374Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:57:25.8839002Z Metadata: read
+2026-07-23T16:57:25.8840021Z ##[endgroup]
+2026-07-23T16:57:25.8842893Z Secret source: Actions
+2026-07-23T16:57:25.8844137Z Prepare workflow directory
+2026-07-23T16:57:25.9395242Z Prepare all required actions
+2026-07-23T16:57:25.9472193Z Complete job name: CI Success Gate
+2026-07-23T16:57:26.0577989Z ##[group]Run set -e
+2026-07-23T16:57:26.0579023Z [36;1mset -e[0m
+2026-07-23T16:57:26.0580043Z [36;1mfailed=()[0m
+2026-07-23T16:57:26.0581680Z [36;1mfor r in "$R_SECRETS" "$R_BACKEND_PYTHON" "$R_BACKEND_NODE" "$R_FRONTEND" "$R_SECURITY" "$R_DEPCHECK"; do[0m
+2026-07-23T16:57:26.0583495Z [36;1m  case "$r" in[0m
+2026-07-23T16:57:26.0584661Z [36;1m    success|skipped) ;;[0m
+2026-07-23T16:57:26.0586109Z [36;1m    *) failed+=("$r") ;;[0m
+2026-07-23T16:57:26.0587257Z [36;1m  esac[0m
+2026-07-23T16:57:26.0588234Z [36;1mdone[0m
+2026-07-23T16:57:26.0589213Z [36;1mif [ ${#failed[@]} -gt 0 ]; then[0m
+2026-07-23T16:57:26.0590636Z [36;1m  echo "::error::Failing required jobs detected: ${failed[*]}"[0m
+2026-07-23T16:57:26.0592016Z [36;1m  exit 1[0m
+2026-07-23T16:57:26.0668724Z [36;1mfi[0m
+2026-07-23T16:57:26.0670064Z [36;1mecho "All required jobs completed successfully or were intentionally skipped."[0m
+2026-07-23T16:57:26.1308086Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:57:26.1309009Z env:
+2026-07-23T16:57:26.1309523Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:26.1310079Z   NODE_VERSION: 22
+2026-07-23T16:57:26.1310639Z   COVERAGE_MIN: 38
+2026-07-23T16:57:26.1311239Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:26.1311870Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:26.1312531Z   R_SECRETS: skipped
+2026-07-23T16:57:26.1313139Z   R_BACKEND_PYTHON: success
+2026-07-23T16:57:26.1313804Z   R_BACKEND_NODE: success
+2026-07-23T16:57:26.1314408Z   R_FRONTEND: success
+2026-07-23T16:57:26.1315011Z   R_SECURITY: skipped
+2026-07-23T16:57:26.1315569Z   R_DEPCHECK: skipped
+2026-07-23T16:57:26.1316338Z ##[endgroup]
+2026-07-23T16:57:26.1534825Z All required jobs completed successfully or were intentionally skipped.
+2026-07-23T16:57:26.1672429Z Cleaning up orphan processes
+
+--- 1_Frontend frontend-test.txt ---
+﻿2026-07-23T16:56:27.7257268Z Current runner version: '2.336.0'
+2026-07-23T16:56:27.7283657Z ##[group]Runner Image Provisioner
+2026-07-23T16:56:27.7284623Z Hosted Compute Agent
+2026-07-23T16:56:27.7285226Z Version: 20260707.563
+2026-07-23T16:56:27.7285821Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:56:27.7286608Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:56:27.7287282Z Worker ID: {7b311f25-902b-4f53-8ac5-a02a0a4f54e5}
+2026-07-23T16:56:27.7288009Z Azure Region: westus2
+2026-07-23T16:56:27.7288615Z ##[endgroup]
+2026-07-23T16:56:27.7290662Z ##[group]Operating System
+2026-07-23T16:56:27.7291391Z Ubuntu
+2026-07-23T16:56:27.7291906Z 24.04.4
+2026-07-23T16:56:27.7292391Z LTS
+2026-07-23T16:56:27.7292993Z ##[endgroup]
+2026-07-23T16:56:27.7293541Z ##[group]Runner Image
+2026-07-23T16:56:27.7294156Z Image: ubuntu-24.04
+2026-07-23T16:56:27.7294731Z Version: 20260714.240.1
+2026-07-23T16:56:27.7296016Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:56:27.7297539Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:56:27.7298500Z ##[endgroup]
+2026-07-23T16:56:27.7299549Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:56:27.7301764Z Contents: read
+2026-07-23T16:56:27.7302394Z Metadata: read
+2026-07-23T16:56:27.7302985Z ##[endgroup]
+2026-07-23T16:56:27.7305244Z Secret source: Actions
+2026-07-23T16:56:27.7306284Z Prepare workflow directory
+2026-07-23T16:56:27.7706244Z Prepare all required actions
+2026-07-23T16:56:27.7750976Z Getting action download info
+2026-07-23T16:56:28.1603511Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:56:28.4868598Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-07-23T16:56:28.5822686Z Download action repository 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' (SHA:65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08)
+2026-07-23T16:56:29.0496710Z Complete job name: Frontend frontend-test
+2026-07-23T16:56:29.1517038Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:29.1528902Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-07-23T16:56:29.1530878Z with:
+2026-07-23T16:56:29.1531636Z   fetch-depth: 1
+2026-07-23T16:56:29.1532752Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.1543226Z   token: ***
+2026-07-23T16:56:29.1544057Z   ssh-strict: true
+2026-07-23T16:56:29.1544879Z   ssh-user: git
+2026-07-23T16:56:29.1545717Z   persist-credentials: true
+2026-07-23T16:56:29.1546644Z   clean: true
+2026-07-23T16:56:29.1547471Z   sparse-checkout-cone-mode: true
+2026-07-23T16:56:29.1548497Z   fetch-tags: false
+2026-07-23T16:56:29.1549338Z   show-progress: true
+2026-07-23T16:56:29.1550372Z   lfs: false
+2026-07-23T16:56:29.1551215Z   submodules: false
+2026-07-23T16:56:29.1552058Z   set-safe-directory: true
+2026-07-23T16:56:29.1553027Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:56:29.1554336Z env:
+2026-07-23T16:56:29.1555090Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:29.1555928Z   NODE_VERSION: 22
+2026-07-23T16:56:29.1556725Z   COVERAGE_MIN: 38
+2026-07-23T16:56:29.1557537Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:29.1558422Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:29.1559352Z ##[endgroup]
+2026-07-23T16:56:29.2601972Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.2605224Z ##[group]Getting Git version info
+2026-07-23T16:56:29.2607502Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.2610962Z [command]/usr/bin/git version
+2026-07-23T16:56:29.2697545Z git version 2.54.0
+2026-07-23T16:56:29.2722007Z ##[endgroup]
+2026-07-23T16:56:29.2739259Z Temporarily overriding HOME='/home/runner/work/_temp/77a04868-c41e-43e4-875b-51330bb07fcb' before making global git config changes
+2026-07-23T16:56:29.2744319Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:29.2749274Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.2800641Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.2805215Z ##[group]Initializing the repository
+2026-07-23T16:56:29.2809406Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.2921752Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:56:29.2925555Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:56:29.2933745Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:56:29.2936294Z hint: call:
+2026-07-23T16:56:29.2937442Z hint:
+2026-07-23T16:56:29.2938939Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:56:29.2941134Z hint:
+2026-07-23T16:56:29.2942903Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:56:29.2946085Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:56:29.2948512Z hint:
+2026-07-23T16:56:29.2950160Z hint: 	git branch -m <name>
+2026-07-23T16:56:29.2951656Z hint:
+2026-07-23T16:56:29.2953659Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:56:29.2958105Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:56:29.2965280Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.3014463Z ##[endgroup]
+2026-07-23T16:56:29.3016299Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:56:29.3018366Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:56:29.3052057Z ##[endgroup]
+2026-07-23T16:56:29.3053422Z ##[group]Setting up auth
+2026-07-23T16:56:29.3060571Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:29.3103026Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:29.3487090Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:29.3530412Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:29.3753448Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:29.3788792Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:29.4012235Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:56:29.4054345Z ##[endgroup]
+2026-07-23T16:56:29.4056511Z ##[group]Fetching the repository
+2026-07-23T16:56:29.4065012Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6dbccbbe8ce224e4203fa07f99be1ee5163e916f:refs/remotes/pull/24/merge
+2026-07-23T16:56:29.8814273Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.8816593Z  * [new ref]         6dbccbbe8ce224e4203fa07f99be1ee5163e916f -> pull/24/merge
+2026-07-23T16:56:29.8853374Z ##[endgroup]
+2026-07-23T16:56:29.8855236Z ##[group]Determining the checkout info
+2026-07-23T16:56:29.8857423Z ##[endgroup]
+2026-07-23T16:56:29.8863060Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:56:29.8915649Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:56:29.8954831Z ##[group]Checking out the ref
+2026-07-23T16:56:29.8957992Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/24/merge
+2026-07-23T16:56:29.9274280Z Note: switching to 'refs/remotes/pull/24/merge'.
+2026-07-23T16:56:29.9275490Z 
+2026-07-23T16:56:29.9276230Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-23T16:56:29.9278021Z changes and commit them, and you can discard any commits you make in this
+2026-07-23T16:56:29.9281092Z state without impacting any branches by switching back to a branch.
+2026-07-23T16:56:29.9282821Z 
+2026-07-23T16:56:29.9283962Z If you want to create a new branch to retain commits you create, you may
+2026-07-23T16:56:29.9286791Z do so (now or later) by using -c with the switch command. Example:
+2026-07-23T16:56:29.9288569Z 
+2026-07-23T16:56:29.9289336Z   git switch -c <new-branch-name>
+2026-07-23T16:56:29.9290837Z 
+2026-07-23T16:56:29.9291519Z Or undo this operation with:
+2026-07-23T16:56:29.9292558Z 
+2026-07-23T16:56:29.9293192Z   git switch -
+2026-07-23T16:56:29.9294013Z 
+2026-07-23T16:56:29.9295348Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-23T16:56:29.9297293Z 
+2026-07-23T16:56:29.9299259Z HEAD is now at 6dbccbb Merge a031a521f21508085ad7750ba068a06eadee0075 into 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:56:29.9303572Z ##[endgroup]
+2026-07-23T16:56:29.9334251Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:56:29.9361100Z 6dbccbbe8ce224e4203fa07f99be1ee5163e916f
+2026-07-23T16:56:29.9794169Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:29.9799328Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-07-23T16:56:29.9800995Z with:
+2026-07-23T16:56:29.9801790Z   node-version: 22
+2026-07-23T16:56:29.9802626Z   cache: npm
+2026-07-23T16:56:29.9803666Z   cache-dependency-path: frontend-test/package-lock.json
+2026-07-23T16:56:29.9804957Z   always-auth: false
+2026-07-23T16:56:29.9805833Z   check-latest: false
+2026-07-23T16:56:29.9815202Z   token: ***
+2026-07-23T16:56:29.9816004Z env:
+2026-07-23T16:56:29.9816786Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:29.9817670Z   NODE_VERSION: 22
+2026-07-23T16:56:29.9818519Z   COVERAGE_MIN: 38
+2026-07-23T16:56:29.9819416Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:29.9820479Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:29.9821437Z ##[endgroup]
+2026-07-23T16:56:30.1307634Z Found in cache @ /opt/hostedtoolcache/node/22.23.1/x64
+2026-07-23T16:56:30.1311911Z (node:2231) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:30.1314985Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:30.1317155Z ##[group]Environment details
+2026-07-23T16:56:30.5635776Z node: v22.23.1
+2026-07-23T16:56:30.5637339Z npm: 10.9.8
+2026-07-23T16:56:30.5637898Z yarn: 1.22.22
+2026-07-23T16:56:30.5639173Z ##[endgroup]
+2026-07-23T16:56:30.5657069Z [command]/opt/hostedtoolcache/node/22.23.1/x64/bin/npm config get cache
+2026-07-23T16:56:30.6721664Z /home/runner/.npm
+2026-07-23T16:56:30.9421233Z Cache hit for: node-cache-Linux-x64-npm-e92c6ae21c40161c0d053d3248b39e48b3a4c8138a5e325fa2a4120a2afaf824
+2026-07-23T16:56:30.9537259Z (node:2231) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:32.2400886Z Received 0 of 30626771 (0.0%), 0.0 MBs/sec
+2026-07-23T16:56:32.9036126Z Received 30626771 of 30626771 (100.0%), 17.6 MBs/sec
+2026-07-23T16:56:32.9037225Z Cache Size: ~29 MB (30626771 B)
+2026-07-23T16:56:32.9152004Z [command]/usr/bin/tar -xf /home/runner/work/_temp/090a70bf-7f3e-4d36-9ba3-a3ff09aa9dca/cache.tzst -P -C /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system- --use-compress-program unzstd
+2026-07-23T16:56:32.9631777Z Cache restored successfully
+2026-07-23T16:56:32.9650133Z Cache restored from key: node-cache-Linux-x64-npm-e92c6ae21c40161c0d053d3248b39e48b3a4c8138a5e325fa2a4120a2afaf824
+2026-07-23T16:56:32.9823304Z ##[group]Run npm ci
+2026-07-23T16:56:32.9823608Z [36;1mnpm ci[0m
+2026-07-23T16:56:32.9912899Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:32.9913265Z env:
+2026-07-23T16:56:32.9913514Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:32.9913753Z   NODE_VERSION: 22
+2026-07-23T16:56:32.9913989Z   COVERAGE_MIN: 38
+2026-07-23T16:56:32.9914197Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:32.9914440Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:32.9914719Z ##[endgroup]
+2026-07-23T16:56:36.1292516Z 
+2026-07-23T16:56:36.1301513Z added 25 packages, and audited 26 packages in 3s
+2026-07-23T16:56:36.1302271Z 
+2026-07-23T16:56:36.1302896Z 9 packages are looking for funding
+2026-07-23T16:56:36.1303499Z   run `npm fund` for details
+2026-07-23T16:56:36.1305275Z 
+2026-07-23T16:56:36.1305579Z found 0 vulnerabilities
+2026-07-23T16:56:36.1827993Z ##[group]Run if grep -q '"lint"' package.json; then
+2026-07-23T16:56:36.1828465Z [36;1mif grep -q '"lint"' package.json; then[0m
+2026-07-23T16:56:36.1828796Z [36;1m  npm run lint[0m
+2026-07-23T16:56:36.1829022Z [36;1melse[0m
+2026-07-23T16:56:36.1829298Z [36;1m  echo "::warning::No lint script defined; skipping."[0m
+2026-07-23T16:56:36.1829622Z [36;1mfi[0m
+2026-07-23T16:56:36.1889321Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:36.1889601Z env:
+2026-07-23T16:56:36.1890122Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:36.1890371Z   NODE_VERSION: 22
+2026-07-23T16:56:36.1890618Z   COVERAGE_MIN: 38
+2026-07-23T16:56:36.1890826Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:36.1891059Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:36.1891299Z ##[endgroup]
+2026-07-23T16:56:36.1998958Z ##[warning]No lint script defined; skipping.
+2026-07-23T16:56:36.2042760Z ##[group]Run if grep -q '"test"' package.json; then
+2026-07-23T16:56:36.2043175Z [36;1mif grep -q '"test"' package.json; then[0m
+2026-07-23T16:56:36.2043619Z [36;1m  npm test -- --coverage --coverageDirectory=reports/coverage-frontend-test[0m
+2026-07-23T16:56:36.2044034Z [36;1melse[0m
+2026-07-23T16:56:36.2044302Z [36;1m  echo "::warning::No test script defined; skipping."[0m
+2026-07-23T16:56:36.2044618Z [36;1mfi[0m
+2026-07-23T16:56:36.2096386Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:36.2096646Z env:
+2026-07-23T16:56:36.2096842Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:36.2097071Z   NODE_VERSION: 22
+2026-07-23T16:56:36.2097272Z   COVERAGE_MIN: 38
+2026-07-23T16:56:36.2097483Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:36.2097722Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:36.2097957Z ##[endgroup]
+2026-07-23T16:56:36.2184855Z ##[warning]No test script defined; skipping.
+2026-07-23T16:56:36.2212049Z ##[group]Run npm run build
+2026-07-23T16:56:36.2212335Z [36;1mnpm run build[0m
+2026-07-23T16:56:36.2264321Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:36.2264590Z env:
+2026-07-23T16:56:36.2264791Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:36.2265018Z   NODE_VERSION: 22
+2026-07-23T16:56:36.2265227Z   COVERAGE_MIN: 38
+2026-07-23T16:56:36.2265442Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:36.2265668Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:36.2265905Z ##[endgroup]
+2026-07-23T16:56:36.3275796Z 
+2026-07-23T16:56:36.3276364Z > ai-recruiter-testing-dashboard@0.1.0 build
+2026-07-23T16:56:36.3276866Z > vite build
+2026-07-23T16:56:36.3277007Z 
+2026-07-23T16:56:36.5739187Z [36mvite v8.1.3 [32mbuilding client environment for production...[36m[39m
+2026-07-23T16:56:36.5849144Z [2K
+2026-07-23T16:56:36.6374605Z 
+2026-07-23T16:56:36.6377267Z new URL("../..", import.meta.url) doesn't exist at build time, it will remain unchanged to be resolved at runtime. If this is intended, you can use the /* @vite-ignore */ comment to suppress this warning.
+2026-07-23T16:56:36.7226301Z transforming...✓ 1780 modules transformed.
+2026-07-23T16:56:36.7536011Z rendering chunks...
+2026-07-23T16:56:36.8031997Z computing gzip size...
+2026-07-23T16:56:36.8067305Z dist/index.html                   0.41 kB │ gzip:  0.28 kB
+2026-07-23T16:56:36.8068262Z dist/assets/index-Hu0AHujP.css   12.43 kB │ gzip:  3.01 kB
+2026-07-23T16:56:36.8069164Z dist/assets/index-7x4OUyoU.js   267.66 kB │ gzip: 83.40 kB
+2026-07-23T16:56:36.8069571Z 
+2026-07-23T16:56:36.8070634Z [32m✓ built in 231ms[39m
+2026-07-23T16:56:36.8370625Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:36.8393242Z ##[group]Run actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+2026-07-23T16:56:36.8393902Z with:
+2026-07-23T16:56:36.8394221Z   name: dist-frontend-test
+2026-07-23T16:56:36.8394615Z   path: frontend-test/dist
+2026-07-23T16:56:36.8394990Z   retention-days: 14
+2026-07-23T16:56:36.8395351Z   if-no-files-found: warn
+2026-07-23T16:56:36.8395828Z   compression-level: 6
+2026-07-23T16:56:36.8396191Z   overwrite: false
+2026-07-23T16:56:36.8396553Z   include-hidden-files: false
+2026-07-23T16:56:36.8396936Z env:
+2026-07-23T16:56:36.8397244Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:36.8397612Z   NODE_VERSION: 22
+2026-07-23T16:56:36.8398012Z   COVERAGE_MIN: 38
+2026-07-23T16:56:36.8398367Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:36.8398790Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:36.8399182Z ##[endgroup]
+2026-07-23T16:56:37.0086360Z (node:2338) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:37.0088128Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:37.0162320Z With the provided path, there will be 3 files uploaded
+2026-07-23T16:56:37.0168597Z Artifact name is valid!
+2026-07-23T16:56:37.0169515Z Root directory input is valid!
+2026-07-23T16:56:37.3521679Z Beginning upload of artifact content to blob storage
+2026-07-23T16:56:37.3943673Z (node:2338) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:37.8087039Z Uploaded bytes 86189
+2026-07-23T16:56:37.8863452Z Finished uploading artifact content to blob storage!
+2026-07-23T16:56:37.8864644Z SHA256 hash of uploaded artifact zip is 8fe3a67765bae84c99c38c5a4a1879068a0af43e21ee4abcbddbadef9a8bbe12
+2026-07-23T16:56:37.8866613Z Finalizing artifact upload
+2026-07-23T16:56:38.1146971Z Artifact dist-frontend-test.zip successfully finalized. Artifact ID 8571795177
+2026-07-23T16:56:38.1148914Z Artifact dist-frontend-test has been successfully uploaded! Final size is 86189 bytes. Artifact ID is 8571795177
+2026-07-23T16:56:38.1157085Z Artifact download URL: https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/29984562766/artifacts/8571795177
+2026-07-23T16:56:38.1328342Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:38.1329619Z Post job cleanup.
+2026-07-23T16:56:38.2511955Z (node:2377) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:38.2512815Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:38.2515794Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-e92c6ae21c40161c0d053d3248b39e48b3a4c8138a5e325fa2a4120a2afaf824, not saving cache.
+2026-07-23T16:56:38.2639130Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:38.2640702Z Post job cleanup.
+2026-07-23T16:56:38.3667652Z [command]/usr/bin/git version
+2026-07-23T16:56:38.3722036Z git version 2.54.0
+2026-07-23T16:56:38.3768300Z Temporarily overriding HOME='/home/runner/work/_temp/348d2977-a08b-4285-b3f0-076a48f230f8' before making global git config changes
+2026-07-23T16:56:38.3770453Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:38.3774486Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:38.3991763Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:38.4044234Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:38.4409187Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:38.4448832Z http.https://github.com/.extraheader
+2026-07-23T16:56:38.4472491Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:56:38.4522784Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:38.4808549Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:38.4846393Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:38.5200585Z Cleaning up orphan processes
+2026-07-23T16:56:38.5700478Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- 2_Frontend frontend.txt ---
+﻿2026-07-23T16:56:27.0609508Z Current runner version: '2.335.1'
+2026-07-23T16:56:27.0631563Z ##[group]Runner Image Provisioner
+2026-07-23T16:56:27.0632285Z Hosted Compute Agent
+2026-07-23T16:56:27.0632787Z Version: 20260707.563
+2026-07-23T16:56:27.0633300Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:56:27.0633923Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:56:27.0634486Z Worker ID: {ca6c7944-501f-45d1-8e2d-f1acf5478bd4}
+2026-07-23T16:56:27.0635087Z Azure Region: northcentralus
+2026-07-23T16:56:27.0635591Z ##[endgroup]
+2026-07-23T16:56:27.0636898Z ##[group]Operating System
+2026-07-23T16:56:27.0637460Z Ubuntu
+2026-07-23T16:56:27.0637908Z 24.04.4
+2026-07-23T16:56:27.0638304Z LTS
+2026-07-23T16:56:27.0638774Z ##[endgroup]
+2026-07-23T16:56:27.0639213Z ##[group]Runner Image
+2026-07-23T16:56:27.0639732Z Image: ubuntu-24.04
+2026-07-23T16:56:27.0640470Z Version: 20260714.240.1
+2026-07-23T16:56:27.0641514Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:56:27.0642702Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:56:27.0643463Z ##[endgroup]
+2026-07-23T16:56:27.0644345Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:56:27.0646060Z Contents: read
+2026-07-23T16:56:27.0646618Z Metadata: read
+2026-07-23T16:56:27.0647123Z ##[endgroup]
+2026-07-23T16:56:27.0648873Z Secret source: Actions
+2026-07-23T16:56:27.0649513Z Prepare workflow directory
+2026-07-23T16:56:27.0951748Z Prepare all required actions
+2026-07-23T16:56:27.0982151Z Getting action download info
+2026-07-23T16:56:27.3396726Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:56:28.3662681Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-07-23T16:56:28.5303769Z Download action repository 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' (SHA:65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08)
+2026-07-23T16:56:28.9563241Z Complete job name: Frontend frontend
+2026-07-23T16:56:29.0286637Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:29.0295843Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-07-23T16:56:29.0297121Z with:
+2026-07-23T16:56:29.0297788Z   fetch-depth: 1
+2026-07-23T16:56:29.0298697Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.0305475Z   token: ***
+2026-07-23T16:56:29.0306183Z   ssh-strict: true
+2026-07-23T16:56:29.0306908Z   ssh-user: git
+2026-07-23T16:56:29.0307628Z   persist-credentials: true
+2026-07-23T16:56:29.0308425Z   clean: true
+2026-07-23T16:56:29.0309150Z   sparse-checkout-cone-mode: true
+2026-07-23T16:56:29.0310127Z   fetch-tags: false
+2026-07-23T16:56:29.0310865Z   show-progress: true
+2026-07-23T16:56:29.0311633Z   lfs: false
+2026-07-23T16:56:29.0312307Z   submodules: false
+2026-07-23T16:56:29.0313050Z   set-safe-directory: true
+2026-07-23T16:56:29.0313883Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:56:29.0314886Z env:
+2026-07-23T16:56:29.0315549Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:29.0316281Z   NODE_VERSION: 22
+2026-07-23T16:56:29.0316976Z   COVERAGE_MIN: 38
+2026-07-23T16:56:29.0317677Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:29.0318436Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:29.0319232Z ##[endgroup]
+2026-07-23T16:56:29.1231003Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.1233557Z ##[group]Getting Git version info
+2026-07-23T16:56:29.1235069Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.1237082Z [command]/usr/bin/git version
+2026-07-23T16:56:29.3229306Z git version 2.54.0
+2026-07-23T16:56:29.3279562Z ##[endgroup]
+2026-07-23T16:56:29.3292274Z Temporarily overriding HOME='/home/runner/work/_temp/ad013bfa-a244-4e74-897a-34639b3051c6' before making global git config changes
+2026-07-23T16:56:29.3294870Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:29.3297553Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.3332555Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.3334978Z ##[group]Initializing the repository
+2026-07-23T16:56:29.3338660Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.5782708Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:56:29.5784981Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:56:29.5786491Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:56:29.5787554Z hint: call:
+2026-07-23T16:56:29.5787984Z hint:
+2026-07-23T16:56:29.5788609Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:56:29.5789459Z hint:
+2026-07-23T16:56:29.5790349Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:56:29.5791708Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:56:29.5792763Z hint:
+2026-07-23T16:56:29.5793237Z hint: 	git branch -m <name>
+2026-07-23T16:56:29.5793860Z hint:
+2026-07-23T16:56:29.5794707Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:56:29.5796749Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:56:29.5800384Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.5829214Z ##[endgroup]
+2026-07-23T16:56:29.5830666Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:56:29.5833185Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:56:29.5862179Z ##[endgroup]
+2026-07-23T16:56:29.5863164Z ##[group]Setting up auth
+2026-07-23T16:56:29.5868427Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:29.5898777Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:29.6295240Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:29.6328239Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:29.6541892Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:29.6568729Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:29.6780170Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:56:29.6814254Z ##[endgroup]
+2026-07-23T16:56:29.6814923Z ##[group]Fetching the repository
+2026-07-23T16:56:29.6822984Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6dbccbbe8ce224e4203fa07f99be1ee5163e916f:refs/remotes/pull/24/merge
+2026-07-23T16:56:30.3778729Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:30.3779257Z  * [new ref]         6dbccbbe8ce224e4203fa07f99be1ee5163e916f -> pull/24/merge
+2026-07-23T16:56:30.3799038Z ##[endgroup]
+2026-07-23T16:56:30.3799580Z ##[group]Determining the checkout info
+2026-07-23T16:56:30.3801590Z ##[endgroup]
+2026-07-23T16:56:30.3813681Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:56:30.5860634Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:56:30.5890550Z ##[group]Checking out the ref
+2026-07-23T16:56:30.5902150Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/24/merge
+2026-07-23T16:56:30.6152713Z Note: switching to 'refs/remotes/pull/24/merge'.
+2026-07-23T16:56:30.6153030Z 
+2026-07-23T16:56:30.6153269Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-23T16:56:30.6153670Z changes and commit them, and you can discard any commits you make in this
+2026-07-23T16:56:30.6154052Z state without impacting any branches by switching back to a branch.
+2026-07-23T16:56:30.6154278Z 
+2026-07-23T16:56:30.6154471Z If you want to create a new branch to retain commits you create, you may
+2026-07-23T16:56:30.6154833Z do so (now or later) by using -c with the switch command. Example:
+2026-07-23T16:56:30.6155116Z 
+2026-07-23T16:56:30.6155213Z   git switch -c <new-branch-name>
+2026-07-23T16:56:30.6155376Z 
+2026-07-23T16:56:30.6155480Z Or undo this operation with:
+2026-07-23T16:56:30.6155618Z 
+2026-07-23T16:56:30.6155693Z   git switch -
+2026-07-23T16:56:30.6155862Z 
+2026-07-23T16:56:30.6156109Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-23T16:56:30.6156474Z 
+2026-07-23T16:56:30.6156870Z HEAD is now at 6dbccbb Merge a031a521f21508085ad7750ba068a06eadee0075 into 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:56:30.6160183Z ##[endgroup]
+2026-07-23T16:56:30.6194973Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:56:30.6217743Z 6dbccbbe8ce224e4203fa07f99be1ee5163e916f
+2026-07-23T16:56:30.6512362Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:30.6513768Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-07-23T16:56:30.6514058Z with:
+2026-07-23T16:56:30.6514231Z   node-version: 22
+2026-07-23T16:56:30.6514405Z   cache: npm
+2026-07-23T16:56:30.6514607Z   cache-dependency-path: frontend/package-lock.json
+2026-07-23T16:56:30.6514855Z   always-auth: false
+2026-07-23T16:56:30.6515058Z   check-latest: false
+2026-07-23T16:56:30.6516780Z   token: ***
+2026-07-23T16:56:30.6516947Z env:
+2026-07-23T16:56:30.6517110Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:30.6517300Z   NODE_VERSION: 22
+2026-07-23T16:56:30.6517466Z   COVERAGE_MIN: 38
+2026-07-23T16:56:30.6517659Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:30.6517842Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:30.6518038Z ##[endgroup]
+2026-07-23T16:56:30.7894881Z Found in cache @ /opt/hostedtoolcache/node/22.23.1/x64
+2026-07-23T16:56:30.7898442Z (node:2035) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:30.7899355Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:30.7901157Z ##[group]Environment details
+2026-07-23T16:56:31.0532814Z node: v22.23.1
+2026-07-23T16:56:31.0533122Z npm: 10.9.8
+2026-07-23T16:56:31.0533355Z yarn: 1.22.22
+2026-07-23T16:56:31.0533950Z ##[endgroup]
+2026-07-23T16:56:31.0580703Z [command]/opt/hostedtoolcache/node/22.23.1/x64/bin/npm config get cache
+2026-07-23T16:56:31.1402926Z /home/runner/.npm
+2026-07-23T16:56:31.2766929Z Cache hit for: node-cache-Linux-x64-npm-32cf3a607067a51308418c7e3682eac4cecf92a06506c96591fa0c65c3084ede
+2026-07-23T16:56:31.2851913Z (node:2035) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:31.8279481Z Received 31739481 of 31739481 (100.0%), 67.6 MBs/sec
+2026-07-23T16:56:31.8280474Z Cache Size: ~30 MB (31739481 B)
+2026-07-23T16:56:31.8301640Z [command]/usr/bin/tar -xf /home/runner/work/_temp/74c4f85f-9b9b-4a77-8e7a-4dcb9bb58ff8/cache.tzst -P -C /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system- --use-compress-program unzstd
+2026-07-23T16:56:31.8708455Z Cache restored successfully
+2026-07-23T16:56:31.8725165Z Cache restored from key: node-cache-Linux-x64-npm-32cf3a607067a51308418c7e3682eac4cecf92a06506c96591fa0c65c3084ede
+2026-07-23T16:56:31.8885588Z ##[group]Run npm ci
+2026-07-23T16:56:31.8885892Z [36;1mnpm ci[0m
+2026-07-23T16:56:31.8964217Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:31.8964452Z env:
+2026-07-23T16:56:31.8964640Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:31.8964825Z   NODE_VERSION: 22
+2026-07-23T16:56:31.8964999Z   COVERAGE_MIN: 38
+2026-07-23T16:56:31.8965174Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:31.8965361Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:31.8965553Z ##[endgroup]
+2026-07-23T16:56:34.8007483Z 
+2026-07-23T16:56:34.8015845Z added 25 packages, and audited 26 packages in 3s
+2026-07-23T16:56:34.8016741Z 
+2026-07-23T16:56:34.8017235Z 9 packages are looking for funding
+2026-07-23T16:56:34.8017807Z   run `npm fund` for details
+2026-07-23T16:56:34.8018214Z 
+2026-07-23T16:56:34.8018535Z found 0 vulnerabilities
+2026-07-23T16:56:34.8477877Z ##[group]Run if grep -q '"lint"' package.json; then
+2026-07-23T16:56:34.8478220Z [36;1mif grep -q '"lint"' package.json; then[0m
+2026-07-23T16:56:34.8478481Z [36;1m  npm run lint[0m
+2026-07-23T16:56:34.8478662Z [36;1melse[0m
+2026-07-23T16:56:34.8478882Z [36;1m  echo "::warning::No lint script defined; skipping."[0m
+2026-07-23T16:56:34.8479136Z [36;1mfi[0m
+2026-07-23T16:56:34.8531118Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:34.8531338Z env:
+2026-07-23T16:56:34.8531506Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:34.8531692Z   NODE_VERSION: 22
+2026-07-23T16:56:34.8531870Z   COVERAGE_MIN: 38
+2026-07-23T16:56:34.8532032Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:34.8532232Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:34.8532429Z ##[endgroup]
+2026-07-23T16:56:34.8630321Z ##[warning]No lint script defined; skipping.
+2026-07-23T16:56:34.8665981Z ##[group]Run if grep -q '"test"' package.json; then
+2026-07-23T16:56:34.8666298Z [36;1mif grep -q '"test"' package.json; then[0m
+2026-07-23T16:56:34.8666638Z [36;1m  npm test -- --coverage --coverageDirectory=reports/coverage-frontend[0m
+2026-07-23T16:56:34.8666949Z [36;1melse[0m
+2026-07-23T16:56:34.8667175Z [36;1m  echo "::warning::No test script defined; skipping."[0m
+2026-07-23T16:56:34.8667444Z [36;1mfi[0m
+2026-07-23T16:56:34.8714583Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:34.8714799Z env:
+2026-07-23T16:56:34.8714970Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:34.8715154Z   NODE_VERSION: 22
+2026-07-23T16:56:34.8715321Z   COVERAGE_MIN: 38
+2026-07-23T16:56:34.8715488Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:34.8715681Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:34.8715881Z ##[endgroup]
+2026-07-23T16:56:34.8793485Z ##[warning]No test script defined; skipping.
+2026-07-23T16:56:34.8822693Z ##[group]Run npm run build
+2026-07-23T16:56:34.8823024Z [36;1mnpm run build[0m
+2026-07-23T16:56:34.8883126Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:34.8883504Z env:
+2026-07-23T16:56:34.8883742Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:34.8884019Z   NODE_VERSION: 22
+2026-07-23T16:56:34.8884278Z   COVERAGE_MIN: 38
+2026-07-23T16:56:34.8884534Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:34.8884814Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:34.8885116Z ##[endgroup]
+2026-07-23T16:56:34.9718436Z 
+2026-07-23T16:56:34.9719195Z > build
+2026-07-23T16:56:34.9719647Z > vite build
+2026-07-23T16:56:34.9720058Z 
+2026-07-23T16:56:35.2011638Z [36mvite v8.1.0 [32mbuilding client environment for production...[36m[39m
+2026-07-23T16:56:35.2098586Z [2K
+2026-07-23T16:56:35.3090471Z transforming...✓ 56 modules transformed.
+2026-07-23T16:56:35.3352528Z rendering chunks...
+2026-07-23T16:56:35.3647401Z computing gzip size...
+2026-07-23T16:56:35.3691364Z dist/index.html                         0.40 kB │ gzip:  0.27 kB
+2026-07-23T16:56:35.3691951Z dist/assets/monstera_bg-BRxu-G8P.png  794.30 kB
+2026-07-23T16:56:35.3692507Z dist/assets/index-EXyqGyrQ.css         17.44 kB │ gzip:  4.24 kB
+2026-07-23T16:56:35.3692963Z dist/assets/index--eXYKgLk.js         253.74 kB │ gzip: 79.12 kB
+2026-07-23T16:56:35.3693183Z 
+2026-07-23T16:56:35.3697229Z [32m✓ built in 170ms[39m
+2026-07-23T16:56:35.3979318Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:35.3980718Z ##[group]Run actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+2026-07-23T16:56:35.3981017Z with:
+2026-07-23T16:56:35.3981177Z   name: dist-frontend
+2026-07-23T16:56:35.3981358Z   path: frontend/dist
+2026-07-23T16:56:35.3981553Z   retention-days: 14
+2026-07-23T16:56:35.3981732Z   if-no-files-found: warn
+2026-07-23T16:56:35.3981923Z   compression-level: 6
+2026-07-23T16:56:35.3982102Z   overwrite: false
+2026-07-23T16:56:35.3982275Z   include-hidden-files: false
+2026-07-23T16:56:35.3982462Z env:
+2026-07-23T16:56:35.3982616Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:35.3982787Z   NODE_VERSION: 22
+2026-07-23T16:56:35.3982969Z   COVERAGE_MIN: 38
+2026-07-23T16:56:35.3983131Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:35.3983317Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:35.3983501Z ##[endgroup]
+2026-07-23T16:56:35.5355702Z (node:2137) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:35.5356714Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:35.5420247Z With the provided path, there will be 5 files uploaded
+2026-07-23T16:56:35.5421197Z Artifact name is valid!
+2026-07-23T16:56:35.5421691Z Root directory input is valid!
+2026-07-23T16:56:35.7271035Z Beginning upload of artifact content to blob storage
+2026-07-23T16:56:35.7798615Z (node:2137) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:36.1067598Z Uploaded bytes 877955
+2026-07-23T16:56:36.1504626Z Finished uploading artifact content to blob storage!
+2026-07-23T16:56:36.1505793Z SHA256 hash of uploaded artifact zip is 18e5af26b873b8429a477aa4073b658aa389c94de439311aa44ab85c6208946d
+2026-07-23T16:56:36.1508154Z Finalizing artifact upload
+2026-07-23T16:56:36.3492153Z Artifact dist-frontend.zip successfully finalized. Artifact ID 8571794414
+2026-07-23T16:56:36.3493176Z Artifact dist-frontend has been successfully uploaded! Final size is 877955 bytes. Artifact ID is 8571794414
+2026-07-23T16:56:36.3494507Z Artifact download URL: https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/29984562766/artifacts/8571794414
+2026-07-23T16:56:36.3675890Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:36.3677468Z Post job cleanup.
+2026-07-23T16:56:36.4686697Z (node:2149) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:36.4687726Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:36.4689487Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-32cf3a607067a51308418c7e3682eac4cecf92a06506c96591fa0c65c3084ede, not saving cache.
+2026-07-23T16:56:36.4792629Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:36.4793762Z Post job cleanup.
+2026-07-23T16:56:36.5540400Z [command]/usr/bin/git version
+2026-07-23T16:56:36.5588011Z git version 2.54.0
+2026-07-23T16:56:36.5655558Z Temporarily overriding HOME='/home/runner/work/_temp/1ac30eae-005e-4aa5-ae77-942908e68e19' before making global git config changes
+2026-07-23T16:56:36.5656809Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:36.5660586Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:36.5702704Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:36.5737503Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:36.5995087Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:36.6024023Z http.https://github.com/.extraheader
+2026-07-23T16:56:36.6035533Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:56:36.6064493Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:36.6292157Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:36.6328841Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:36.6730455Z Cleaning up orphan processes
+2026-07-23T16:56:36.6986021Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- 3_Backend Node (Express auth).txt ---
+﻿2026-07-23T16:56:28.2934197Z Current runner version: '2.336.0'
+2026-07-23T16:56:28.2959623Z ##[group]Runner Image Provisioner
+2026-07-23T16:56:28.2960451Z Hosted Compute Agent
+2026-07-23T16:56:28.2961128Z Version: 20260707.563
+2026-07-23T16:56:28.2961740Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:56:28.2962434Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:56:28.2963208Z Worker ID: {5cb709c8-e4c9-42f7-a03c-d1fef23795c3}
+2026-07-23T16:56:28.2963903Z Azure Region: centralus
+2026-07-23T16:56:28.2964996Z ##[endgroup]
+2026-07-23T16:56:28.2966562Z ##[group]Operating System
+2026-07-23T16:56:28.2967178Z Ubuntu
+2026-07-23T16:56:28.2967805Z 24.04.4
+2026-07-23T16:56:28.2968331Z LTS
+2026-07-23T16:56:28.2968881Z ##[endgroup]
+2026-07-23T16:56:28.2969439Z ##[group]Runner Image
+2026-07-23T16:56:28.2970026Z Image: ubuntu-24.04
+2026-07-23T16:56:28.2970630Z Version: 20260714.240.1
+2026-07-23T16:56:28.2971997Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:56:28.2973590Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:56:28.2974894Z ##[endgroup]
+2026-07-23T16:56:28.2976091Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:56:28.2978198Z Contents: read
+2026-07-23T16:56:28.2978928Z Metadata: read
+2026-07-23T16:56:28.2979483Z ##[endgroup]
+2026-07-23T16:56:28.2982008Z Secret source: Actions
+2026-07-23T16:56:28.2983459Z Prepare workflow directory
+2026-07-23T16:56:28.3413626Z Prepare all required actions
+2026-07-23T16:56:28.3456624Z Getting action download info
+2026-07-23T16:56:28.6146465Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:56:29.0506845Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-07-23T16:56:29.1556636Z Download action repository 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' (SHA:65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08)
+2026-07-23T16:56:29.4989799Z Complete job name: Backend Node (Express auth)
+2026-07-23T16:56:29.6133978Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:29.6146871Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-07-23T16:56:29.6148550Z with:
+2026-07-23T16:56:29.6149504Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.6158038Z   token: ***
+2026-07-23T16:56:29.6158784Z   ssh-strict: true
+2026-07-23T16:56:29.6159503Z   ssh-user: git
+2026-07-23T16:56:29.6160228Z   persist-credentials: true
+2026-07-23T16:56:29.6161027Z   clean: true
+2026-07-23T16:56:29.6161741Z   sparse-checkout-cone-mode: true
+2026-07-23T16:56:29.6162585Z   fetch-depth: 1
+2026-07-23T16:56:29.6163301Z   fetch-tags: false
+2026-07-23T16:56:29.6164010Z   show-progress: true
+2026-07-23T16:56:29.6165133Z   lfs: false
+2026-07-23T16:56:29.6165962Z   submodules: false
+2026-07-23T16:56:29.6166690Z   set-safe-directory: true
+2026-07-23T16:56:29.6167508Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:56:29.6169231Z env:
+2026-07-23T16:56:29.6169917Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:29.6170663Z   NODE_VERSION: 22
+2026-07-23T16:56:29.6171392Z   COVERAGE_MIN: 38
+2026-07-23T16:56:29.6172102Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:29.6172867Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:29.6173650Z ##[endgroup]
+2026-07-23T16:56:29.7222444Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.7225922Z ##[group]Getting Git version info
+2026-07-23T16:56:29.7227636Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.7230018Z [command]/usr/bin/git version
+2026-07-23T16:56:29.7302880Z git version 2.54.0
+2026-07-23T16:56:29.7327889Z ##[endgroup]
+2026-07-23T16:56:29.7347855Z Temporarily overriding HOME='/home/runner/work/_temp/c1d7af19-92b7-4378-8ce9-133549115cf3' before making global git config changes
+2026-07-23T16:56:29.7350529Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:29.7355731Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.7420420Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:29.7424630Z ##[group]Initializing the repository
+2026-07-23T16:56:29.7432805Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:29.7529863Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:56:29.7531793Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:56:29.7533610Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:56:29.7535276Z hint: call:
+2026-07-23T16:56:29.7537431Z hint:
+2026-07-23T16:56:29.7538476Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:56:29.7539699Z hint:
+2026-07-23T16:56:29.7540734Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:56:29.7542463Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:56:29.7543837Z hint:
+2026-07-23T16:56:29.7544810Z hint: 	git branch -m <name>
+2026-07-23T16:56:29.7545616Z hint:
+2026-07-23T16:56:29.7546694Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:56:29.7549105Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:56:29.7552790Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:29.7601231Z ##[endgroup]
+2026-07-23T16:56:29.7602979Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:56:29.7604941Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:56:29.7645920Z ##[endgroup]
+2026-07-23T16:56:29.7647313Z ##[group]Setting up auth
+2026-07-23T16:56:29.7653426Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:29.7688525Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:29.8052564Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:29.8097830Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:29.8330829Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:29.8367049Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:29.8591467Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:56:29.8629946Z ##[endgroup]
+2026-07-23T16:56:29.8630904Z ##[group]Fetching the repository
+2026-07-23T16:56:29.8640334Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6dbccbbe8ce224e4203fa07f99be1ee5163e916f:refs/remotes/pull/24/merge
+2026-07-23T16:56:30.6366641Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:30.6369711Z  * [new ref]         6dbccbbe8ce224e4203fa07f99be1ee5163e916f -> pull/24/merge
+2026-07-23T16:56:30.6401562Z ##[endgroup]
+2026-07-23T16:56:30.6403450Z ##[group]Determining the checkout info
+2026-07-23T16:56:30.6406046Z ##[endgroup]
+2026-07-23T16:56:30.6410120Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:56:30.6458366Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:56:30.6494099Z ##[group]Checking out the ref
+2026-07-23T16:56:30.6496978Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/24/merge
+2026-07-23T16:56:30.6832827Z Note: switching to 'refs/remotes/pull/24/merge'.
+2026-07-23T16:56:30.6834103Z 
+2026-07-23T16:56:30.6835243Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-23T16:56:30.6836877Z changes and commit them, and you can discard any commits you make in this
+2026-07-23T16:56:30.6838423Z state without impacting any branches by switching back to a branch.
+2026-07-23T16:56:30.6839080Z 
+2026-07-23T16:56:30.6839631Z If you want to create a new branch to retain commits you create, you may
+2026-07-23T16:56:30.6840747Z do so (now or later) by using -c with the switch command. Example:
+2026-07-23T16:56:30.6841362Z 
+2026-07-23T16:56:30.6841763Z   git switch -c <new-branch-name>
+2026-07-23T16:56:30.6842256Z 
+2026-07-23T16:56:30.6842666Z Or undo this operation with:
+2026-07-23T16:56:30.6843155Z 
+2026-07-23T16:56:30.6843551Z   git switch -
+2026-07-23T16:56:30.6844013Z 
+2026-07-23T16:56:30.6844949Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-23T16:56:30.6846044Z 
+2026-07-23T16:56:30.6846913Z HEAD is now at 6dbccbb Merge a031a521f21508085ad7750ba068a06eadee0075 into 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:56:30.6850266Z ##[endgroup]
+2026-07-23T16:56:30.6959665Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:56:30.6961124Z 6dbccbbe8ce224e4203fa07f99be1ee5163e916f
+2026-07-23T16:56:30.7231757Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:30.7234574Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-07-23T16:56:30.7235525Z with:
+2026-07-23T16:56:30.7236196Z   node-version: 22
+2026-07-23T16:56:30.7236893Z   cache: npm
+2026-07-23T16:56:30.7237656Z   cache-dependency-path: backend/package-lock.json
+2026-07-23T16:56:30.7238496Z   always-auth: false
+2026-07-23T16:56:30.7239221Z   check-latest: false
+2026-07-23T16:56:30.7242798Z   token: ***
+2026-07-23T16:56:30.7243474Z env:
+2026-07-23T16:56:30.7244168Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:30.7245028Z   NODE_VERSION: 22
+2026-07-23T16:56:30.7245712Z   COVERAGE_MIN: 38
+2026-07-23T16:56:30.7246438Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:30.7247161Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:30.7247893Z ##[endgroup]
+2026-07-23T16:56:30.8639673Z Found in cache @ /opt/hostedtoolcache/node/22.23.1/x64
+2026-07-23T16:56:30.8643356Z (node:2189) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:30.8646132Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:30.8649011Z ##[group]Environment details
+2026-07-23T16:56:31.2412172Z node: v22.23.1
+2026-07-23T16:56:31.2412958Z npm: 10.9.8
+2026-07-23T16:56:31.2413511Z yarn: 1.22.22
+2026-07-23T16:56:31.2415288Z ##[endgroup]
+2026-07-23T16:56:31.2480667Z [command]/opt/hostedtoolcache/node/22.23.1/x64/bin/npm config get cache
+2026-07-23T16:56:31.3904777Z /home/runner/.npm
+2026-07-23T16:56:31.5282151Z Cache hit for: node-cache-Linux-x64-npm-512254bf185d400ac831afa3acd72afc8b7bf0b26ec5dd7d94bb1cf3a4bd8eb3
+2026-07-23T16:56:31.5412328Z (node:2189) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:32.2959821Z Received 11348720 of 11348720 (100.0%), 17.3 MBs/sec
+2026-07-23T16:56:32.2961676Z Cache Size: ~11 MB (11348720 B)
+2026-07-23T16:56:32.2990493Z [command]/usr/bin/tar -xf /home/runner/work/_temp/185cc639-02f1-47a0-8446-e4fefeb4cf22/cache.tzst -P -C /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system- --use-compress-program unzstd
+2026-07-23T16:56:32.4097505Z Cache restored successfully
+2026-07-23T16:56:32.4107491Z Cache restored from key: node-cache-Linux-x64-npm-512254bf185d400ac831afa3acd72afc8b7bf0b26ec5dd7d94bb1cf3a4bd8eb3
+2026-07-23T16:56:32.4300354Z ##[group]Run npm ci
+2026-07-23T16:56:32.4300739Z [36;1mnpm ci[0m
+2026-07-23T16:56:32.4389702Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:32.4390048Z env:
+2026-07-23T16:56:32.4390313Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:32.4390594Z   NODE_VERSION: 22
+2026-07-23T16:56:32.4390851Z   COVERAGE_MIN: 38
+2026-07-23T16:56:32.4391128Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:32.4391423Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:32.4391721Z ##[endgroup]
+2026-07-23T16:56:36.2497457Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-07-23T16:56:36.3747189Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-07-23T16:56:37.5256063Z 
+2026-07-23T16:56:37.5257229Z added 470 packages, and audited 471 packages in 5s
+2026-07-23T16:56:37.5257830Z 
+2026-07-23T16:56:37.5258216Z 75 packages are looking for funding
+2026-07-23T16:56:37.5258845Z   run `npm fund` for details
+2026-07-23T16:56:37.5267063Z 
+2026-07-23T16:56:37.5267668Z found 0 vulnerabilities
+2026-07-23T16:56:37.5798799Z ##[group]Run if grep -q '"lint"' package.json; then
+2026-07-23T16:56:37.5799287Z [36;1mif grep -q '"lint"' package.json; then[0m
+2026-07-23T16:56:37.5799621Z [36;1m  npm run lint[0m
+2026-07-23T16:56:37.5799872Z [36;1melse[0m
+2026-07-23T16:56:37.5800159Z [36;1m  echo "::warning::No lint script defined; skipping."[0m
+2026-07-23T16:56:37.5800488Z [36;1mfi[0m
+2026-07-23T16:56:37.5863043Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:37.5863308Z env:
+2026-07-23T16:56:37.5863507Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:37.5863771Z   NODE_VERSION: 22
+2026-07-23T16:56:37.5863979Z   COVERAGE_MIN: 38
+2026-07-23T16:56:37.5864190Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:37.5864719Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:37.5864964Z ##[endgroup]
+2026-07-23T16:56:37.6931478Z 
+2026-07-23T16:56:37.6932275Z > ai-recruiter-auth-backend@1.0.0 lint
+2026-07-23T16:56:37.6933023Z > eslint . --max-warnings=0
+2026-07-23T16:56:37.6933318Z 
+2026-07-23T16:56:38.1287844Z ##[group]Run if grep -q '"test"' package.json; then
+2026-07-23T16:56:38.1288284Z [36;1mif grep -q '"test"' package.json; then[0m
+2026-07-23T16:56:38.1288624Z [36;1m  mkdir -p reports[0m
+2026-07-23T16:56:38.1288877Z [36;1m  npm run test:coverage[0m
+2026-07-23T16:56:38.1289119Z [36;1melse[0m
+2026-07-23T16:56:38.1289687Z [36;1m  echo "::warning::No test script defined; skipping backend-node tests. Add a 'test' script to backend/package.json to enforce this gate."[0m
+2026-07-23T16:56:38.1290308Z [36;1mfi[0m
+2026-07-23T16:56:38.1350494Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:38.1350762Z env:
+2026-07-23T16:56:38.1350961Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:38.1351189Z   NODE_VERSION: 22
+2026-07-23T16:56:38.1351394Z   COVERAGE_MIN: 38
+2026-07-23T16:56:38.1351598Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:38.1351824Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:38.1352067Z ##[endgroup]
+2026-07-23T16:56:38.2371510Z 
+2026-07-23T16:56:38.2372527Z > ai-recruiter-auth-backend@1.0.0 test:coverage
+2026-07-23T16:56:38.2373913Z > jest --runInBand --coverage --coverageDirectory=reports/coverage-node --coverageReporters=lcov --coverageReporters=text --passWithNoTests
+2026-07-23T16:56:38.2375263Z 
+2026-07-23T16:56:38.5386756Z No tests found, exiting with code 0
+2026-07-23T16:56:38.5662294Z ----------|---------|----------|---------|---------|-------------------
+2026-07-23T16:56:38.5663531Z File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+2026-07-23T16:56:38.5664908Z ----------|---------|----------|---------|---------|-------------------
+2026-07-23T16:56:38.5666267Z All files |       0 |        0 |       0 |       0 |                   
+2026-07-23T16:56:38.5667287Z ----------|---------|----------|---------|---------|-------------------
+2026-07-23T16:56:38.6699718Z ##[group]Run npm audit --audit-level=high || true
+2026-07-23T16:56:38.6700123Z [36;1mnpm audit --audit-level=high || true[0m
+2026-07-23T16:56:38.6759574Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:38.6759834Z env:
+2026-07-23T16:56:38.6760027Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:38.6760266Z   NODE_VERSION: 22
+2026-07-23T16:56:38.6760466Z   COVERAGE_MIN: 38
+2026-07-23T16:56:38.6760682Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:38.6760903Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:38.6761133Z ##[endgroup]
+2026-07-23T16:56:39.2295852Z found 0 vulnerabilities
+2026-07-23T16:56:39.2489644Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:39.2491215Z ##[group]Run actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+2026-07-23T16:56:39.2491629Z with:
+2026-07-23T16:56:39.2491846Z   name: backend-node-reports
+2026-07-23T16:56:39.2492170Z   path: reports/coverage-node
+reports/junit-node.xml
+
+2026-07-23T16:56:39.2492509Z   retention-days: 14
+2026-07-23T16:56:39.2492738Z   if-no-files-found: warn
+2026-07-23T16:56:39.2492976Z   compression-level: 6
+2026-07-23T16:56:39.2493213Z   overwrite: false
+2026-07-23T16:56:39.2493442Z   include-hidden-files: false
+2026-07-23T16:56:39.2493698Z env:
+2026-07-23T16:56:39.2493887Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:39.2494135Z   NODE_VERSION: 22
+2026-07-23T16:56:39.2494650Z   COVERAGE_MIN: 38
+2026-07-23T16:56:39.2494875Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:39.2495129Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:39.2495379Z ##[endgroup]
+2026-07-23T16:56:39.4125964Z (node:2317) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:39.4127544Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:39.4171250Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-07-23T16:56:39.4175015Z The least common ancestor is /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/reports. This will be the root directory of the artifact
+2026-07-23T16:56:39.4209150Z ##[warning]No files were found with the provided path: reports/coverage-node
+reports/junit-node.xml. No artifacts will be uploaded.
+2026-07-23T16:56:39.4463303Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:39.4465715Z Post job cleanup.
+2026-07-23T16:56:39.5761905Z (node:2329) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:39.5763466Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:39.5768401Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-512254bf185d400ac831afa3acd72afc8b7bf0b26ec5dd7d94bb1cf3a4bd8eb3, not saving cache.
+2026-07-23T16:56:39.5913666Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:39.5915454Z Post job cleanup.
+2026-07-23T16:56:39.6804767Z [command]/usr/bin/git version
+2026-07-23T16:56:39.6859502Z git version 2.54.0
+2026-07-23T16:56:39.6915099Z Temporarily overriding HOME='/home/runner/work/_temp/9ec0d6e8-8063-49e9-9274-82e2ab36dac9' before making global git config changes
+2026-07-23T16:56:39.6916870Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:39.6925452Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:39.6975816Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:39.7038618Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:39.7366183Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:39.7398514Z http.https://github.com/.extraheader
+2026-07-23T16:56:39.7429010Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:56:39.7474601Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:39.7731086Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:39.7769975Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:39.8167424Z Cleaning up orphan processes
+2026-07-23T16:56:39.8533128Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- 4_Backend Python (pytest + coverage).txt ---
+﻿2026-07-23T16:56:27.6403894Z Current runner version: '2.335.1'
+2026-07-23T16:56:27.6428514Z ##[group]Runner Image Provisioner
+2026-07-23T16:56:27.6429394Z Hosted Compute Agent
+2026-07-23T16:56:27.6429989Z Version: 20260707.563
+2026-07-23T16:56:27.6430679Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:56:27.6431437Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:56:27.6432097Z Worker ID: {3254bf4d-c9bb-4586-a114-a1aff65a5bd9}
+2026-07-23T16:56:27.6432878Z Azure Region: westus3
+2026-07-23T16:56:27.6433451Z ##[endgroup]
+2026-07-23T16:56:27.6434938Z ##[group]Operating System
+2026-07-23T16:56:27.6435644Z Ubuntu
+2026-07-23T16:56:27.6436161Z 24.04.4
+2026-07-23T16:56:27.6436717Z LTS
+2026-07-23T16:56:27.6437580Z ##[endgroup]
+2026-07-23T16:56:27.6438159Z ##[group]Runner Image
+2026-07-23T16:56:27.6438892Z Image: ubuntu-24.04
+2026-07-23T16:56:27.6439467Z Version: 20260714.240.1
+2026-07-23T16:56:27.6440743Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:56:27.6442250Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:56:27.6443298Z ##[endgroup]
+2026-07-23T16:56:27.6444349Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:56:27.6446276Z Contents: read
+2026-07-23T16:56:27.6446882Z Metadata: read
+2026-07-23T16:56:27.6447959Z ##[endgroup]
+2026-07-23T16:56:27.6450109Z Secret source: Actions
+2026-07-23T16:56:27.6450858Z Prepare workflow directory
+2026-07-23T16:56:27.6864102Z Prepare all required actions
+2026-07-23T16:56:27.6902595Z Getting action download info
+2026-07-23T16:56:28.0209277Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:56:28.7153361Z Download action repository 'astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081' (SHA:e58605a9b6da7c637471fab8847a5e5a6b8df081)
+2026-07-23T16:56:29.7012636Z Download action repository 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' (SHA:65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08)
+2026-07-23T16:56:29.9613190Z Complete job name: Backend Python (pytest + coverage)
+2026-07-23T16:56:30.0335686Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:30.0343996Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-07-23T16:56:30.0344621Z with:
+2026-07-23T16:56:30.0344965Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:30.0347921Z   token: ***
+2026-07-23T16:56:30.0348184Z   ssh-strict: true
+2026-07-23T16:56:30.0348435Z   ssh-user: git
+2026-07-23T16:56:30.0348698Z   persist-credentials: true
+2026-07-23T16:56:30.0348981Z   clean: true
+2026-07-23T16:56:30.0349246Z   sparse-checkout-cone-mode: true
+2026-07-23T16:56:30.0349580Z   fetch-depth: 1
+2026-07-23T16:56:30.0349829Z   fetch-tags: false
+2026-07-23T16:56:30.0350092Z   show-progress: true
+2026-07-23T16:56:30.0350384Z   lfs: false
+2026-07-23T16:56:30.0350664Z   submodules: false
+2026-07-23T16:56:30.0350930Z   set-safe-directory: true
+2026-07-23T16:56:30.0351232Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:56:30.0351816Z env:
+2026-07-23T16:56:30.0352065Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:30.0352329Z   NODE_VERSION: 22
+2026-07-23T16:56:30.0352572Z   COVERAGE_MIN: 38
+2026-07-23T16:56:30.0352818Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:30.0353096Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:30.0353398Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:56:30.0353700Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:56:30.0353995Z   UV_LINK_MODE: copy
+2026-07-23T16:56:30.0354248Z ##[endgroup]
+2026-07-23T16:56:30.1379588Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:30.1381782Z ##[group]Getting Git version info
+2026-07-23T16:56:30.1383192Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:30.1384614Z [command]/usr/bin/git version
+2026-07-23T16:56:30.1450228Z git version 2.54.0
+2026-07-23T16:56:30.1478507Z ##[endgroup]
+2026-07-23T16:56:30.1498616Z Temporarily overriding HOME='/home/runner/work/_temp/0d996960-a25a-4dcd-be04-d1862531623f' before making global git config changes
+2026-07-23T16:56:30.1500348Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:30.1501400Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:30.1552636Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:30.1556581Z ##[group]Initializing the repository
+2026-07-23T16:56:30.1560703Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:30.1675626Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:56:30.1676856Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:56:30.1678127Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:56:30.1679033Z hint: call:
+2026-07-23T16:56:30.1679540Z hint:
+2026-07-23T16:56:30.1680170Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:56:30.1680846Z hint:
+2026-07-23T16:56:30.1681556Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:56:30.1682515Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:56:30.1683533Z hint:
+2026-07-23T16:56:30.1685387Z hint: 	git branch -m <name>
+2026-07-23T16:56:30.1686213Z hint:
+2026-07-23T16:56:30.1687379Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:56:30.1689191Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:56:30.1696924Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:30.1745367Z ##[endgroup]
+2026-07-23T16:56:30.1746136Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:56:30.1749173Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:56:30.1780350Z ##[endgroup]
+2026-07-23T16:56:30.1781187Z ##[group]Setting up auth
+2026-07-23T16:56:30.1788583Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:30.1823731Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:30.2198679Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:30.2238442Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:30.2473450Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:30.2509801Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:30.2734450Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:56:30.2773296Z ##[endgroup]
+2026-07-23T16:56:30.2774117Z ##[group]Fetching the repository
+2026-07-23T16:56:30.2783213Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6dbccbbe8ce224e4203fa07f99be1ee5163e916f:refs/remotes/pull/24/merge
+2026-07-23T16:56:31.3808506Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:31.3810489Z  * [new ref]         6dbccbbe8ce224e4203fa07f99be1ee5163e916f -> pull/24/merge
+2026-07-23T16:56:31.3843763Z ##[endgroup]
+2026-07-23T16:56:31.3844470Z ##[group]Determining the checkout info
+2026-07-23T16:56:31.3846354Z ##[endgroup]
+2026-07-23T16:56:31.3853894Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:56:31.3908419Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:56:31.3942126Z ##[group]Checking out the ref
+2026-07-23T16:56:31.3946488Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/24/merge
+2026-07-23T16:56:31.4282013Z Note: switching to 'refs/remotes/pull/24/merge'.
+2026-07-23T16:56:31.4283061Z 
+2026-07-23T16:56:31.4283788Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-23T16:56:31.4285078Z changes and commit them, and you can discard any commits you make in this
+2026-07-23T16:56:31.4286324Z state without impacting any branches by switching back to a branch.
+2026-07-23T16:56:31.4287425Z 
+2026-07-23T16:56:31.4288060Z If you want to create a new branch to retain commits you create, you may
+2026-07-23T16:56:31.4289188Z do so (now or later) by using -c with the switch command. Example:
+2026-07-23T16:56:31.4289913Z 
+2026-07-23T16:56:31.4290309Z   git switch -c <new-branch-name>
+2026-07-23T16:56:31.4290996Z 
+2026-07-23T16:56:31.4291431Z Or undo this operation with:
+2026-07-23T16:56:31.4291925Z 
+2026-07-23T16:56:31.4292146Z   git switch -
+2026-07-23T16:56:31.4292462Z 
+2026-07-23T16:56:31.4292850Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-23T16:56:31.4293304Z 
+2026-07-23T16:56:31.4293788Z HEAD is now at 6dbccbb Merge a031a521f21508085ad7750ba068a06eadee0075 into 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:56:31.4371094Z ##[endgroup]
+2026-07-23T16:56:31.4372978Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:56:31.4373549Z 6dbccbbe8ce224e4203fa07f99be1ee5163e916f
+2026-07-23T16:56:31.4612382Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:31.4614176Z ##[group]Run astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081
+2026-07-23T16:56:31.4614550Z with:
+2026-07-23T16:56:31.4614738Z   enable-cache: true
+2026-07-23T16:56:31.4614977Z   cache-dependency-glob: requirements.txt
+2026-07-23T16:56:31.4617845Z   github-token: ***
+2026-07-23T16:56:31.4618079Z   prune-cache: true
+2026-07-23T16:56:31.4618312Z   ignore-nothing-to-cache: false
+2026-07-23T16:56:31.4618580Z   ignore-empty-workdir: false
+2026-07-23T16:56:31.4618815Z env:
+2026-07-23T16:56:31.4619001Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:31.4619213Z   NODE_VERSION: 22
+2026-07-23T16:56:31.4619409Z   COVERAGE_MIN: 38
+2026-07-23T16:56:31.4619643Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:31.4619865Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:31.4620116Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:56:31.4620370Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:56:31.4620621Z   UV_LINK_MODE: copy
+2026-07-23T16:56:31.4620824Z ##[endgroup]
+2026-07-23T16:56:31.6390132Z (node:2226) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:56:31.6391384Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:56:32.0584074Z Downloading uv from "https://github.com/astral-sh/uv/releases/download/0.11.31/uv-x86_64-unknown-linux-gnu.tar.gz" ...
+2026-07-23T16:56:32.5883386Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/781f950f-3560-4d37-b8e2-ec793bf41095 -f /home/runner/work/_temp/b16920dc-26be-4bf9-bc85-16460e2a9192
+2026-07-23T16:56:33.1372825Z Added /home/runner/.local/bin to the path
+2026-07-23T16:56:33.1376050Z Added /opt/hostedtoolcache/uv/0.11.31/x86_64 to the path
+2026-07-23T16:56:33.1398472Z Set UV_CACHE_DIR to /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:56:33.1399004Z Successfully installed uv version 0.11.31
+2026-07-23T16:56:33.1399383Z Searching files using cache dependency glob: requirements.txt
+2026-07-23T16:56:33.1423345Z /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/requirements.txt
+2026-07-23T16:56:33.1438923Z Found 1 files to hash.
+2026-07-23T16:56:33.2171688Z Trying to restore uv cache from GitHub Actions cache with key: setup-uv-1-x86_64-unknown-linux-gnu-3.12.3-460843b6d6e4a285edc7789ade47927a3885971e79e9b8a7f06d3ff89cf85920
+2026-07-23T16:56:33.4197483Z Cache hit for: setup-uv-1-x86_64-unknown-linux-gnu-3.12.3-460843b6d6e4a285edc7789ade47927a3885971e79e9b8a7f06d3ff89cf85920
+2026-07-23T16:56:33.4304900Z (node:2226) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:56:34.6813339Z Received 6408338 of 10602642 (60.4%), 6.1 MBs/sec
+2026-07-23T16:56:34.7053897Z Received 10602642 of 10602642 (100.0%), 9.9 MBs/sec
+2026-07-23T16:56:34.7055585Z Cache Size: ~10 MB (10602642 B)
+2026-07-23T16:56:34.7082336Z [command]/usr/bin/tar -xf /home/runner/work/_temp/74b6fcf1-e9ce-424a-8ffa-4dc61085265e/cache.tzst -P -C /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system- --use-compress-program unzstd
+2026-07-23T16:56:34.7555117Z Cache restored successfully
+2026-07-23T16:56:34.7565794Z uv cache restored from GitHub Actions cache with key: setup-uv-1-x86_64-unknown-linux-gnu-3.12.3-460843b6d6e4a285edc7789ade47927a3885971e79e9b8a7f06d3ff89cf85920
+2026-07-23T16:56:34.7745701Z ##[group]Run uv python install 3.11
+2026-07-23T16:56:34.7746082Z [36;1muv python install 3.11[0m
+2026-07-23T16:56:34.7825187Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:34.7825459Z env:
+2026-07-23T16:56:34.7825662Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:34.7825899Z   NODE_VERSION: 22
+2026-07-23T16:56:34.7826128Z   COVERAGE_MIN: 38
+2026-07-23T16:56:34.7826342Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:34.7826582Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:34.7826836Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:56:34.7827333Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:56:34.7827628Z   UV_LINK_MODE: copy
+2026-07-23T16:56:34.7827940Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:56:34.7828260Z ##[endgroup]
+2026-07-23T16:56:34.9345354Z Downloading cpython-3.11.15-linux-x86_64-gnu (download) (29.5MiB)
+2026-07-23T16:56:35.9285698Z  Downloaded cpython-3.11.15-linux-x86_64-gnu (download)
+2026-07-23T16:56:35.9336642Z Installed Python 3.11.15 in 1.13s
+2026-07-23T16:56:35.9337362Z  + cpython-3.11.15-linux-x86_64-gnu (python3.11)
+2026-07-23T16:56:35.9390412Z ##[group]Run uv venv .venv --python 3.11
+2026-07-23T16:56:35.9390780Z [36;1muv venv .venv --python 3.11[0m
+2026-07-23T16:56:35.9391095Z [36;1msource .venv/bin/activate[0m
+2026-07-23T16:56:35.9391407Z [36;1muv pip install -r requirements.txt[0m
+2026-07-23T16:56:35.9391756Z [36;1muv pip install pytest-cov ruff black[0m
+2026-07-23T16:56:35.9450045Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:56:35.9450296Z env:
+2026-07-23T16:56:35.9450491Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:35.9450718Z   NODE_VERSION: 22
+2026-07-23T16:56:35.9450935Z   COVERAGE_MIN: 38
+2026-07-23T16:56:35.9451154Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:35.9451393Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:35.9451660Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:56:35.9451928Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:56:35.9452197Z   UV_LINK_MODE: copy
+2026-07-23T16:56:35.9452472Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:56:35.9452817Z ##[endgroup]
+2026-07-23T16:56:36.0942389Z Using CPython 3.11.15
+2026-07-23T16:56:36.0943060Z Creating virtual environment at: .venv
+2026-07-23T16:56:36.0950776Z Activate with: .venv/bin/activate
+2026-07-23T16:56:36.5008938Z Resolved 129 packages in 269ms
+2026-07-23T16:56:36.5186693Z Downloading pygments (1.2MiB)
+2026-07-23T16:56:36.5204080Z Downloading scipy (33.7MiB)
+2026-07-23T16:56:36.5206363Z Downloading nvidia-cuda-nvrtc (86.0MiB)
+2026-07-23T16:56:36.5208175Z Downloading tokenizers (3.1MiB)
+2026-07-23T16:56:36.5209713Z Downloading sympy (6.0MiB)
+2026-07-23T16:56:36.5283839Z Downloading cryptography (4.5MiB)
+2026-07-23T16:56:36.5285036Z Downloading nvidia-nccl-cu13 (196.4MiB)
+2026-07-23T16:56:36.5287333Z Downloading numpy (16.0MiB)
+2026-07-23T16:56:36.5290748Z Downloading cuda-bindings (6.4MiB)
+2026-07-23T16:56:36.5292290Z Downloading nvidia-cusolver (191.6MiB)
+2026-07-23T16:56:36.5294433Z Downloading lxml (5.0MiB)
+2026-07-23T16:56:36.5297830Z Downloading pillow (6.6MiB)
+2026-07-23T16:56:36.5300965Z Downloading nvidia-nvshmem-cu13 (57.6MiB)
+2026-07-23T16:56:36.5302966Z Downloading nvidia-cufile (1.2MiB)
+2026-07-23T16:56:36.5308097Z Downloading nvidia-cusparse (139.2MiB)
+2026-07-23T16:56:36.5308966Z Downloading nvidia-cuda-cupti (10.2MiB)
+2026-07-23T16:56:36.5309529Z Downloading reportlab (1.9MiB)
+2026-07-23T16:56:36.5310121Z Downloading nvidia-cusparselt-cu13 (162.3MiB)
+2026-07-23T16:56:36.5312085Z Downloading nvidia-cuda-runtime (2.1MiB)
+2026-07-23T16:56:36.5313779Z Downloading faiss-cpu (22.6MiB)
+2026-07-23T16:56:36.5315453Z Downloading hf-xet (4.2MiB)
+2026-07-23T16:56:36.5317016Z Downloading nvidia-nvjitlink (38.9MiB)
+2026-07-23T16:56:36.5318981Z Downloading pandas (12.5MiB)
+2026-07-23T16:56:36.5320652Z Downloading networkx (2.0MiB)
+2026-07-23T16:56:36.5322397Z Downloading nvidia-cufft (204.2MiB)
+2026-07-23T16:56:36.5324137Z Downloading playwright (42.1MiB)
+2026-07-23T16:56:36.5325909Z Downloading nvidia-cudnn-cu13 (349.2MiB)
+2026-07-23T16:56:36.5327911Z Downloading nvidia-cublas (403.5MiB)
+2026-07-23T16:56:36.5329643Z Downloading nvidia-curand (56.8MiB)
+2026-07-23T16:56:36.5331419Z Downloading triton (188.5MiB)
+2026-07-23T16:56:36.5353604Z Downloading transformers (9.8MiB)
+2026-07-23T16:56:36.5356647Z Downloading pydantic-core (2.0MiB)
+2026-07-23T16:56:36.5359049Z Downloading torch (502.2MiB)
+2026-07-23T16:56:36.5361027Z Downloading scikit-learn (12.9MiB)
+2026-07-23T16:56:37.1653061Z  Downloaded nvidia-cufile
+2026-07-23T16:56:37.4512204Z  Downloaded pygments
+2026-07-23T16:56:37.5440376Z  Downloaded reportlab
+2026-07-23T16:56:37.5586078Z  Downloaded pydantic-core
+2026-07-23T16:56:37.7026710Z  Downloaded nvidia-cuda-runtime
+2026-07-23T16:56:37.9443918Z  Downloaded networkx
+2026-07-23T16:56:37.9841756Z  Downloaded tokenizers
+2026-07-23T16:56:38.2660626Z  Downloaded hf-xet
+2026-07-23T16:56:38.4186145Z  Downloaded cryptography
+2026-07-23T16:56:38.5227439Z  Downloaded lxml
+2026-07-23T16:56:38.9468055Z  Downloaded pillow
+2026-07-23T16:56:38.9641071Z  Downloaded cuda-bindings
+2026-07-23T16:56:39.1007760Z  Downloaded sympy
+2026-07-23T16:56:39.4936138Z  Downloaded nvidia-cuda-cupti
+2026-07-23T16:56:39.9211464Z  Downloaded pandas
+2026-07-23T16:56:39.9351441Z  Downloaded scikit-learn
+2026-07-23T16:56:40.4187403Z  Downloaded numpy
+2026-07-23T16:56:40.7297882Z  Downloaded transformers
+2026-07-23T16:56:41.1669483Z  Downloaded faiss-cpu
+2026-07-23T16:56:42.4838028Z  Downloaded nvidia-nvjitlink
+2026-07-23T16:56:42.4865229Z  Downloaded scipy
+2026-07-23T16:56:42.9838515Z  Downloaded playwright
+2026-07-23T16:56:43.6517045Z  Downloaded nvidia-curand
+2026-07-23T16:56:43.6707870Z  Downloaded nvidia-nvshmem-cu13
+2026-07-23T16:56:45.0950637Z  Downloaded nvidia-cuda-nvrtc
+2026-07-23T16:56:47.2848949Z  Downloaded nvidia-cusparse
+2026-07-23T16:56:48.1972135Z  Downloaded nvidia-cusparselt-cu13
+2026-07-23T16:56:49.1745077Z  Downloaded triton
+2026-07-23T16:56:49.2420267Z  Downloaded nvidia-cusolver
+2026-07-23T16:56:49.3594312Z  Downloaded nvidia-nccl-cu13
+2026-07-23T16:56:49.4695890Z  Downloaded nvidia-cufft
+2026-07-23T16:56:52.2001785Z  Downloaded nvidia-cudnn-cu13
+2026-07-23T16:56:52.9046012Z  Downloaded nvidia-cublas
+2026-07-23T16:56:55.2817656Z  Downloaded torch
+2026-07-23T16:56:55.2822390Z Prepared 129 packages in 18.77s
+2026-07-23T16:57:06.8676793Z Installed 129 packages in 11.58s
+2026-07-23T16:57:06.8678452Z  + allure-pytest==2.16.0
+2026-07-23T16:57:06.8678962Z  + allure-python-commons==2.16.0
+2026-07-23T16:57:06.8679513Z  + annotated-doc==0.0.4
+2026-07-23T16:57:06.8680001Z  + annotated-types==0.7.0
+2026-07-23T16:57:06.8680491Z  + anyio==4.14.2
+2026-07-23T16:57:06.8680903Z  + attrs==26.1.0
+2026-07-23T16:57:06.8681319Z  + authlib==1.7.2
+2026-07-23T16:57:06.8681768Z  + axe-playwright-python==0.1.4
+2026-07-23T16:57:06.8682291Z  + bandit==1.7.10
+2026-07-23T16:57:06.8682724Z  + certifi==2026.7.22
+2026-07-23T16:57:06.8683159Z  + cffi==2.1.0
+2026-07-23T16:57:06.8683568Z  + chardet==7.4.3
+2026-07-23T16:57:06.8684031Z  + charset-normalizer==3.4.9
+2026-07-23T16:57:06.8684533Z  + click==8.4.2
+2026-07-23T16:57:06.8684952Z  + cloudpickle==3.1.2
+2026-07-23T16:57:06.8685446Z  + cryptography==49.0.0
+2026-07-23T16:57:06.8685932Z  + cuda-bindings==13.3.1
+2026-07-23T16:57:06.8686443Z  + cuda-pathfinder==1.6.0
+2026-07-23T16:57:06.8686974Z  + cuda-toolkit==13.0.3.0
+2026-07-23T16:57:06.8687642Z  + distro==1.9.0
+2026-07-23T16:57:06.8688055Z  + dparse==0.6.4
+2026-07-23T16:57:06.8688461Z  + faiss-cpu==1.13.1
+2026-07-23T16:57:06.8688912Z  + fastapi==0.139.2
+2026-07-23T16:57:06.8689281Z  + filelock==3.32.0
+2026-07-23T16:57:06.8689690Z  + fsspec==2026.6.0
+2026-07-23T16:57:06.8697925Z  + google-auth==2.56.2
+2026-07-23T16:57:06.8717953Z  + google-genai==2.8.0
+2026-07-23T16:57:06.8718497Z  + greenlet==3.1.1
+2026-07-23T16:57:06.8718913Z  + h11==0.16.0
+2026-07-23T16:57:06.8719339Z  + hf-xet==1.5.2
+2026-07-23T16:57:06.8719785Z  + httpcore==1.0.9
+2026-07-23T16:57:06.8720214Z  + httpx==0.28.1
+2026-07-23T16:57:06.8720653Z  + huggingface-hub==1.5.0
+2026-07-23T16:57:06.8721137Z  + idna==3.18
+2026-07-23T16:57:06.8721548Z  + iniconfig==2.3.0
+2026-07-23T16:57:06.8721972Z  + jinja2==3.1.6
+2026-07-23T16:57:06.8722396Z  + joblib==1.5.3
+2026-07-23T16:57:06.8722813Z  + joserfc==1.7.4
+2026-07-23T16:57:06.8723240Z  + jsonschema==4.24.0
+2026-07-23T16:57:06.8723704Z  + jsonschema-specifications==2025.9.1
+2026-07-23T16:57:06.8724173Z  + lighthouse==1.0.0
+2026-07-23T16:57:06.8724581Z  + lxml==6.1.1
+2026-07-23T16:57:06.8724929Z  + markdown-it-py==4.2.0
+2026-07-23T16:57:06.8725162Z  + markupsafe==3.0.3
+2026-07-23T16:57:06.8725378Z  + marshmallow==4.3.0
+2026-07-23T16:57:06.8725580Z  + mdurl==0.1.2
+2026-07-23T16:57:06.8725774Z  + mpmath==1.3.0
+2026-07-23T16:57:06.8725967Z  + networkx==3.6.1
+2026-07-23T16:57:06.8726159Z  + numpy==2.2.6
+2026-07-23T16:57:06.8726357Z  + nvidia-cublas==13.1.1.3
+2026-07-23T16:57:06.8726595Z  + nvidia-cuda-cupti==13.0.85
+2026-07-23T16:57:06.8726840Z  + nvidia-cuda-nvrtc==13.0.88
+2026-07-23T16:57:06.8727413Z  + nvidia-cuda-runtime==13.0.96
+2026-07-23T16:57:06.8727694Z  + nvidia-cudnn-cu13==9.20.0.48
+2026-07-23T16:57:06.8727945Z  + nvidia-cufft==12.0.0.61
+2026-07-23T16:57:06.8728201Z  + nvidia-cufile==1.15.1.6
+2026-07-23T16:57:06.8728792Z  + nvidia-curand==10.4.0.35
+2026-07-23T16:57:06.8729099Z  + nvidia-cusolver==12.0.4.66
+2026-07-23T16:57:06.8729410Z  + nvidia-cusparse==12.6.3.3
+2026-07-23T16:57:06.8729736Z  + nvidia-cusparselt-cu13==0.8.1
+2026-07-23T16:57:06.8730077Z  + nvidia-nccl-cu13==2.29.7
+2026-07-23T16:57:06.8730370Z  + nvidia-nvjitlink==13.3.33
+2026-07-23T16:57:06.8730729Z  + nvidia-nvshmem-cu13==3.4.5
+2026-07-23T16:57:06.8731096Z  + nvidia-nvtx==13.0.85
+2026-07-23T16:57:06.8731448Z  + ollama==0.5.1
+2026-07-23T16:57:06.8731749Z  + packaging==26.2
+2026-07-23T16:57:06.8732034Z  + pandas==2.2.3
+2026-07-23T16:57:06.8732332Z  + pillow==12.3.0
+2026-07-23T16:57:06.8732636Z  + playwright==1.49.1
+2026-07-23T16:57:06.8732927Z  + pluggy==1.6.0
+2026-07-23T16:57:06.8733208Z  + psutil==7.2.2
+2026-07-23T16:57:06.8733501Z  + py-cpuinfo==9.0.0
+2026-07-23T16:57:06.8733764Z  + pyasn1==0.6.4
+2026-07-23T16:57:06.8734061Z  + pyasn1-modules==0.4.2
+2026-07-23T16:57:06.8734357Z  + pycparser==3.0
+2026-07-23T16:57:06.8734615Z  + pydantic==2.9.2
+2026-07-23T16:57:06.8734938Z  + pydantic-core==2.23.4
+2026-07-23T16:57:06.8735253Z  + pyee==12.0.0
+2026-07-23T16:57:06.8735490Z  + pygments==2.20.0
+2026-07-23T16:57:06.8735833Z  + pynvml==11.4.1
+2026-07-23T16:57:06.8736255Z  + pypdf==6.13.3
+2026-07-23T16:57:06.8736498Z  + pytest==9.0.3
+2026-07-23T16:57:06.8736758Z  + pytest-base-url==2.1.0
+2026-07-23T16:57:06.8737059Z  + pytest-benchmark==4.0.0
+2026-07-23T16:57:06.8737784Z  + pytest-mock==3.14.0
+2026-07-23T16:57:06.8738078Z  + pytest-playwright==0.8.0
+2026-07-23T16:57:06.8738395Z  + python-dateutil==2.9.0.post0
+2026-07-23T16:57:06.8738729Z  + python-docx==1.1.2
+2026-07-23T16:57:06.8739342Z  + python-dotenv==1.2.2
+2026-07-23T16:57:06.8739656Z  + python-multipart==0.0.31
+2026-07-23T16:57:06.8739986Z  + python-slugify==8.0.4
+2026-07-23T16:57:06.8740318Z  + pytz==2026.2
+2026-07-23T16:57:06.8740596Z  + pyyaml==6.0.2
+2026-07-23T16:57:06.8740889Z  + referencing==0.37.0
+2026-07-23T16:57:06.8741187Z  + regex==2026.7.19
+2026-07-23T16:57:06.8741483Z  + reportlab==4.2.5
+2026-07-23T16:57:06.8741795Z  + requests==2.33.0
+2026-07-23T16:57:06.8742058Z  + rich==15.0.0
+2026-07-23T16:57:06.8742450Z  + rpds-py==2026.6.3
+2026-07-23T16:57:06.8742713Z  + ruamel-yaml==0.19.1
+2026-07-23T16:57:06.8743015Z  + safetensors==0.8.0
+2026-07-23T16:57:06.8743336Z  + safety==3.2.3
+2026-07-23T16:57:06.8743664Z  + safety-schemas==0.0.19
+2026-07-23T16:57:06.8744015Z  + scalene==1.5.33
+2026-07-23T16:57:06.8744366Z  + scikit-learn==1.6.1
+2026-07-23T16:57:06.8744658Z  + scipy==1.17.1
+2026-07-23T16:57:06.8744938Z  + setuptools==83.0.0
+2026-07-23T16:57:06.8745206Z  + shellingham==1.5.4
+2026-07-23T16:57:06.8745491Z  + six==1.17.0
+2026-07-23T16:57:06.8745693Z  + sniffio==1.3.1
+2026-07-23T16:57:06.8745942Z  + starlette==1.3.1
+2026-07-23T16:57:06.8746261Z  + stevedore==5.9.0
+2026-07-23T16:57:06.8746644Z  + sympy==1.14.0
+2026-07-23T16:57:06.8747444Z  + tenacity==9.1.4
+2026-07-23T16:57:06.8747695Z  + text-unidecode==1.3
+2026-07-23T16:57:06.8747926Z  + threadpoolctl==3.6.0
+2026-07-23T16:57:06.8748166Z  + tokenizers==0.22.2
+2026-07-23T16:57:06.8748374Z  + torch==2.13.0
+2026-07-23T16:57:06.8748568Z  + tqdm==4.69.0
+2026-07-23T16:57:06.8748766Z  + transformers==5.5.0
+2026-07-23T16:57:06.8748979Z  + triton==3.7.1
+2026-07-23T16:57:06.8749178Z  + typer==0.27.0
+2026-07-23T16:57:06.8749386Z  + typing-extensions==4.16.0
+2026-07-23T16:57:06.8749641Z  + typing-inspection==0.4.2
+2026-07-23T16:57:06.8749869Z  + tzdata==2026.3
+2026-07-23T16:57:06.8768661Z  + urllib3==2.7.0
+2026-07-23T16:57:06.8769017Z  + uvicorn==0.38.0
+2026-07-23T16:57:06.8769441Z  + websockets==16.1.1
+2026-07-23T16:57:06.8769751Z  + wheel==0.47.0
+2026-07-23T16:57:07.2747878Z Resolved 14 packages in 382ms
+2026-07-23T16:57:07.2945599Z Downloading black (1.8MiB)
+2026-07-23T16:57:07.2946481Z Downloading ruff (10.9MiB)
+2026-07-23T16:57:07.4496519Z  Downloaded ruff
+2026-07-23T16:57:07.4611840Z  Downloaded black
+2026-07-23T16:57:08.1746030Z Prepared 8 packages in 899ms
+2026-07-23T16:57:08.6330697Z Installed 8 packages in 458ms
+2026-07-23T16:57:08.6331650Z  + black==26.5.1
+2026-07-23T16:57:08.6332376Z  + coverage==7.15.2
+2026-07-23T16:57:08.6332919Z  + mypy-extensions==1.1.0
+2026-07-23T16:57:08.6333452Z  + pathspec==1.1.1
+2026-07-23T16:57:08.6334042Z  + platformdirs==4.11.0
+2026-07-23T16:57:08.6334582Z  + pytest-cov==7.1.0
+2026-07-23T16:57:08.6335095Z  + pytokens==0.4.1
+2026-07-23T16:57:08.6335537Z  + ruff==0.15.22
+2026-07-23T16:57:08.6394677Z ##[group]Run source .venv/bin/activate
+2026-07-23T16:57:08.6395019Z [36;1msource .venv/bin/activate[0m
+2026-07-23T16:57:08.6395274Z [36;1mruff check .[0m
+2026-07-23T16:57:08.6395497Z [36;1mblack --check .[0m
+2026-07-23T16:57:08.6455174Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:57:08.6455438Z env:
+2026-07-23T16:57:08.6455639Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:08.6455867Z   NODE_VERSION: 22
+2026-07-23T16:57:08.6456087Z   COVERAGE_MIN: 38
+2026-07-23T16:57:08.6456301Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:08.6456545Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:08.6456810Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:57:08.6457409Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:57:08.6457690Z   UV_LINK_MODE: copy
+2026-07-23T16:57:08.6457967Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:57:08.6458290Z ##[endgroup]
+2026-07-23T16:57:08.6824354Z All checks passed!
+2026-07-23T16:57:09.8284247Z All done! ✨ 🍰 ✨
+2026-07-23T16:57:09.8284871Z 42 files would be left unchanged.
+2026-07-23T16:57:09.8580687Z ##[group]Run source .venv/bin/activate
+2026-07-23T16:57:09.8581026Z [36;1msource .venv/bin/activate[0m
+2026-07-23T16:57:09.8581307Z [36;1mmkdir -p reports[0m
+2026-07-23T16:57:09.8581558Z [36;1mpytest tests/unit \[0m
+2026-07-23T16:57:09.8581844Z [36;1m  --junitxml=reports/junit-python.xml \[0m
+2026-07-23T16:57:09.8582146Z [36;1m  --cov=. \[0m
+2026-07-23T16:57:09.8582380Z [36;1m  --cov-config=.coveragerc \[0m
+2026-07-23T16:57:09.8582726Z [36;1m  --cov-report=xml:reports/coverage-python.xml \[0m
+2026-07-23T16:57:09.8583112Z [36;1m  --cov-report=html:reports/htmlcov-python \[0m
+2026-07-23T16:57:09.8583426Z [36;1m  --cov-fail-under=38 \[0m
+2026-07-23T16:57:09.8583671Z [36;1m  -q[0m
+2026-07-23T16:57:09.8642630Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:57:09.8642881Z env:
+2026-07-23T16:57:09.8643072Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:09.8643311Z   NODE_VERSION: 22
+2026-07-23T16:57:09.8643520Z   COVERAGE_MIN: 38
+2026-07-23T16:57:09.8643743Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:09.8643983Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:09.8644240Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:57:09.8644507Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:57:09.8644762Z   UV_LINK_MODE: copy
+2026-07-23T16:57:09.8645025Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:57:09.8645338Z ##[endgroup]
+2026-07-23T16:57:14.0327652Z ................................                                         [100%]
+2026-07-23T16:57:14.0328766Z =============================== warnings summary ===============================
+2026-07-23T16:57:14.0329847Z .venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+2026-07-23T16:57:14.0332905Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+2026-07-23T16:57:14.0335352Z     from starlette.testclient import TestClient as TestClient  # noqa
+2026-07-23T16:57:14.0335840Z 
+2026-07-23T16:57:14.0336155Z .venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:132
+2026-07-23T16:57:14.0338260Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in CodeReviewRequest has conflict with protected namespace "model_".
+2026-07-23T16:57:14.0339654Z   
+2026-07-23T16:57:14.0340118Z   You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-07-23T16:57:14.0340705Z     warnings.warn(
+2026-07-23T16:57:14.0340871Z 
+2026-07-23T16:57:14.0341117Z .venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:132
+2026-07-23T16:57:14.0342670Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in Body_analyze_analyze_post has conflict with protected namespace "model_".
+2026-07-23T16:57:14.0344073Z   
+2026-07-23T16:57:14.0344525Z   You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-07-23T16:57:14.0345099Z     warnings.warn(
+2026-07-23T16:57:14.0345260Z 
+2026-07-23T16:57:14.0345535Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-07-23T16:57:14.0346134Z ================================ tests coverage ================================
+2026-07-23T16:57:14.0346701Z _______________ coverage: platform linux, python 3.11.15-final-0 _______________
+2026-07-23T16:57:14.0347210Z 
+2026-07-23T16:57:14.0347382Z Coverage HTML written to dir reports/htmlcov-python
+2026-07-23T16:57:14.0347871Z Coverage XML written to file reports/coverage-python.xml
+2026-07-23T16:57:14.0348401Z Required test coverage of 38% reached. Total coverage: 48.19%
+2026-07-23T16:57:14.0349109Z 32 passed, 3 warnings in 2.10s
+2026-07-23T16:57:14.1393291Z ##[group]Run source .venv/bin/activate
+2026-07-23T16:57:14.1393655Z [36;1msource .venv/bin/activate[0m
+2026-07-23T16:57:14.1393965Z [36;1mpytest tests/integration -m "not e2e" -q[0m
+2026-07-23T16:57:14.1451829Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:57:14.1452078Z env:
+2026-07-23T16:57:14.1452268Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:14.1452487Z   NODE_VERSION: 22
+2026-07-23T16:57:14.1452684Z   COVERAGE_MIN: 38
+2026-07-23T16:57:14.1452880Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:14.1453103Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:14.1453374Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:57:14.1453630Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:57:14.1453879Z   UV_LINK_MODE: copy
+2026-07-23T16:57:14.1454140Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:57:14.1454443Z ##[endgroup]
+2026-07-23T16:57:15.6997719Z .........                                                                [100%]
+2026-07-23T16:57:15.6998391Z =============================== warnings summary ===============================
+2026-07-23T16:57:15.6998887Z tests/integration/test_scenario_matrix.py:234
+2026-07-23T16:57:15.7000702Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:234: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7002437Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7002615Z 
+2026-07-23T16:57:15.7002784Z tests/integration/test_scenario_matrix.py:507
+2026-07-23T16:57:15.7004535Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:507: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7006249Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7006424Z 
+2026-07-23T16:57:15.7006574Z tests/integration/test_scenario_matrix.py:513
+2026-07-23T16:57:15.7008561Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:513: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7010282Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7010444Z 
+2026-07-23T16:57:15.7010597Z tests/integration/test_scenario_matrix.py:524
+2026-07-23T16:57:15.7012008Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:524: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7013244Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7013382Z 
+2026-07-23T16:57:15.7013505Z tests/integration/test_scenario_matrix.py:555
+2026-07-23T16:57:15.7014741Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:555: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7015945Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7016072Z 
+2026-07-23T16:57:15.7016184Z tests/integration/test_scenario_matrix.py:590
+2026-07-23T16:57:15.7017645Z   /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/tests/integration/test_scenario_matrix.py:590: PytestUnknownMarkWarning: Unknown pytest.mark.e2e - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+2026-07-23T16:57:15.7019235Z     @pytest.mark.e2e
+2026-07-23T16:57:15.7019556Z 
+2026-07-23T16:57:15.7019781Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-07-23T16:57:15.7020195Z 9 passed, 12 deselected, 6 warnings in 0.36s
+2026-07-23T16:57:15.7549210Z ##[group]Run source .venv/bin/activate
+2026-07-23T16:57:15.7549541Z [36;1msource .venv/bin/activate[0m
+2026-07-23T16:57:15.7549834Z [36;1mpython scripts/ai_platform.py report[0m
+2026-07-23T16:57:15.7607756Z shell: /usr/bin/bash -e {0}
+2026-07-23T16:57:15.7608002Z env:
+2026-07-23T16:57:15.7608194Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:15.7608416Z   NODE_VERSION: 22
+2026-07-23T16:57:15.7608620Z   COVERAGE_MIN: 38
+2026-07-23T16:57:15.7608825Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:15.7609054Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:15.7609317Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:57:15.7609577Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:57:15.7609831Z   UV_LINK_MODE: copy
+2026-07-23T16:57:15.7610103Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:57:15.7610440Z   REPORT_OUTPUT_DIR: reports
+2026-07-23T16:57:15.7610685Z ##[endgroup]
+2026-07-23T16:57:17.9303938Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:57:17.9305346Z ##[group]Run actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+2026-07-23T16:57:17.9305737Z with:
+2026-07-23T16:57:17.9305941Z   name: backend-python-reports
+2026-07-23T16:57:17.9306403Z   path: reports/coverage-python.xml
+reports/junit-python.xml
+reports/htmlcov-python
+reports/ai-*
+
+2026-07-23T16:57:17.9306885Z   retention-days: 14
+2026-07-23T16:57:17.9307385Z   if-no-files-found: warn
+2026-07-23T16:57:17.9307636Z   compression-level: 6
+2026-07-23T16:57:17.9307854Z   overwrite: false
+2026-07-23T16:57:17.9308080Z   include-hidden-files: false
+2026-07-23T16:57:17.9308312Z env:
+2026-07-23T16:57:17.9308533Z   PYTHON_VERSION: 3.11
+2026-07-23T16:57:17.9308750Z   NODE_VERSION: 22
+2026-07-23T16:57:17.9308947Z   COVERAGE_MIN: 38
+2026-07-23T16:57:17.9309146Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:57:17.9309371Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:57:17.9309622Z   PYTHONDONTWRITEBYTECODE: 1
+2026-07-23T16:57:17.9309886Z   PIP_DISABLE_PIP_VERSION_CHECK: 1
+2026-07-23T16:57:17.9310140Z   UV_LINK_MODE: copy
+2026-07-23T16:57:17.9310398Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+2026-07-23T16:57:17.9310699Z ##[endgroup]
+2026-07-23T16:57:18.0963191Z (node:2438) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:57:18.0964533Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:57:18.1142435Z With the provided path, there will be 21 files uploaded
+2026-07-23T16:57:18.1143415Z Artifact name is valid!
+2026-07-23T16:57:18.1143864Z Root directory input is valid!
+2026-07-23T16:57:18.4045848Z Beginning upload of artifact content to blob storage
+2026-07-23T16:57:18.4657833Z (node:2438) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-23T16:57:18.8306094Z Uploaded bytes 153908
+2026-07-23T16:57:18.8933294Z Finished uploading artifact content to blob storage!
+2026-07-23T16:57:18.8934310Z SHA256 hash of uploaded artifact zip is 9035164252506a23f376286ac3946c8fd263d779a79895d5320c90f06de5b311
+2026-07-23T16:57:18.8935935Z Finalizing artifact upload
+2026-07-23T16:57:19.1069740Z Artifact backend-python-reports.zip successfully finalized. Artifact ID 8571814170
+2026-07-23T16:57:19.1071371Z Artifact backend-python-reports has been successfully uploaded! Final size is 153908 bytes. Artifact ID is 8571814170
+2026-07-23T16:57:19.1073587Z Artifact download URL: https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/29984562766/artifacts/8571814170
+2026-07-23T16:57:19.1255311Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:57:19.1256555Z Post job cleanup.
+2026-07-23T16:57:19.2454589Z Cache hit occurred on key setup-uv-1-x86_64-unknown-linux-gnu-3.12.3-460843b6d6e4a285edc7789ade47927a3885971e79e9b8a7f06d3ff89cf85920, not saving cache.
+2026-07-23T16:57:19.2456640Z (node:2450) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-23T16:57:19.2458212Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-23T16:57:19.2579659Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:57:19.2580933Z Post job cleanup.
+2026-07-23T16:57:19.3438920Z [command]/usr/bin/git version
+2026-07-23T16:57:19.3490822Z git version 2.54.0
+2026-07-23T16:57:19.3539990Z Temporarily overriding HOME='/home/runner/work/_temp/f18cc9f1-45b5-48e9-8db2-857d327a80f4' before making global git config changes
+2026-07-23T16:57:19.3541530Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:57:19.3548414Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:57:19.3600680Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:57:19.3650725Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:57:19.4012002Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:57:19.4035131Z http.https://github.com/.extraheader
+2026-07-23T16:57:19.4046875Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:57:19.4092892Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:57:19.4345839Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:57:19.4386534Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:57:19.4760010Z Cleaning up orphan processes
+2026-07-23T16:57:19.5134375Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08, astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- 8_Detect Changed Paths.txt ---
+﻿2026-07-23T16:56:18.5274877Z Current runner version: '2.336.0'
+2026-07-23T16:56:18.5296931Z ##[group]Runner Image Provisioner
+2026-07-23T16:56:18.5297606Z Hosted Compute Agent
+2026-07-23T16:56:18.5298128Z Version: 20260707.563
+2026-07-23T16:56:18.5298639Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-23T16:56:18.5299238Z Build Date: 2026-07-07T19:33:50Z
+2026-07-23T16:56:18.5299827Z Worker ID: {4ac9e91c-546b-4c4c-95e8-e93b3313e7a6}
+2026-07-23T16:56:18.5300405Z Azure Region: northcentralus
+2026-07-23T16:56:18.5300872Z ##[endgroup]
+2026-07-23T16:56:18.5301989Z ##[group]Operating System
+2026-07-23T16:56:18.5302509Z Ubuntu
+2026-07-23T16:56:18.5302969Z 24.04.4
+2026-07-23T16:56:18.5303400Z LTS
+2026-07-23T16:56:18.5303812Z ##[endgroup]
+2026-07-23T16:56:18.5304446Z ##[group]Runner Image
+2026-07-23T16:56:18.5304955Z Image: ubuntu-24.04
+2026-07-23T16:56:18.5305397Z Version: 20260714.240.1
+2026-07-23T16:56:18.5306461Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-23T16:56:18.5307681Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+2026-07-23T16:56:18.5308489Z ##[endgroup]
+2026-07-23T16:56:18.5309493Z ##[group]GITHUB_TOKEN Permissions
+2026-07-23T16:56:18.5311023Z Contents: read
+2026-07-23T16:56:18.5311485Z Metadata: read
+2026-07-23T16:56:18.5312077Z PullRequests: read
+2026-07-23T16:56:18.5312534Z ##[endgroup]
+2026-07-23T16:56:18.5314556Z Secret source: Actions
+2026-07-23T16:56:18.5315427Z Prepare workflow directory
+2026-07-23T16:56:18.5626182Z Prepare all required actions
+2026-07-23T16:56:18.5661627Z Getting action download info
+2026-07-23T16:56:18.8610121Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-23T16:56:19.2049939Z Download action repository 'dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050' (SHA:6852f92c20ea7fd3b0c25de3b5112db3a98da050)
+2026-07-23T16:56:19.5044562Z Complete job name: Detect Changed Paths
+2026-07-23T16:56:19.5705238Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:19.5712854Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-07-23T16:56:19.5713542Z with:
+2026-07-23T16:56:19.5713973Z   repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:19.5718251Z   token: ***
+2026-07-23T16:56:19.5718629Z   ssh-strict: true
+2026-07-23T16:56:19.5718982Z   ssh-user: git
+2026-07-23T16:56:19.5719433Z   persist-credentials: true
+2026-07-23T16:56:19.5719833Z   clean: true
+2026-07-23T16:56:19.5720185Z   sparse-checkout-cone-mode: true
+2026-07-23T16:56:19.5720600Z   fetch-depth: 1
+2026-07-23T16:56:19.5720939Z   fetch-tags: false
+2026-07-23T16:56:19.5721290Z   show-progress: true
+2026-07-23T16:56:19.5721740Z   lfs: false
+2026-07-23T16:56:19.5722089Z   submodules: false
+2026-07-23T16:56:19.5722453Z   set-safe-directory: true
+2026-07-23T16:56:19.5722842Z   allow-unsafe-pr-checkout: false
+2026-07-23T16:56:19.5723543Z env:
+2026-07-23T16:56:19.5723866Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:19.5724428Z   NODE_VERSION: 22
+2026-07-23T16:56:19.5724774Z   COVERAGE_MIN: 38
+2026-07-23T16:56:19.5725120Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:19.5725502Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:19.5725887Z ##[endgroup]
+2026-07-23T16:56:19.6587770Z Syncing repository: Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:19.6589986Z ##[group]Getting Git version info
+2026-07-23T16:56:19.6590800Z Working directory is '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:19.6592127Z [command]/usr/bin/git version
+2026-07-23T16:56:19.6597197Z git version 2.54.0
+2026-07-23T16:56:19.6614450Z ##[endgroup]
+2026-07-23T16:56:19.6626701Z Temporarily overriding HOME='/home/runner/work/_temp/701569cb-6b69-4d5c-8382-91af6b5c7d0f' before making global git config changes
+2026-07-23T16:56:19.6632334Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:19.6633734Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:19.6665107Z Deleting the contents of '/home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-'
+2026-07-23T16:56:19.6668030Z ##[group]Initializing the repository
+2026-07-23T16:56:19.6672586Z [command]/usr/bin/git init /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:19.6736040Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-23T16:56:19.6737326Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-23T16:56:19.6738659Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-23T16:56:19.6739687Z hint: call:
+2026-07-23T16:56:19.6740156Z hint:
+2026-07-23T16:56:19.6740733Z hint: 	git config --global init.defaultBranch <name>
+2026-07-23T16:56:19.6741357Z hint:
+2026-07-23T16:56:19.6741935Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-23T16:56:19.6742793Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-23T16:56:19.6743484Z hint:
+2026-07-23T16:56:19.6743969Z hint: 	git branch -m <name>
+2026-07-23T16:56:19.6745464Z hint:
+2026-07-23T16:56:19.6746147Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-23T16:56:19.6747421Z Initialized empty Git repository in /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-/.git/
+2026-07-23T16:56:19.6749568Z [command]/usr/bin/git remote add origin https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:19.6775191Z ##[endgroup]
+2026-07-23T16:56:19.6776070Z ##[group]Disabling automatic garbage collection
+2026-07-23T16:56:19.6778615Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-23T16:56:19.6805120Z ##[endgroup]
+2026-07-23T16:56:19.6805708Z ##[group]Setting up auth
+2026-07-23T16:56:19.6811382Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:19.6840929Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:19.7113667Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:19.7149573Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:19.7366687Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:19.7401083Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:19.7596442Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-23T16:56:19.7631457Z ##[endgroup]
+2026-07-23T16:56:19.7632568Z ##[group]Fetching the repository
+2026-07-23T16:56:19.7640799Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6dbccbbe8ce224e4203fa07f99be1ee5163e916f:refs/remotes/pull/24/merge
+2026-07-23T16:56:20.2696542Z From https://github.com/Trigyn-Intern/AI-recruiter-screening-system-
+2026-07-23T16:56:20.2698498Z  * [new ref]         6dbccbbe8ce224e4203fa07f99be1ee5163e916f -> pull/24/merge
+2026-07-23T16:56:20.2719473Z ##[endgroup]
+2026-07-23T16:56:20.2720314Z ##[group]Determining the checkout info
+2026-07-23T16:56:20.2721618Z ##[endgroup]
+2026-07-23T16:56:20.2726409Z [command]/usr/bin/git sparse-checkout disable
+2026-07-23T16:56:20.2767239Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-23T16:56:20.2793312Z ##[group]Checking out the ref
+2026-07-23T16:56:20.2795680Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/24/merge
+2026-07-23T16:56:20.3045590Z Note: switching to 'refs/remotes/pull/24/merge'.
+2026-07-23T16:56:20.3046618Z 
+2026-07-23T16:56:20.3047342Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-23T16:56:20.3049156Z changes and commit them, and you can discard any commits you make in this
+2026-07-23T16:56:20.3050642Z state without impacting any branches by switching back to a branch.
+2026-07-23T16:56:20.3051407Z 
+2026-07-23T16:56:20.3051990Z If you want to create a new branch to retain commits you create, you may
+2026-07-23T16:56:20.3053500Z do so (now or later) by using -c with the switch command. Example:
+2026-07-23T16:56:20.3054320Z 
+2026-07-23T16:56:20.3054637Z   git switch -c <new-branch-name>
+2026-07-23T16:56:20.3055230Z 
+2026-07-23T16:56:20.3055552Z Or undo this operation with:
+2026-07-23T16:56:20.3056189Z 
+2026-07-23T16:56:20.3056622Z   git switch -
+2026-07-23T16:56:20.3057140Z 
+2026-07-23T16:56:20.3057870Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-23T16:56:20.3058862Z 
+2026-07-23T16:56:20.3059998Z HEAD is now at 6dbccbb Merge a031a521f21508085ad7750ba068a06eadee0075 into 04017aa1b47a3db0e4e7040eea03cc77090e8450
+2026-07-23T16:56:20.3063898Z ##[endgroup]
+2026-07-23T16:56:20.3090161Z [command]/usr/bin/git log -1 --format=%H
+2026-07-23T16:56:20.3113997Z 6dbccbbe8ce224e4203fa07f99be1ee5163e916f
+2026-07-23T16:56:20.3378510Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:20.3383090Z ##[group]Run dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050
+2026-07-23T16:56:20.3384505Z with:
+2026-07-23T16:56:20.3386813Z   filters: backend:
+  - "api.py"
+  - "backend/**"
+  - "requirements.txt"
+  - "tests/**"
+  - "pytest.ini"
+  - "conftest.py"
+frontend:
+  - "frontend/**"
+  - "frontend-test/**"
+docs:
+  - "docs/**"
+  - "README.md"
+  - "AGENTS.md"
+
+2026-07-23T16:56:20.3396027Z   token: ***
+2026-07-23T16:56:20.3396745Z   list-files: none
+2026-07-23T16:56:20.3397503Z   initial-fetch-depth: 100
+2026-07-23T16:56:20.3398351Z   predicate-quantifier: some
+2026-07-23T16:56:20.3399183Z env:
+2026-07-23T16:56:20.3399896Z   PYTHON_VERSION: 3.11
+2026-07-23T16:56:20.3400639Z   NODE_VERSION: 22
+2026-07-23T16:56:20.3401338Z   COVERAGE_MIN: 38
+2026-07-23T16:56:20.3402051Z   DEPCHECK_FAIL_CVSS: 7
+2026-07-23T16:56:20.3402822Z   ARTIFACT_RETENTION_DAYS: 14
+2026-07-23T16:56:20.3403612Z ##[endgroup]
+2026-07-23T16:56:20.4073687Z ##[group]Fetching list of changed files for PR#24 from Github API
+2026-07-23T16:56:20.4078876Z Invoking listFiles(pull_number: 24, per_page: 100)
+2026-07-23T16:56:20.8296907Z Received 100 items
+2026-07-23T16:56:20.8298120Z [added] .ai/AGENTS.md
+2026-07-23T16:56:20.8299005Z [added] .ai/README.md
+2026-07-23T16:56:20.8360111Z [added] .ai/agents/developer-agent.md
+2026-07-23T16:56:20.8361666Z [added] .ai/agents/documentation-agent.md
+2026-07-23T16:56:20.8363111Z [added] .ai/agents/release-agent.md
+2026-07-23T16:56:20.8364577Z [added] .ai/agents/requirement-agent.md
+2026-07-23T16:56:20.8365665Z [added] .ai/agents/review-agent.md
+2026-07-23T16:56:20.8366581Z [added] .ai/agents/security-agent.md
+2026-07-23T16:56:20.8367559Z [added] .ai/agents/testing-agent.md
+2026-07-23T16:56:20.8368520Z [added] .ai/analysis/architecture-analysis.md
+2026-07-23T16:56:20.8369534Z [added] .ai/analysis/code-complexity.md
+2026-07-23T16:56:20.8370482Z [added] .ai/analysis/cost-analysis.md
+2026-07-23T16:56:20.8371454Z [added] .ai/analysis/dependency-analysis.md
+2026-07-23T16:56:20.8372442Z [added] .ai/analysis/duplicate-code.md
+2026-07-23T16:56:20.8373737Z [added] .ai/analysis/migration-analysis.md
+2026-07-23T16:56:20.8375687Z [added] .ai/analysis/performance-analysis.md
+2026-07-23T16:56:20.8376931Z [added] .ai/analysis/risk-analysis.md
+2026-07-23T16:56:20.8377870Z [added] .ai/analysis/technical-debt.md
+2026-07-23T16:56:20.8378848Z [added] .ai/automation/automation-config.md
+2026-07-23T16:56:20.8379960Z [added] .ai/automation/branch-policy.md
+2026-07-23T16:56:20.8381074Z [added] .ai/automation/ci-cd-automation.md
+2026-07-23T16:56:20.8382091Z [added] .ai/automation/deployment-policy.md
+2026-07-23T16:56:20.8383115Z [added] .ai/automation/documentation-sync.md
+2026-07-23T16:56:20.8384268Z [added] .ai/automation/git-hooks.md
+2026-07-23T16:56:20.8385193Z [added] .ai/automation/github-actions.md
+2026-07-23T16:56:20.8386155Z [added] .ai/automation/mcp-integration.md
+2026-07-23T16:56:20.8387182Z [added] .ai/automation/notification-engine.md
+2026-07-23T16:56:20.8388234Z [added] .ai/automation/pre-commit-automation.md
+2026-07-23T16:56:20.8389321Z [added] .ai/automation/pre-push-automation.md
+2026-07-23T16:56:20.8390468Z [added] .ai/automation/pull-request-automation.md
+2026-07-23T16:56:20.8391530Z [added] .ai/automation/quality-gates.md
+2026-07-23T16:56:20.8392766Z [added] .ai/automation/release-automation.md
+2026-07-23T16:56:20.8394424Z [added] .ai/automation/repository-monitor.md
+2026-07-23T16:56:20.8395947Z [added] .ai/automation/rollback-strategy.md
+2026-07-23T16:56:20.8397168Z [added] .ai/checklists/architecture.md
+2026-07-23T16:56:20.8398096Z [added] .ai/checklists/coding.md
+2026-07-23T16:56:20.8398973Z [added] .ai/checklists/documentation.md
+2026-07-23T16:56:20.8400155Z [added] .ai/checklists/security.md
+2026-07-23T16:56:20.8401032Z [added] .ai/checklists/testing.md
+2026-07-23T16:56:20.8401977Z [added] .ai/decision-tree/agent-orchestration.md
+2026-07-23T16:56:20.8403041Z [added] .ai/decision-tree/agent-selection.md
+2026-07-23T16:56:20.8404054Z [added] .ai/decision-tree/context-selection.md
+2026-07-23T16:56:20.8405301Z [added] .ai/decision-tree/execution-order.md
+2026-07-23T16:56:20.8406341Z [added] .ai/decision-tree/failure-handling.md
+2026-07-23T16:56:20.8407369Z [added] .ai/decision-tree/orchestrator.md
+2026-07-23T16:56:20.8408398Z [added] .ai/decision-tree/priority-selection.md
+2026-07-23T16:56:20.8409419Z [added] .ai/decision-tree/risk-matrix.md
+2026-07-23T16:56:20.8410385Z [added] .ai/decision-tree/routing-rules.md
+2026-07-23T16:56:20.8411380Z [added] .ai/decision-tree/skill-selection.md
+2026-07-23T16:56:20.8412424Z [added] .ai/decision-tree/technology-selection.md
+2026-07-23T16:56:20.8413506Z [added] .ai/decision-tree/workflow-selection.md
+2026-07-23T16:56:20.8414703Z [added] .ai/engine/agent-selector.md
+2026-07-23T16:56:20.8415625Z [added] .ai/engine/approval-engine.md
+2026-07-23T16:56:20.8416547Z [added] .ai/engine/audit-engine.md
+2026-07-23T16:56:20.8417469Z [added] .ai/engine/context-builder.md
+2026-07-23T16:56:20.8418413Z [added] .ai/engine/execution-manager.md
+2026-07-23T16:56:20.8419372Z [added] .ai/engine/execution-summary.md
+2026-07-23T16:56:20.8420332Z [added] .ai/engine/feedback-engine.md
+2026-07-23T16:56:20.8421261Z [added] .ai/engine/task-classifier.md
+2026-07-23T16:56:20.8422202Z [added] .ai/engine/validation-engine.md
+2026-07-23T16:56:20.8423161Z [added] .ai/engine/workflow-selector.md
+2026-07-23T16:56:20.8424251Z [added] .ai/execution/claude-executor.md
+2026-07-23T16:56:20.8425238Z [added] .ai/execution/codex-executor.md
+2026-07-23T16:56:20.8426214Z [added] .ai/execution/context-loader.md
+2026-07-23T16:56:20.8427155Z [added] .ai/execution/execute.md
+2026-07-23T16:56:20.8428050Z [added] .ai/execution/knowledge-loader.md
+2026-07-23T16:56:20.8429030Z [added] .ai/execution/prompt-builder.md
+2026-07-23T16:56:20.8429992Z [added] .ai/execution/report-generator.md
+2026-07-23T16:56:20.8430949Z [added] .ai/execution/skill-loader.md
+2026-07-23T16:56:20.8431874Z [added] .ai/execution/template-loader.md
+2026-07-23T16:56:20.8432865Z [added] .ai/execution/workflow-engine.md
+2026-07-23T16:56:20.8433901Z [added] .ai/knowledge/architecture-principles.md
+2026-07-23T16:56:20.8435187Z [added] .ai/knowledge/coding-standards.md
+2026-07-23T16:56:20.8436225Z [added] .ai/knowledge/documentation-guidelines.md
+2026-07-23T16:56:20.8437345Z [added] .ai/knowledge/security-test-scenarios.md
+2026-07-23T16:56:20.8438397Z [added] .ai/knowledge/testing-guidelines.md
+2026-07-23T16:56:20.8439388Z [added] .ai/learning/best-practices.md
+2026-07-23T16:56:20.8440322Z [added] .ai/learning/coding-patterns.md
+2026-07-23T16:56:20.8441244Z [added] .ai/learning/common-bugs.md
+2026-07-23T16:56:20.8442206Z [added] .ai/learning/decision-history.md
+2026-07-23T16:56:20.8443183Z [added] .ai/learning/lessons-learned.md
+2026-07-23T16:56:20.8444268Z [added] .ai/learning/project-history.md
+2026-07-23T16:56:20.8445229Z [added] .ai/platform/approval-engine.md
+2026-07-23T16:56:20.8446150Z [added] .ai/platform/audit.md
+2026-07-23T16:56:20.8447010Z [added] .ai/platform/context-engine.md
+2026-07-23T16:56:20.8447955Z [added] .ai/platform/execution-engine.md
+2026-07-23T16:56:20.8448889Z [added] .ai/platform/governance.md
+2026-07-23T16:56:20.8449826Z [added] .ai/platform/memory-management.md
+2026-07-23T16:56:20.8450855Z [added] .ai/platform/multi-agent-coordinator.md
+2026-07-23T16:56:20.8451885Z [added] .ai/platform/planning-engine.md
+2026-07-23T16:56:20.8452810Z [added] .ai/project-config.yaml
+2026-07-23T16:56:20.8453661Z [added] .ai/prompts/bug-analysis.md
+2026-07-23T16:56:20.8454637Z [added] .ai/prompts/generate-tests.md
+2026-07-23T16:56:20.8455597Z [added] .ai/prompts/requirement-analysis.md
+2026-07-23T16:56:20.8456593Z [added] .ai/prompts/root-cause-analysis.md
+2026-07-23T16:56:20.8457719Z [added] .ai/skills/architecture.skill.md
+2026-07-23T16:56:20.8458691Z [added] .ai/skills/code-review.skill.md
+2026-07-23T16:56:20.8459664Z [added] .ai/skills/coding-standards.skill.md
+2026-07-23T16:56:20.8460648Z [added] .ai/skills/documentation.skill.md
+2026-07-23T16:56:20.8461592Z [added] .ai/skills/security.skill.md
+2026-07-23T16:56:21.3505212Z Received 74 items
+2026-07-23T16:56:21.3505688Z [added] .ai/skills/unit-testing.skill.md
+2026-07-23T16:56:21.3506134Z [added] .ai/temp/final_prompt.md
+2026-07-23T16:56:21.3506518Z [added] .ai/templates/code-review-template.md
+2026-07-23T16:56:21.3506939Z [added] .ai/templates/documentation-template.md
+2026-07-23T16:56:21.3507389Z [added] .ai/templates/security-review-template.md
+2026-07-23T16:56:21.3507804Z [added] .ai/templates/test-report-template.md
+2026-07-23T16:56:21.3508127Z [added] .ai/workflows/bug-fix.workflow.md
+2026-07-23T16:56:21.3508378Z [added] .ai/workflows/documentation.workflow.md
+2026-07-23T16:56:21.3508668Z [added] .ai/workflows/feature-development.workflow.md
+2026-07-23T16:56:21.3508948Z [added] .ai/workflows/hotfix.workflow.md
+2026-07-23T16:56:21.3509189Z [added] .ai/workflows/refactoring.workflow.md
+2026-07-23T16:56:21.3509432Z [added] .ai/workflows/release.workflow.md
+2026-07-23T16:56:21.3509660Z [modified] .code-review/invoke.txt
+2026-07-23T16:56:21.3509923Z [modified] .code-review/last-changed-files.txt
+2026-07-23T16:56:21.3510189Z [added] .coverage
+2026-07-23T16:56:21.3510361Z [added] .coveragerc
+2026-07-23T16:56:21.3510547Z [modified] .github/workflows/ci.yml
+2026-07-23T16:56:21.3510784Z [removed] .github/workflows/lighthouse.yml
+2026-07-23T16:56:21.3511029Z [removed] .github/workflows/perf.yml
+2026-07-23T16:56:21.3511307Z [modified] .gitignore
+2026-07-23T16:56:21.3511868Z [added] .requirements.sha
+2026-07-23T16:56:21.3512596Z [added] AGENTS.md
+2026-07-23T16:56:21.3512865Z [modified] README.md
+2026-07-23T16:56:21.3513116Z [modified] api.py
+2026-07-23T16:56:21.3513399Z [modified] append_api.py
+2026-07-23T16:56:21.3513692Z [modified] backend.py
+2026-07-23T16:56:21.3514002Z [added] backend/eslint.config.mjs
+2026-07-23T16:56:21.3514554Z [modified] backend/package-lock.json
+2026-07-23T16:56:21.3516545Z [modified] backend/package.json
+2026-07-23T16:56:21.3517057Z [modified] backend/src/store/userStore.js
+2026-07-23T16:56:21.3517477Z [added] docs/AI_PLATFORM_OPERATIONS.md
+2026-07-23T16:56:21.3517878Z [modified] frontend-test/src/reportCatalog.js
+2026-07-23T16:56:21.3518666Z [modified] pytest.ini
+2026-07-23T16:56:21.3518955Z [modified] reports/report.html
+2026-07-23T16:56:21.3519308Z [modified] requirements.txt
+2026-07-23T16:56:21.3519642Z [added] scripts/ai_platform.py
+2026-07-23T16:56:21.3519998Z [added] scripts/ai_platform_core/__init__.py
+2026-07-23T16:56:21.3520414Z [added] scripts/ai_platform_core/cli.py
+2026-07-23T16:56:21.3520816Z [added] scripts/ai_platform_core/config.py
+2026-07-23T16:56:21.3521237Z [added] scripts/ai_platform_core/context.py
+2026-07-23T16:56:21.3521625Z [added] scripts/ai_platform_core/executor.py
+2026-07-23T16:56:21.3522017Z [added] scripts/ai_platform_core/history.py
+2026-07-23T16:56:21.3522447Z [added] scripts/ai_platform_core/post_checks.py
+2026-07-23T16:56:21.3524774Z [added] scripts/ai_platform_core/prompt_builder.py
+2026-07-23T16:56:21.3525285Z [added] scripts/ai_platform_core/reports.py
+2026-07-23T16:56:21.3525706Z [added] scripts/ai_platform_core/routing.py
+2026-07-23T16:56:21.3525945Z [added] scripts/ai_platform_core/summary.py
+2026-07-23T16:56:21.3526192Z [added] scripts/ai_platform_core/utils.py
+2026-07-23T16:56:21.3526418Z [added] scripts/ai_platform_core/wizard.py
+2026-07-23T16:56:21.3526689Z [added] scripts/ai_platform_core/wizard_defaults.py
+2026-07-23T16:56:21.3526941Z [modified] scripts/seed_perf_data.py
+2026-07-23T16:56:21.3527149Z [removed] skills.zip
+2026-07-23T16:56:21.3527386Z [modified] skills/code-review-policy/render_checklist.py
+2026-07-23T16:56:21.3527692Z [modified] skills/render_security_report.py
+2026-07-23T16:56:21.3527938Z [modified] test.py
+2026-07-23T16:56:21.3528126Z [modified] tests/conftest.py
+2026-07-23T16:56:21.3528609Z [modified] tests/data/generate_resumes.py
+2026-07-23T16:56:21.3528870Z [modified] tests/data/generate_sample.py
+2026-07-23T16:56:21.3529126Z [modified] tests/integration/conftest.py
+2026-07-23T16:56:21.3529411Z [modified] tests/integration/run_scenario_matrix.py
+2026-07-23T16:56:21.3529683Z [modified] tests/integration/test_scenario_matrix.py
+2026-07-23T16:56:21.3529991Z [modified] tests/performance/benchmarks/test_cache_hit_speed.py
+2026-07-23T16:56:21.3530326Z [modified] tests/performance/benchmarks/test_embedding_speed.py
+2026-07-23T16:56:21.3530687Z [modified] tests/performance/benchmarks/test_llm_only.py
+2026-07-23T16:56:21.3531023Z [modified] tests/performance/benchmarks/test_parse_speed.py
+2026-07-23T16:56:21.3531332Z [modified] tests/performance/conftest.py
+2026-07-23T16:56:21.3531625Z [modified] tests/performance/profiles/run_profiler.py
+2026-07-23T16:56:21.3531901Z [modified] tests/render_report.py
+2026-07-23T16:56:21.3532140Z [added] tests/unit/test_api.py
+2026-07-23T16:56:21.3532387Z [modified] tests/unit/test_extraction.py
+2026-07-23T16:56:21.3532628Z [modified] tests/unit/test_json.py
+2026-07-23T16:56:21.3532860Z [modified] tests/unit/test_ollama.py
+2026-07-23T16:56:21.3533094Z [removed] tests/unit/test_scoring.py
+2026-07-23T16:56:21.3533404Z [modified] tests/unit/test_validation.py
+2026-07-23T16:56:21.3536100Z ##[endgroup]
+2026-07-23T16:56:21.3536388Z Detected 174 changed files
+2026-07-23T16:56:21.3536733Z Results:
+2026-07-23T16:56:21.3537941Z ##[group]Filter backend = true
+2026-07-23T16:56:21.3538234Z Matching files:
+2026-07-23T16:56:21.3538488Z api.py [modified]
+2026-07-23T16:56:21.3538701Z backend/eslint.config.mjs [added]
+2026-07-23T16:56:21.3538926Z backend/package-lock.json [modified]
+2026-07-23T16:56:21.3539149Z backend/package.json [modified]
+2026-07-23T16:56:21.3539371Z backend/src/store/userStore.js [modified]
+2026-07-23T16:56:21.3539595Z pytest.ini [modified]
+2026-07-23T16:56:21.3539786Z requirements.txt [modified]
+2026-07-23T16:56:21.3539992Z tests/conftest.py [modified]
+2026-07-23T16:56:21.3540213Z tests/data/generate_resumes.py [modified]
+2026-07-23T16:56:21.3540444Z tests/data/generate_sample.py [modified]
+2026-07-23T16:56:21.3540683Z tests/integration/conftest.py [modified]
+2026-07-23T16:56:21.3540925Z tests/integration/run_scenario_matrix.py [modified]
+2026-07-23T16:56:21.3541204Z tests/integration/test_scenario_matrix.py [modified]
+2026-07-23T16:56:21.3541720Z tests/performance/benchmarks/test_cache_hit_speed.py [modified]
+2026-07-23T16:56:21.3542057Z tests/performance/benchmarks/test_embedding_speed.py [modified]
+2026-07-23T16:56:21.3542363Z tests/performance/benchmarks/test_llm_only.py [modified]
+2026-07-23T16:56:21.3542669Z tests/performance/benchmarks/test_parse_speed.py [modified]
+2026-07-23T16:56:21.3542943Z tests/performance/conftest.py [modified]
+2026-07-23T16:56:21.3543196Z tests/performance/profiles/run_profiler.py [modified]
+2026-07-23T16:56:21.3543449Z tests/render_report.py [modified]
+2026-07-23T16:56:21.3543667Z tests/unit/test_api.py [added]
+2026-07-23T16:56:21.3543907Z tests/unit/test_extraction.py [modified]
+2026-07-23T16:56:21.3544348Z tests/unit/test_json.py [modified]
+2026-07-23T16:56:21.3544694Z tests/unit/test_ollama.py [modified]
+2026-07-23T16:56:21.3545033Z tests/unit/test_scoring.py [deleted]
+2026-07-23T16:56:21.3545414Z tests/unit/test_validation.py [modified]
+2026-07-23T16:56:21.3546072Z ##[endgroup]
+2026-07-23T16:56:21.3546796Z ##[group]Filter frontend = true
+2026-07-23T16:56:21.3547265Z Matching files:
+2026-07-23T16:56:21.3547600Z frontend-test/src/reportCatalog.js [modified]
+2026-07-23T16:56:21.3548471Z ##[endgroup]
+2026-07-23T16:56:21.3549013Z ##[group]Filter docs = true
+2026-07-23T16:56:21.3549370Z Matching files:
+2026-07-23T16:56:21.3549698Z AGENTS.md [added]
+2026-07-23T16:56:21.3549974Z README.md [modified]
+2026-07-23T16:56:21.3553950Z docs/AI_PLATFORM_OPERATIONS.md [added]
+2026-07-23T16:56:21.3554681Z ##[endgroup]
+2026-07-23T16:56:21.3555004Z Changes output set to ["backend","frontend","docs"]
+2026-07-23T16:56:21.3764438Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-23T16:56:21.3765450Z Post job cleanup.
+2026-07-23T16:56:21.4497283Z [command]/usr/bin/git version
+2026-07-23T16:56:21.4563258Z git version 2.54.0
+2026-07-23T16:56:21.4594377Z Temporarily overriding HOME='/home/runner/work/_temp/484743f8-b377-4909-b555-497972e5b83b' before making global git config changes
+2026-07-23T16:56:21.4595399Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-23T16:56:21.4600005Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AI-recruiter-screening-system-/AI-recruiter-screening-system-
+2026-07-23T16:56:21.4636958Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-23T16:56:21.4672010Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-23T16:56:21.4889956Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-23T16:56:21.4913425Z http.https://github.com/.extraheader
+2026-07-23T16:56:21.4923728Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-23T16:56:21.4956429Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-23T16:56:21.5172944Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-23T16:56:21.5209665Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-23T16:56:21.5548438Z Evaluate and set job outputs
+2026-07-23T16:56:21.5556582Z Set output 'backend'
+2026-07-23T16:56:21.5557792Z Set output 'frontend'
+2026-07-23T16:56:21.5558304Z Set output 'docs'
+2026-07-23T16:56:21.5558799Z Cleaning up orphan processes
+2026-07-23T16:56:21.5771454Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+--- Backend Node (Express auth)/system.txt ---
+2026-07-23T16:56:23.7260000Z Evaluating backend-node.if
+2026-07-23T16:56:23.7260000Z Evaluating: (success() && (((((needs.changes.outputs.backend == 'true') || (github.event_name == 'workflow_dispatch'))) && (((github.event_name != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'backend-node'))))))
+2026-07-23T16:56:23.7260000Z Expanded: (true && ((('true' == 'true') || (github.event_name == 'workflow_dispatch')) && (('pull_request' != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'backend-node'))))
+2026-07-23T16:56:23.7260000Z Result: true
+2026-07-23T16:56:24.1840000Z Requested labels: ubuntu-latest
+2026-07-23T16:56:24.1840000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:56:24.1840000Z Waiting for a runner to pick up this job...
+2026-07-23T16:56:24.5110000Z Job is about to start running on the hosted runner: GitHub Actions 1000000706
+2026-07-23T16:56:24.5110000Z Job is waiting for a hosted runner to come online.
+--- Backend Python (pytest + coverage)/system.txt ---
+2026-07-23T16:56:23.7260000Z Evaluating backend-python.if
+2026-07-23T16:56:23.7260000Z Evaluating: (success() && (((((needs.changes.outputs.backend == 'true') || (github.event_name == 'workflow_dispatch'))) && (((github.event_name != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'backend-python'))))))
+2026-07-23T16:56:23.7260000Z Expanded: (true && ((('true' == 'true') || (github.event_name == 'workflow_dispatch')) && (('pull_request' != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'backend-python'))))
+2026-07-23T16:56:23.7260000Z Result: true
+2026-07-23T16:56:24.1830000Z Requested labels: ubuntu-latest
+2026-07-23T16:56:24.1830000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:56:24.1830000Z Waiting for a runner to pick up this job...
+2026-07-23T16:56:24.5110000Z Job is about to start running on the hosted runner: GitHub Actions 1000000705
+2026-07-23T16:56:24.5100000Z Job is waiting for a hosted runner to come online.
+--- CI Success Gate/system.txt ---
+2026-07-23T16:57:23.1360000Z Evaluating ci-success.if
+2026-07-23T16:57:23.1360000Z Evaluating: (always() && (needs.changes.result == 'success'))
+2026-07-23T16:57:23.1360000Z Expanded: (true && ('success' == 'success'))
+2026-07-23T16:57:23.1360000Z Result: true
+2026-07-23T16:57:23.1370000Z Requested labels: ubuntu-latest
+2026-07-23T16:57:23.1370000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:57:23.1370000Z Waiting for a runner to pick up this job...
+2026-07-23T16:57:23.4830000Z Job is waiting for a hosted runner to come online.
+2026-07-23T16:57:23.4840000Z Job is about to start running on the hosted runner: GitHub Actions 1000000709
+--- Detect Changed Paths/system.txt ---
+2026-07-23T16:56:15.7670000Z Evaluating changes.if
+2026-07-23T16:56:15.7670000Z Evaluating: success()
+2026-07-23T16:56:15.7670000Z Result: true
+2026-07-23T16:56:15.7700000Z Requested labels: ubuntu-latest
+2026-07-23T16:56:15.7700000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:56:15.7700000Z Waiting for a runner to pick up this job...
+2026-07-23T16:56:16.1230000Z Job is waiting for a hosted runner to come online.
+2026-07-23T16:56:16.1230000Z Job is about to start running on the hosted runner: GitHub Actions 1000000704
+--- Frontend frontend-test/system.txt ---
+2026-07-23T16:56:24.1880000Z Requested labels: ubuntu-latest
+2026-07-23T16:56:24.1880000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:56:24.1880000Z Waiting for a runner to pick up this job...
+2026-07-23T16:56:24.1830000Z Evaluating frontend-builds.if
+2026-07-23T16:56:24.1830000Z Evaluating: (success() && (((((needs.changes.outputs.frontend == 'true') || (github.event_name == 'workflow_dispatch'))) && (((github.event_name != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'frontend'))))))
+2026-07-23T16:56:24.1830000Z Expanded: (true && ((('true' == 'true') || (github.event_name == 'workflow_dispatch')) && (('pull_request' != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'frontend'))))
+2026-07-23T16:56:24.1830000Z Result: true
+2026-07-23T16:56:24.5130000Z Job is about to start running on the hosted runner: GitHub Actions 1000000708
+2026-07-23T16:56:24.5120000Z Job is waiting for a hosted runner to come online.
+--- Frontend frontend/system.txt ---
+2026-07-23T16:56:23.7270000Z Evaluating frontend-builds.if
+2026-07-23T16:56:23.7270000Z Evaluating: (success() && (((((needs.changes.outputs.frontend == 'true') || (github.event_name == 'workflow_dispatch'))) && (((github.event_name != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'frontend'))))))
+2026-07-23T16:56:23.7270000Z Expanded: (true && ((('true' == 'true') || (github.event_name == 'workflow_dispatch')) && (('pull_request' != 'workflow_dispatch') || (inputs.scope == 'all') || (inputs.scope == 'frontend'))))
+2026-07-23T16:56:23.7270000Z Result: true
+2026-07-23T16:56:24.1840000Z Requested labels: ubuntu-latest
+2026-07-23T16:56:24.1840000Z Job defined at: Trigyn-Intern/AI-recruiter-screening-system-/.github/workflows/ci.yml@refs/pull/24/merge
+2026-07-23T16:56:24.1840000Z Waiting for a runner to pick up this job...
+2026-07-23T16:56:24.5120000Z Job is waiting for a hosted runner to come online.
+2026-07-23T16:56:24.5120000Z Job is about to start running on the hosted runner: GitHub Actions 1000000707

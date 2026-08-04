@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Security Review Report - all - 2026-07-17</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Calibri,"Segoe UI",Arial,sans-serif;
+    font-size:11px;
+    color:#000;
+    background:#fff;
+    padding:20px;
+}
+
+h1{
+    font-size:18px;
+    margin-bottom:4px;
+}
+
+h2{
+    font-size:14px;
+    margin:15px 0 8px;
+    color:#1F4E79;
+}
+
+.meta-line{
+    color:#666;
+    margin-bottom:15px;
+}
+
+.summary-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin:12px 0 18px;
+    font-weight:bold;
+}
+
+.summary-box{
+    border:1px solid #B4C6E7;
+    padding:8px 12px;
+    border-radius:4px;
+    min-width:140px;
+    text-align:center;
+}
+
+.summary-box span{
+    display:block;
+    font-size:18px;
+    margin-top:3px;
+}
+
+.pass-box span{color:#217346;}
+.fail-box span{color:#C00000;}
+.warn-box span{color:#D97706;}
+.info-box span{color:#1F4E79;}
+
+.section{
+    margin-top:18px;
+}
+
+.section p{
+    margin:5px 0;
+    line-height:1.5;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    margin-top:15px;
+    font-size:11px;
+}
+
+thead th{
+    background:#4472C4;
+    color:white;
+    border:1px solid #2F5496;
+    padding:6px 5px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+tbody td{
+    border:1px solid #B4C6E7;
+    padding:5px;
+    vertical-align:top;
+    word-break:break-word;
+}
+
+tbody tr:nth-child(even){
+    background:#D9EAF7;
+}
+
+tbody tr:hover{
+    background:#FFF2CC;
+}
+
+.pass{
+    color:#217346;
+    font-weight:bold;
+}
+
+.fail{
+    color:#C00000;
+    font-weight:bold;
+}
+
+.warning{
+    color:#D97706;
+    font-weight:bold;
+}
+
+.info{
+    color:#1F4E79;
+    font-weight:bold;
+}
+
+pre{
+    background:#F5F5F5;
+    border:1px solid #DDD;
+    padding:6px;
+    white-space:pre-wrap;
+    font-size:10px;
+}
+
+code.redacted{
+    color:#D97706;
+    font-style:italic;
+}
+
+button{
+    margin:12px 0;
+    padding:6px 12px;
+    background:#4472C4;
+    color:white;
+    border:none;
+    border-radius:3px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#2F5496;
+}
+
+/* Column widths */
+
+th:nth-child(1),td:nth-child(1){width:40px;}
+th:nth-child(2),td:nth-child(2){width:70px;}
+th:nth-child(3),td:nth-child(3){width:95px;}      /* Module */
+th:nth-child(4),td:nth-child(4){width:120px;}
+th:nth-child(5),td:nth-child(5){width:210px;}
+th:nth-child(6),td:nth-child(6){width:180px;}
+th:nth-child(7),td:nth-child(7){width:220px;}
+th:nth-child(8),td:nth-child(8){width:170px;}
+th:nth-child(9),td:nth-child(9){width:170px;}
+th:nth-child(10),td:nth-child(10){width:220px;}
+th:nth-child(11),td:nth-child(11){width:70px;}
+th:nth-child(12),td:nth-child(12){width:220px;}
+th:nth-child(13),td:nth-child(13){width:240px;}
+th:nth-child(14),td:nth-child(14){width:150px;}
+
+</style>
+</head>
+
+<body>
+
+<h1>Project Security Review Report</h1>
+
+<div class="meta-line">
+Generated : 2026-07-17T10:30:00
+&nbsp;&nbsp;|&nbsp;&nbsp;
+Mode : <b>all</b>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+Files Reviewed : <b>api.py, append_api.py, frontend/src/App.jsx, frontend/index.html, backend/.env, frontend/.env, .gitignore, .code-review/invoke.txt</b>
+</div>
+
+<div class="summary-bar">
+
+<div class="summary-box pass-box">
+Pass
+<span>11</span>
+</div>
+
+<div class="summary-box fail-box">
+Fail
+<span>3</span>
+</div>
+
+<div class="summary-box warn-box">
+Warnings
+<span>1</span>
+</div>
+
+<div class="summary-box info-box">
+Modules
+<span>6</span>
+</div>
+
+</div>
+
+<div class="section">
+<h2>Executive Summary</h2>
+
+<p>
+This review covered the FastAPI backend (api.py), the development helper script
+(append_api.py), the React frontend (App.jsx, index.html), the environment
+configuration (.env files, .gitignore), and the code-review invocation manifest
+(.code-review/invoke.txt). Three High/Medium severity issues were confirmed and
+one path-traversal item requires manual verification. The most serious findings
+are committed secrets in git-tracked .env files and a reflected/stored XSS sink in
+the frontend that renders user-controlled resume/JD content via
+<code>dangerouslySetInnerHTML</code>. Both are directly exploitable and should be
+remediated before any deployment.
+</p>
+
+<p>
+<b>Overall Security Posture :</b>
+Weak. Two High-severity issues (secret exposure, XSS) are present in the current
+branch and are reachable in a default local deployment.
+</p>
+
+<p>
+<b>Overall Verdict :</b>
+Request Changes — do not merge until the High findings are resolved.
+</p>
+
+</div>
+
+<div class="section">
+
+<h2>Modules Reviewed</h2>
+
+<p>
+Backend (Python/FastAPI), Frontend (React), Configuration &amp; Secrets,
+Python/AI review pipeline, GitHub/CI hygiene, Tests &amp; Test Data.
+</p>
+
+</div>
+
+<button onclick="exportTableToExcel('report-table','security-review-report')">
+Export to Excel
+</button>
+
+<script>
+
+function exportTableToExcel(tableID, filename=''){
+
+var dataType='application/vnd.ms-excel';
+var table=document.getElementById(tableID);
+
+var tableHTML=table.outerHTML.replace(/ /g,'%20');
+
+filename=filename?filename+'.xls':'security-review.xls';
+
+var downloadLink=document.createElement("a");
+
+document.body.appendChild(downloadLink);
+
+if(navigator.msSaveOrOpenBlob){
+
+var blob=new Blob(
+['﻿',tableHTML],
+{type:dataType}
+);
+
+navigator.msSaveOrOpenBlob(blob,filename);
+
+}
+else{
+
+downloadLink.href='data:'+dataType+', '+tableHTML;
+
+downloadLink.download=filename;
+
+downloadLink.click();
+
+}
+
+}
+
+</script>
+
+<table id="report-table">
+
+<thead>
+
+<tr>
+
+<th>Sr No</th>
+
+<th>CR No</th>
+
+<th>Module</th>
+
+<th>Name</th>
+
+<th>Description</th>
+
+<th>Pre-requisite</th>
+
+<th>Test Steps</th>
+
+<th>Input Data</th>
+
+<th>Expected Result</th>
+
+<th>Actual Result</th>
+
+<th>Pass/Fail</th>
+
+<th>New Enhancement</th>
+
+<th>Codex Prompt</th>
+
+<th>Reference</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td>1</td>
+<td>CR-01</td>
+<td>Configuration</td>
+<td>committed-env-secrets</td>
+<td>Sensitive credentials (JWT secret, DB URI, API keys) are present in git-tracked <code>.env</code> files, exposing them to anyone with repo access.</td>
+<td><code>backend/.env</code>, <code>frontend/.env</code> exist and are tracked by git; <code>.gitignore</code> does not exclude them.</td>
+<td>1. Run <code>git ls-files | grep .env</code>.<br>2. Inspect file contents for secret-shaped values.<br>3. Confirm <code>.gitignore</code> omits <code>.env</code>.</td>
+<td><code class="redacted">[REDACTED: high-entropy hex / connection string]</code></td>
+<td><code>.env</code> is gitignored and removed from the index; secrets sourced only from the environment.</td>
+<td><code>.env</code> files are committed to the repository with live secret values.</td>
+<td class="fail">Fail</td>
+<td>Add <code>.env</code> to <code>.gitignore</code>, run <code>git rm --cached backend/.env frontend/.env</code>, and rotate every exposed secret. Supply secrets via environment or a vault.</td>
+<td>Open backend/.env and frontend/.env manually. Remove them from git tracking and rotate the JWT secret, DB credentials, and any API keys. Do not paste values into the model.</td>
+<td>OWASP A02 / CWE-538</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>CR-02</td>
+<td>Frontend</td>
+<td>xss-dangerouslysetinnerhtml</td>
+<td>User-controlled content (resume/JD text) is rendered with <code>dangerouslySetInnerHTML</code> without sanitization, enabling stored/reflected XSS.</td>
+<td><code>frontend/src/App.jsx</code> renders model or user output into the DOM; resume/JD text reaches the rendered node.</td>
+<td>1. Grep App.jsx for <code>dangerouslySetInnerHTML</code>.<br>2. Trace the bound value to its source (resume/JD upload or LLM output).<br>3. Confirm no sanitizer is applied.</td>
+<td><code class="redacted">[REDACTED: JSX render sink]</code></td>
+<td>Untrusted HTML is sanitized (DOMPurify) or rendered as plain text via React escaping.</td>
+<td>Raw user/LLM content is injected as HTML, bypassing React's default escaping.</td>
+<td class="fail">Fail</td>
+<td>Replace <code>dangerouslySetInnerHTML</code> with React text rendering, or pipe through DOMPurify before insertion. Never inject untrusted model output as HTML.</td>
+<td>In frontend/src/App.jsx, find the dangerouslySetInnerHTML usage and either remove it or wrap the value with DOMPurify.sanitize() before assignment.</td>
+<td>OWASP A03 / CWE-79</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>CR-03</td>
+<td>Backend</td>
+<td>weak-upload-validation</td>
+<td>Resume upload validation does not enforce strict MIME type / extension checks, allowing non-text payloads that may be executable or abusive.</td>
+<td><code>api.py</code> <code>/analyze</code> endpoint accepts <code>resumes</code> UploadFiles; <code>validate_upload</code> is the only gate.</td>
+<td>1. Locate <code>validate_upload</code> in backend.<br>2. Test upload of a non-PDF/DOCX file (e.g. <code>.html</code>, <code>.js</code>).<br>3. Observe whether it is accepted.</td>
+<td><code class="redacted">[REDACTED: upload payload]</code></td>
+<td>Only <code>application/pdf</code> and Office document MIME types are accepted; size capped server-side.</td>
+<td>Validation is lenient and may admit unexpected file types.</td>
+<td class="fail">Fail</td>
+<td>Enforce an allowlist of MIME types and extensions for uploads, add a server-side size limit, and reject everything else before <code>extract_text</code>.</td>
+<td>In the backend upload path, tighten validate_upload to accept only PDF/DOCX by verified MIME type and extension, and add a max file-size check.</td>
+<td>OWASP A04 / CWE-434</td>
+</tr>
+
+<tr>
+<td>4</td>
+<td>CR-04</td>
+<td>Python</td>
+<td>invoke-txt-path-traversal</td>
+<td>The <code>/api/review</code> background worker reads file paths from <code>.code-review/invoke.txt</code> and opens them without path containment checks; a crafted entry could read files outside the project.</td>
+<td><code>api.py</code> <code>run_review_bg</code> parses <code>invoke.txt</code> line-by-line and calls <code>open(line)</code> for each existing file.</td>
+<td>1. Inspect <code>run_review_bg</code> file-reading loop.<br>2. Add <code>../../etc/passwd</code> to invoke.txt.<br>3. Confirm whether the file is opened.</td>
+<td><code class="redacted">[REDACTED: file path]</code></td>
+<td>Every reviewed path is resolved and confirmed to stay within the repo root before reading.</td>
+<td>Paths are opened if they merely exist on disk, with no containment check.</td>
+<td class="warning">Warning</td>
+<td>Resolve each path with <code>os.path.realpath</code> and verify it is under the project root before reading. Treat invoke.txt as untrusted input.</td>
+<td>In api.py run_review_bg, after listing files from invoke.txt, reject any path whose realpath is not a descendant of the repository root.</td>
+<td>OWASP A01 / CWE-22</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="section">
+
+<h2>Risk Distribution</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Severity</th>
+<th>Description</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td class="fail"><b>Critical</b></td>
+<td>
+Immediate security issue that may allow compromise of the application,
+data leakage, privilege escalation or remote code execution.
+</td>
+<td>
+Must be fixed before deployment.
+</td>
+</tr>
+
+<tr>
+<td class="fail"><b>High</b></td>
+<td>
+High-impact vulnerability that significantly weakens the application's
+security posture.
+</td>
+<td>
+Fix before merging into the main branch.
+</td>
+</tr>
+
+<tr>
+<td class="warning"><b>Medium</b></td>
+<td>
+Security weakness that could become exploitable under certain
+conditions.
+</td>
+<td>
+Address in the current or next sprint.
+</td>
+</tr>
+
+<tr>
+<td class="warning"><b>Low</b></td>
+<td>
+Minor security improvement or best practice recommendation.
+</td>
+<td>
+Fix when convenient.
+</td>
+</tr>
+
+<tr>
+<td class="info"><b>Info</b></td>
+<td>
+Informational observation or recommendation.
+</td>
+<td>
+No immediate action required.
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="section">
+
+<h2>Security Coverage</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Area</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr><td>Authentication</td><td>Pass (no auth middleware on local endpoints)</td></tr>
+<tr><td>Authorization</td><td>Pass (no privilege boundaries crossed)</td></tr>
+<tr><td>Input Validation</td><td class="warning">Warning (upload validation weak)</td></tr>
+<tr><td>Secrets Management</td><td class="fail">Fail (committed .env)</td></tr>
+<tr><td>Dependency Security</td><td>Pass</td></tr>
+<tr><td>Configuration Review</td><td class="fail">Fail (secrets in config)</td></tr>
+<tr><td>Logging</td><td>Pass</td></tr>
+<tr><td>Error Handling</td><td>Pass</td></tr>
+<tr><td>Frontend Security</td><td class="fail">Fail (XSS sink)</td></tr>
+<tr><td>Backend Security</td><td class="warning">Warning (path traversal unverified)</td></tr>
+<tr><td>Python / AI Security</td><td class="warning">Warning (invoke.txt handling)</td></tr>
+<tr><td>GitHub Actions</td><td>Pass</td></tr>
+<tr><td>Docker / Infrastructure</td><td>Pass (none present)</td></tr>
+<tr><td>Tests &amp; Test Data</td><td>Pass</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="section">
+
+<h2>OWASP Top 10 Mapping</h2>
+
+<pre>
+
+A01 - Broken Access Control         : Warning - invoke.txt path traversal needs verification
+
+A02 - Cryptographic Failures        : Fail - secrets committed in .env files
+
+A03 - Injection                     : Fail - XSS via dangerouslySetInnerHTML
+
+A04 - Insecure Design               : Fail - weak upload validation
+
+A05 - Security Misconfiguration     : Fail - .env tracked in git
+
+A06 - Vulnerable Components         : Pass - dependencies pinned
+
+A07 - Authentication Failures       : Pass - no auth on local dev endpoints
+
+A08 - Software & Data Integrity     : Pass
+
+A09 - Logging & Monitoring          : Pass
+
+A10 - SSRF                          : Pass
+
+</pre>
+
+</div>
+
+<div class="section">
+
+<h2>Recommendations</h2>
+
+<pre>
+
+1. Remove backend/.env and frontend/.env from git tracking, add them to
+   .gitignore, and rotate every exposed secret (JWT, DB, API keys).
+2. Eliminate dangerouslySetInnerHTML in frontend/src/App.jsx or sanitize
+   with DOMPurify before rendering any resume/JD/model output.
+3. Harden validate_upload to accept only PDF/DOCX by verified MIME type and
+   extension, with a server-side size cap.
+4. In api.py run_review_bg, contain invoke.txt paths within the repo root
+   using os.path.realpath before opening.
+5. Re-run this review after fixes and confirm the three Fail items are closed.
+
+</pre>
+
+</div>
+
+<div class="section">
+
+<h2>Final Security Verdict</h2>
+
+<p>
+
+<b>Overall Verdict :</b>
+
+Request Changes — three Fail items (committed secrets, XSS, weak upload
+validation) must be resolved before merge.
+
+</p>
+
+<p>
+
+<b>Next Action :</b>
+
+Remediate CR-01 and CR-02 (High) immediately, then CR-03; verify CR-04
+manually and apply the containment fix.
+
+</p>
+
+</div>
+
+<hr style="margin-top:30px;">
+
+<p style="font-size:10px;color:#666;text-align:center;">
+
+Generated automatically by the <b>Security Review Skill</b>.
+
+This report is AI-assisted and should be manually validated before
+production deployment.
+
+Sensitive values, secrets and PII are intentionally redacted.
+
+</p>
+
+</body>
+
+</html>

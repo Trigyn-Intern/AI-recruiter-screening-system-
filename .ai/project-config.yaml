@@ -1,0 +1,78 @@
+schema_version: "1.0.0"
+
+project:
+  name: "AI Recruiter Screening System"
+  description: "AI-powered resume screening and candidate ranking platform."
+  repository: "<replace-with-repository-url>"
+  owner: "Team Trigyn"
+
+technology:
+  languages: ["python", "javascript"]
+  runtimes: ["python", "node"]
+  frameworks: ["fastapi", "react", "vite", "express"]
+  build_tools: ["vite", "npm"]
+  package_managers: ["pip", "npm"]
+
+testing:
+  unit_test_framework: "pytest"
+  integration_framework: "pytest-playwright"
+  coverage_threshold: 80
+  mutation_testing: false
+  test_isolation_required: true
+
+security:
+  secrets_management: "environment-variables"
+  sast_enabled: true
+  dependency_scan_enabled: true
+  threat_model_required: true
+  auth_model: "jwt"
+  prompt_injection_review: true
+
+code_quality:
+  max_file_lines: 400
+  max_function_lines: 60
+  max_cyclomatic_complexity: 10
+  enforce_linting: true
+  enforce_formatting: true
+  require_pull_request: true
+  require_code_review: true
+
+documentation:
+  readme_required: true
+  adr_required: true
+  api_docs_required: true
+  diagram_format: "mermaid"
+
+deployment:
+  target_environments: ["development", "staging", "production"]
+  containerized: false
+  infrastructure_as_code: "none"
+
+naming_standards:
+  casing: "camelCase"
+  file_naming: "kebab-case"
+  test_suffix: "test"
+  identifier_prefixes: {}
+
+review_policy:
+  required_reviewers: 1
+  require_security_review: true
+  require_architecture_review: false
+  auto_assign: true
+  blocking_checks: ["coding", "testing", "security", "documentation"]
+
+branch_strategy:
+  default_branch: "main"
+  feature_prefix: "feature/"
+  release_prefix: "release/"
+  hotfix_prefix: "hotfix/"
+  squash_merges: true
+  rebase_merges: false
+
+ai:
+  enabled_assistants: ["codex"]
+  require_skill_invocation: true
+  max_skill_invocation_depth: 3
+  knowledge_root: ".ai/knowledge"
+  checklist_root: ".ai/checklists"
+  template_root: ".ai/templates"

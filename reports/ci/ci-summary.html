@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CI Summary &mdash; CI Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1d18;
+    --panel: #15241f;
+    --border: rgba(255,255,255,0.08);
+    --text: #e6efe9;
+    --muted: #9bb1a8;
+    --accent: #82b4a7;
+    --pass: #4caf73;
+    --fail: #d96b6b;
+    --warn: #d9a26b;
+    --code-bg: #0b1310;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+  header.page { border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 28px; }
+  header.page h1 { margin: 0; font-size: 24px; letter-spacing: 0.02em; }
+  header.page p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+  .verdict { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px;
+              font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .verdict.pass { background: rgba(76,175,115,0.18); color: var(--pass); }
+  .verdict.fail { background: rgba(217,107,107,0.18); color: var(--fail); }
+  .verdict.warn { background: rgba(217,162,107,0.18); color: var(--warn); }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+              gap: 14px; margin-bottom: 32px; }
+  .summary .item { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+                    padding: 14px 16px; }
+  .summary .item h4 { margin: 0; color: var(--muted); font-size: 11px;
+                       text-transform: uppercase; letter-spacing: 0.06em; }
+  .summary .item p { margin: 6px 0 0; font-size: 18px; font-weight: 600; color: var(--text); }
+  .summary .item small { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+           padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .card.error { border-color: rgba(217,107,107,0.4); }
+  .card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h3 { margin: 0; font-size: 14px; color: #fff; }
+  .card .desc { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .card dl { margin: 6px 0 0; display: grid; grid-template-columns: 90px 1fr; gap: 2px 12px;
+              font-size: 12.5px; }
+  .card dt { color: var(--muted); }
+  .card dd { margin: 0; word-break: break-all; }
+  .card h4 { margin: 8px 0 4px; color: var(--muted); font-size: 11px;
+              text-transform: uppercase; letter-spacing: 0.06em; }
+  .card ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+  .card code { background: var(--code-bg); border: 1px solid var(--border); padding: 1px 6px;
+                border-radius: 4px; font-size: 11.5px; color: var(--accent); }
+  .card p.error { margin: 0; color: var(--fail); font-size: 12.5px; }
+  .card.empty { text-align: center; color: var(--muted); }
+  .status { font-size: 10px; padding: 1px 8px; border-radius: 999px; font-weight: 700;
+             text-transform: uppercase; letter-spacing: 0.05em; }
+  .status-ok { background: rgba(76,175,115,0.18); color: var(--pass); }
+  .status-error { background: rgba(217,107,107,0.18); color: var(--fail); }
+  footer { margin-top: 32px; color: var(--muted); font-size: 11.5px; text-align: center; }
+  a { color: var(--accent); }
+  .meta-grid { display: grid; gap: 4px 16px; grid-template-columns: 130px 1fr;
+                font-size: 13px; margin-top: 12px; }
+  .meta-grid dt { color: var(--muted); }
+  .meta-grid dd { margin: 0; word-break: break-all; }
+</style>
+</head>
+<body>
+<main>
+  <header class="page">
+    <h1>CI Summary &mdash; ci.yml</h1>
+    <p>
+      Run <a href="https://github.com/Trigyn-Intern/AI-recruiter-screening-system-/actions/runs/29984562766">#29984562766</a>
+      on <strong>ci</strong>
+      <span class="verdict pass">SUCCESS</span>
+    </p>
+    <dl class="meta-grid">
+      <dt>Repository</dt><dd>Trigyn-Intern/AI-recruiter-screening-system-</dd>
+      <dt>Workflow</dt><dd>ci.yml</dd>
+      <dt>Trigger</dt><dd>pull_request</dd>
+      <dt>Commit</dt><dd><code>a031a521f215</code></dd>
+      <dt>Started</dt><dd>2026-07-23T06:17:01Z</dd>
+      <dt>Updated</dt><dd>2026-07-23T16:57:28Z</dd>
+      <dt>Actor</dt><dd>rishabatra1802</dd>
+      <dt>Logs</dt><dd><code>reports/ci-logs.txt</code> (150.7 KB)</dd>
+    </dl>
+  </header>
+
+  <section class="summary" aria-label="Run totals">
+    <div class="item"><h4>Artifacts</h4><p>3</p></div>
+    <div class="item"><h4>Files</h4><p>29</p></div>
+    <div class="item"><h4>Downloaded</h4><p>1.1 MB</p></div>
+    <div class="item"><h4>Fetched at</h4><p>2026-07-28T05:22:50+00:00</p></div>
+  </section>
+
+  <h2 style="margin-bottom:14px;font-size:16px;">Artifacts</h2>
+  <div class="cards">
+    <section class="card"><header><h3>backend-python-reports</h3><span class="status status-ok">downloaded</span></header><p class="desc">Backend (FastAPI / pytest) coverage + AI engineering reports. Includes HTML coverage, JUnit XML, and the AI dashboard.</p><dl><dt>Files</dt><dd>21</dd><dt>Size</dt><dd>150.3 KB</dd><dt>Location</dt><dd><code>reports/ci/backend-python-reports</code></dd></dl><div class="art-section"><div class="art-extra"><span class="status status-pass">32/32 pass</span><span class="status status-muted">100.0% pass rate</span><span class="status status-muted">2.10 s</span></div><div class="art-extra"><span class="status status-warn">48.19% line coverage</span></div><details><summary>Lowest-coverage files</summary><ul class="art-list"><li><code>append_api.py</code> &mdash; 0.0%</li><li><code>api.py</code> &mdash; 31.1%</li><li><code>backend.py</code> &mdash; 52.4%</li></ul></details><details><summary>Per-file coverage (statements vs missing)</summary><table class="art-table"><thead><tr><th>File</th><th>Statements</th><th>Covered</th><th>Missing</th><th>Excluded</th><th>Rate</th></tr></thead><tbody><tr><td><code>api_py</code></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td></tr><tr><td><code>append_api_py</code></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td></tr><tr><td><code>backend_py</code></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td></tr></tbody></table></details><div class="art-extra"><span class="status status-muted">15464 source files</span><span class="status status-muted">3544 test modules</span><span class="status status-warn">4263 oversized</span><span class="status status-muted">7 manifests</span></div><p class="muted">AI reports: ai-architecture-report.md, ai-dependency-report.md, ai-execution-report.md, ai-executive-report.md, ai-quality-report.md, ai-security-report.md, ai-technical-debt-report.md</p></div><h4>Top-level entries</h4><ul><li><code>ai-architecture-report.md</code></li><li><code>ai-dashboard.json</code></li><li><code>ai-dependency-report.md</code></li><li><code>ai-execution-report.md</code></li><li><code>ai-executive-report.md</code></li><li><code>ai-quality-report.md</code></li><li><code>ai-security-report.md</code></li><li><code>ai-technical-debt-report.md</code></li><li><a href="./backend-python-reports/coverage-python.html" target="_blank"><code>coverage-python.html</code></a></li><li><code>coverage-python.xml</code></li><li><a href="./backend-python-reports/htmlcov-python/index.html" target="_blank"><code>htmlcov-python &#x2197; Interactive Coverage</code></a></li><li><a href="./backend-python-reports/junit-python.html" target="_blank"><code>junit-python.html</code></a></li><li><code>junit-python.xml</code></li></ul></section>
+<section class="card"><header><h3>dist-frontend-test</h3><span class="status status-ok">downloaded</span></header><p class="desc">Production build of the React/Vite testing dashboard (port 5174).</p><dl><dt>Files</dt><dd>3</dd><dt>Size</dt><dd>84.2 KB</dd><dt>Location</dt><dd><code>reports/ci/dist-frontend-test</code></dd></dl><div class="art-section"><span class="status status-muted">index.html: 417 B</span></div><h4>Top-level entries</h4><ul><li><code>assets</code></li><li><a href="./dist-frontend-test/index.html" target="_blank"><code>index.html</code></a></li></ul></section>
+<section class="card"><header><h3>dist-frontend</h3><span class="status status-ok">downloaded</span></header><p class="desc">Production build of the recruiter React/Vite frontend.</p><dl><dt>Files</dt><dd>5</dd><dt>Size</dt><dd>857.4 KB</dd><dt>Location</dt><dd><code>reports/ci/dist-frontend</code></dd></dl><div class="art-section"><div class="art-extra"><span class="status status-muted">8 reports</span></div><p class="muted">Categories: integration, performance, review, security</p><p class="muted">Updated: 2026-07-14T00:00:00Z</p></div><h4>Top-level entries</h4><ul><li><code>assets</code></li><li><a href="./dist-frontend/index.html" target="_blank"><code>index.html</code></a></li><li><code>reports.json</code></li></ul></section>
+  </div>
+
+  <footer>
+    Generated by <code>scripts/fetch_ci.py</code>. Open this file directly in any browser; no network required.
+  </footer>
+</main>
+</body>
+</html>

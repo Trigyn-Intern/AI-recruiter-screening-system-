@@ -1,0 +1,90 @@
+.dashboard-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image:
+    linear-gradient(rgba(16, 24, 20, 0.7), rgba(16, 24, 20, 0.82)),
+    url("../../assets/monstera_bg.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #f7fbf8;
+}
+
+.dashboard-header {
+  background: rgba(26, 33, 29, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.dashboard-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #82b4a7;
+  color: #17231e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.dashboard-brand h1 {
+  font-size: 18px;
+  margin: 0;
+  color: #ffffff;
+}
+
+.dashboard-brand p {
+  margin: 0;
+  font-size: 12px;
+  color: #b9c4be;
+}
+
+.dashboard-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #b9c4be;
+}
+
+.dashboard-user strong {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.logout-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7fbf8;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(130, 180, 167, 0.22);
+}
