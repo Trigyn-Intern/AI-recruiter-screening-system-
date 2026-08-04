@@ -47,31 +47,37 @@ def parse_junit(xml_path: Path) -> dict:
             duration += float(suite.get("time", "0") or 0)
         except ValueError:
             pass
-        suite_rows.append({
-            "name": suite.get("name", ""),
-            "tests": int(suite.get("tests", "0") or 0),
-            "failures": int(suite.get("failures", "0") or 0),
-            "errors": int(suite.get("errors", "0") or 0),
-            "skipped": int(suite.get("skipped", "0") or 0),
-            "duration": float(suite.get("time", "0") or 0),
-            "timestamp": suite.get("timestamp", ""),
-        })
+        suite_rows.append(
+            {
+                "name": suite.get("name", ""),
+                "tests": int(suite.get("tests", "0") or 0),
+                "failures": int(suite.get("failures", "0") or 0),
+                "errors": int(suite.get("errors", "0") or 0),
+                "skipped": int(suite.get("skipped", "0") or 0),
+                "duration": float(suite.get("time", "0") or 0),
+                "timestamp": suite.get("timestamp", ""),
+            }
+        )
         for case in suite.findall("testcase"):
             case_time = float(case.get("time", "0") or 0)
             fail_node = case.find("failure") or case.find("error")
             if fail_node is not None:
-                failed_cases.append({
-                    "name": case.get("name", ""),
-                    "classname": case.get("classname", ""),
-                    "duration": case_time,
-                    "message": (fail_node.get("message") or "")[:240],
-                })
+                failed_cases.append(
+                    {
+                        "name": case.get("name", ""),
+                        "classname": case.get("classname", ""),
+                        "duration": case_time,
+                        "message": (fail_node.get("message") or "")[:240],
+                    }
+                )
             if case_time > 0.5:
-                slow_cases.append({
-                    "name": case.get("name", ""),
-                    "classname": case.get("classname", ""),
-                    "duration": case_time,
-                })
+                slow_cases.append(
+                    {
+                        "name": case.get("name", ""),
+                        "classname": case.get("classname", ""),
+                        "duration": case_time,
+                    }
+                )
 
     passed = max(tests - failures - errors - skipped, 0)
     slow_cases.sort(key=lambda c: -c["duration"])
@@ -108,15 +114,20 @@ def parse_coverage(xml_path: Path) -> dict:
     for cls in root.iter("class"):
         filename = cls.get("filename", "")
         lines = cls.findall(".//line")
-        files.append({
-            "file": filename,
-            "line_rate": float(cls.get("line-rate", "0") or 0),
-            "branch_rate": float(cls.get("branch-rate", "0") or 0),
-            "lines": len(lines),
-            "missing": sum(1 for line in lines if line.get("hits") == "0"),
-        })
+        files.append(
+            {
+                "file": filename,
+                "line_rate": float(cls.get("line-rate", "0") or 0),
+                "branch_rate": float(cls.get("branch-rate", "0") or 0),
+                "lines": len(lines),
+                "missing": sum(1 for line in lines if line.get("hits") == "0"),
+            }
+        )
     files.sort(key=lambda f: f["line_rate"])
-    weakest = [{"file": f["file"], "line_rate": round(f["line_rate"] * 100, 1)} for f in files[:5]]
+    weakest = [
+        {"file": f["file"], "line_rate": round(f["line_rate"] * 100, 1)}
+        for f in files[:5]
+    ]
     return {
         "present": True,
         "line_rate": round(line_rate * 100, 2),
@@ -144,14 +155,16 @@ def parse_coverage_status_json(json_path: Path) -> dict:
         excluded = int(nums.get("n_excluded", 0))
         covered = max(statements - missing, 0)
         rate = (covered / statements) if statements else 0
-        rows.append({
-            "file": nums.get("file", name),
-            "statements": statements,
-            "covered": covered,
-            "missing": missing,
-            "excluded": excluded,
-            "line_rate": round(rate * 100, 1),
-        })
+        rows.append(
+            {
+                "file": nums.get("file", name),
+                "statements": statements,
+                "covered": covered,
+                "missing": missing,
+                "excluded": excluded,
+                "line_rate": round(rate * 100, 1),
+            }
+        )
     rows.sort(key=lambda r: r["line_rate"])
     weakest = [{"file": r["file"], "line_rate": r["line_rate"]} for r in rows[:5]]
     return {"present": True, "files": rows, "weakest": weakest}
@@ -270,7 +283,14 @@ def parse_k6(jsonl_path: Path) -> dict:
             "p95": values[int(count * 0.95)] if count > 1 else values[-1],
         }
 
-    keys = ["http_reqs", "http_req_duration", "http_req_failed", "vus", "iterations", "checks"]
+    keys = [
+        "http_reqs",
+        "http_req_duration",
+        "http_req_failed",
+        "vus",
+        "iterations",
+        "checks",
+    ]
     return {
         "present": True,
         "metrics": {k: _summary(samples.get(k, [])) for k in keys if k in samples},
@@ -303,63 +323,69 @@ def generate_junit_html(junit_data: dict, out_path: Path, label: str = "Tests"):
     if not junit_data.get("present") or junit_data.get("error"):
         return
 
-    passed = junit_data.get('passed', 0)
-    failed = junit_data.get('failures', 0) + junit_data.get('errors', 0)
-    skipped = junit_data.get('skipped', 0)
-    total = junit_data.get('tests', 0)
-    rate = junit_data.get('pass_rate', 0)
-    duration = junit_data.get('duration_seconds', 0)
+    passed = junit_data.get("passed", 0)
+    failed = junit_data.get("failures", 0) + junit_data.get("errors", 0)
+    skipped = junit_data.get("skipped", 0)
+    total = junit_data.get("tests", 0)
+    rate = junit_data.get("pass_rate", 0)
+    duration = junit_data.get("duration_seconds", 0)
     verdict_color = "#4caf73" if failed == 0 else "#d96b6b"
     verdict_label = "ALL PASSING" if failed == 0 else f"{failed} FAILURE(S)"
 
     # Build test case rows for ALL tests sorted by suite
     rows_html = []
-    for suite in junit_data.get('suites', []):
-        suite_name = suite.get('name', '')
+    for suite in junit_data.get("suites", []):
+        suite_name = suite.get("name", "")
         rows_html.append(
             f'<tr class="suite-header"><td colspan="4">{suite_name}</td></tr>'
         )
 
     # Re-parse testcases from suite data — we need them per-suite
     # Fall back: list failed cases prominently, then all from suites
-    failed_cases = junit_data.get('failed_cases', [])
-    slow_cases = junit_data.get('slow_cases', [])
+    failed_cases = junit_data.get("failed_cases", [])
+    slow_cases = junit_data.get("slow_cases", [])
 
     failed_rows = ""
     for c in failed_cases:
-        msg = str(c.get('message', '')).replace('<', '&lt;').replace('>', '&gt;')
+        msg = str(c.get("message", "")).replace("<", "&lt;").replace(">", "&gt;")
         failed_rows += (
             f'<tr class="fail-row">'
-            f'<td><code>{c.get("classname", "")}</code></td>'
-            f'<td>{c.get("name", "")}</td>'
+            f"<td><code>{c.get('classname', '')}</code></td>"
+            f"<td>{c.get('name', '')}</td>"
             f'<td><span class="badge fail">FAIL</span></td>'
             f'<td class="msg">{msg}</td>'
-            f'</tr>'
+            f"</tr>"
         )
 
     slow_rows = ""
     for c in slow_cases:
         slow_rows += (
-            f'<tr>'
-            f'<td><code>{c.get("classname", "")}</code></td>'
-            f'<td>{c.get("name", "")}</td>'
+            f"<tr>"
+            f"<td><code>{c.get('classname', '')}</code></td>"
+            f"<td>{c.get('name', '')}</td>"
             f'<td class="dur">{c.get("duration", 0):.3f}s</td>'
-            f'</tr>'
+            f"</tr>"
         )
 
     suite_rows = ""
-    for s in junit_data.get('suites', []):
-        s_pass = max(0, s.get('tests', 0) - s.get('failures', 0) - s.get('errors', 0) - s.get('skipped', 0))
-        row_cls = "fail-row" if (s.get('failures', 0) + s.get('errors', 0)) > 0 else ""
+    for s in junit_data.get("suites", []):
+        s_pass = max(
+            0,
+            s.get("tests", 0)
+            - s.get("failures", 0)
+            - s.get("errors", 0)
+            - s.get("skipped", 0),
+        )
+        row_cls = "fail-row" if (s.get("failures", 0) + s.get("errors", 0)) > 0 else ""
         suite_rows += (
             f'<tr class="{row_cls}">'
-            f'<td>{s.get("name")}</td>'
-            f'<td>{s.get("tests", 0)}</td>'
+            f"<td>{s.get('name')}</td>"
+            f"<td>{s.get('tests', 0)}</td>"
             f'<td style="color:#4caf73">{s_pass}</td>'
             f'<td style="color:{"#d96b6b" if s.get("failures", 0) else "#9bb1a8"}">{s.get("failures", 0)}</td>'
-            f'<td>{s.get("skipped", 0)}</td>'
-            f'<td>{s.get("duration", 0):.3f}s</td>'
-            f'</tr>'
+            f"<td>{s.get('skipped', 0)}</td>"
+            f"<td>{s.get('duration', 0):.3f}s</td>"
+            f"</tr>"
         )
 
     html = f"""<!DOCTYPE html>
@@ -423,7 +449,7 @@ def generate_junit_html(junit_data: dict, out_path: Path, label: str = "Tests"):
   <div class="stats">
     <div class="stat"><div class="val">{total}</div><div class="lbl">Total Tests</div></div>
     <div class="stat pass"><div class="val">{passed}</div><div class="lbl">Passed</div></div>
-    <div class="stat{'fail' if failed else ''}"><div class="val" style="color:{'var(--fail)' if failed else 'var(--pass)'}">{failed}</div><div class="lbl">Failed</div></div>
+    <div class="stat{"fail" if failed else ""}"><div class="val" style="color:{"var(--fail)" if failed else "var(--pass)"}">{failed}</div><div class="lbl">Failed</div></div>
     <div class="stat skip"><div class="val">{skipped}</div><div class="lbl">Skipped</div></div>
     <div class="stat"><div class="val">{rate}%</div><div class="lbl">Pass Rate</div></div>
     <div class="stat"><div class="val">{duration:.2f}s</div><div class="lbl">Duration</div></div>
@@ -459,39 +485,50 @@ def generate_junit_html(junit_data: dict, out_path: Path, label: str = "Tests"):
 """
 
     html += "</main></body></html>"
-    out_path.write_text(html, encoding='utf-8', errors='replace')
+    out_path.write_text(html, encoding="utf-8", errors="replace")
 
 
-def generate_coverage_html(coverage_data: dict, out_path: Path, label: str = "Coverage"):
+def generate_coverage_html(
+    coverage_data: dict, out_path: Path, label: str = "Coverage"
+):
     """Generate a premium dark-themed HTML Coverage report."""
     if not coverage_data.get("present") or coverage_data.get("error"):
         return
 
-    line_rate = coverage_data.get('line_rate', 0) or 0
-    branch_rate = coverage_data.get('branch_rate', 0) or 0
-    lines_valid = coverage_data.get('lines_valid', 0) or 0
-    lines_covered = coverage_data.get('lines_covered', 0) or 0
-    weakest = coverage_data.get('weakest', []) or []
-    strongest = coverage_data.get('strongest', []) or []
+    line_rate = coverage_data.get("line_rate", 0) or 0
+    branch_rate = coverage_data.get("branch_rate", 0) or 0
+    lines_valid = coverage_data.get("lines_valid", 0) or 0
+    lines_covered = coverage_data.get("lines_covered", 0) or 0
+    weakest = coverage_data.get("weakest", []) or []
+    strongest = coverage_data.get("strongest", []) or []
 
-    bar_color = "#4caf73" if line_rate >= 80 else ("#d9a26b" if line_rate >= 50 else "#d96b6b")
-    rating = "EXCELLENT" if line_rate >= 90 else ("GOOD" if line_rate >= 70 else ("FAIR" if line_rate >= 50 else "LOW"))
+    bar_color = (
+        "#4caf73" if line_rate >= 80 else ("#d9a26b" if line_rate >= 50 else "#d96b6b")
+    )
+    rating = (
+        "EXCELLENT"
+        if line_rate >= 90
+        else ("GOOD" if line_rate >= 70 else ("FAIR" if line_rate >= 50 else "LOW"))
+    )
 
     def file_rows(files, limit=20):
         rows = ""
         for f in files[:limit]:
-            r = f.get('line_rate', 0) or 0
+            r = f.get("line_rate", 0) or 0
             c = "#4caf73" if r >= 80 else ("#d9a26b" if r >= 50 else "#d96b6b")
             rows += (
-                f'<tr>'
-                f'<td><code>{f.get("file", "")}</code></td>'
+                f"<tr>"
+                f"<td><code>{f.get('file', '')}</code></td>"
                 f'<td style="color:{c};font-weight:600">{r}%</td>'
-                f'<td>{f.get("lines_valid", "—")}</td>'
-                f'<td>{f.get("lines_covered", "—")}</td>'
-                f'<td>{f.get("lines_missing", "—")}</td>'
-                f'</tr>'
+                f"<td>{f.get('lines_valid', '—')}</td>"
+                f"<td>{f.get('lines_covered', '—')}</td>"
+                f"<td>{f.get('lines_missing', '—')}</td>"
+                f"</tr>"
             )
-        return rows or '<tr><td colspan="5" style="color:var(--muted)">No file data.</td></tr>'
+        return (
+            rows
+            or '<tr><td colspan="5" style="color:var(--muted)">No file data.</td></tr>'
+        )
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -575,7 +612,7 @@ def generate_coverage_html(coverage_data: dict, out_path: Path, label: str = "Co
 """
 
     html += "</main></body></html>"
-    out_path.write_text(html, encoding='utf-8', errors='replace')
+    out_path.write_text(html, encoding="utf-8", errors="replace")
 
 
 def parse_log_signals(text: str) -> dict:
@@ -615,16 +652,24 @@ def enrich_artifact(artifact, root: Path) -> None:
 
     if artifact.name == "backend-python-reports":
         parsed["junit"] = parse_junit(root / "junit-python.xml")
-        generate_junit_html(parsed["junit"], root / "junit-python.html", label="Python (pytest)")
+        generate_junit_html(
+            parsed["junit"], root / "junit-python.html", label="Python (pytest)"
+        )
         parsed["coverage"] = parse_coverage(root / "coverage-python.xml")
-        generate_coverage_html(parsed["coverage"], root / "coverage-python.html", label="Python")
-        parsed["status"] = parse_coverage_status_json(root / "htmlcov-python" / "status.json")
+        generate_coverage_html(
+            parsed["coverage"], root / "coverage-python.html", label="Python"
+        )
+        parsed["status"] = parse_coverage_status_json(
+            root / "htmlcov-python" / "status.json"
+        )
         parsed["ai_dashboard"] = parse_ai_dashboard(root / "ai-dashboard.json")
 
     if artifact.name == "backend-node-reports":
         parsed["junit"] = parse_junit(root / "junit-node.xml")
         if parsed["junit"].get("present"):
-            generate_junit_html(parsed["junit"], root / "junit-node.html", label="Node (Jest)")
+            generate_junit_html(
+                parsed["junit"], root / "junit-node.html", label="Node (Jest)"
+            )
         # Try to parse coverage summary from jest's coverage-summary.json
         cov_summary = root / "coverage-node" / "coverage-summary.json"
         if cov_summary.exists():
@@ -646,7 +691,11 @@ def enrich_artifact(artifact, root: Path) -> None:
         audit_log = root / "audit-node.log"
         if audit_log.exists():
             audit_text = audit_log.read_text(encoding="utf-8", errors="replace")
-            vulns = re.findall(r"(\d+) (critical|high|moderate|low) severity", audit_text, re.IGNORECASE)
+            vulns = re.findall(
+                r"(\d+) (critical|high|moderate|low) severity",
+                audit_text,
+                re.IGNORECASE,
+            )
             parsed["node_audit"] = {"present": True, "findings": vulns}
 
     if artifact.name in ("frontend-reports", "frontend-test-reports"):
@@ -654,8 +703,11 @@ def enrich_artifact(artifact, root: Path) -> None:
         junit_path = root / f"junit-{app_name}.xml"
         parsed["junit"] = parse_junit(junit_path)
         if parsed["junit"].get("present"):
-            generate_junit_html(parsed["junit"], root / f"junit-{app_name}.html",
-                                label=f"{app_name.replace('-', ' ').title()} (Jest)")
+            generate_junit_html(
+                parsed["junit"],
+                root / f"junit-{app_name}.html",
+                label=f"{app_name.replace('-', ' ').title()} (Jest)",
+            )
         cov_summary = root / f"coverage-{app_name}" / "coverage-summary.json"
         if cov_summary.exists():
             try:
@@ -671,8 +723,11 @@ def enrich_artifact(artifact, root: Path) -> None:
                     "strongest": [],
                 }
                 if parsed["coverage"].get("present"):
-                    generate_coverage_html(parsed["coverage"], root / f"coverage-{app_name}.html",
-                                           label=app_name.replace('-', ' ').title())
+                    generate_coverage_html(
+                        parsed["coverage"],
+                        root / f"coverage-{app_name}.html",
+                        label=app_name.replace("-", " ").title(),
+                    )
             except (json.JSONDecodeError, KeyError, ValueError, OSError):
                 parsed["coverage"] = {"present": False}
 
@@ -681,10 +736,14 @@ def enrich_artifact(artifact, root: Path) -> None:
 
     if artifact.name == "dist-frontend-test":
         index_html = root / "index.html"
-        parsed["index_size_bytes"] = index_html.stat().st_size if index_html.exists() else 0
+        parsed["index_size_bytes"] = (
+            index_html.stat().st_size if index_html.exists() else 0
+        )
 
     if artifact.name == "dependency-check-report":
-        parsed["vulnerabilities"] = parse_dependency_check_html(root / "dependency-check-report.html")
+        parsed["vulnerabilities"] = parse_dependency_check_html(
+            root / "dependency-check-report.html"
+        )
 
     k6_path = Path("reports/k6-results.json")
     if k6_path.exists():

@@ -42,8 +42,13 @@ SCREENSHOT_DIR = Path(__file__).resolve().parent / "screenshots"
 # Shared helpers
 # ============================================================
 
-def _http_json(url: str, method: str = "GET", body: dict[str, Any] | None = None,
-               token: str | None = None) -> dict[str, Any]:
+
+def _http_json(
+    url: str,
+    method: str = "GET",
+    body: dict[str, Any] | None = None,
+    token: str | None = None,
+) -> dict[str, Any]:
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
@@ -297,6 +302,7 @@ def test_scenario_matrix(page, scenario, data_root):
 # Backend unit tests
 # ============================================================
 
+
 @pytest.mark.backend
 def test_safe_json_extract_parses_embedded_json():
     from backend import safe_json_extract
@@ -460,14 +466,23 @@ def test_analyze_candidate_detail_uses_cache_when_present(mocker):
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
-    mocker.patch("backend.get_ai_cache_key", return_value="candidate_detail|Gemini|gemini-2.5-flash|90|resume|job")
-    mocker.patch("backend.get_ai_cache", return_value={
-        "candidate_detail|Gemini|gemini-2.5-flash|90|resume|job": cached,
-    })
+    mocker.patch(
+        "backend.get_ai_cache_key",
+        return_value="candidate_detail|Gemini|gemini-2.5-flash|90|resume|job",
+    )
+    mocker.patch(
+        "backend.get_ai_cache",
+        return_value={
+            "candidate_detail|Gemini|gemini-2.5-flash|90|resume|job": cached,
+        },
+    )
     mock_ai = mocker.patch("backend.safe_ai_json")
 
     result = analyze_candidate_detail(
-        "resume", "job", 90, model_name="gemini-2.5-flash",
+        "resume",
+        "job",
+        90,
+        model_name="gemini-2.5-flash",
     )
     assert result == cached
     mock_ai.assert_not_called()
@@ -490,6 +505,7 @@ def test_normalize_configuration_prefills_blank_prompts():
 # ============================================================
 # Integration probes (FastAPI direct, no React dev server required)
 # ============================================================
+
 
 @pytest.mark.integration
 def test_api_health_is_reachable():
@@ -562,13 +578,13 @@ def test_jd_input_required_field_via_analyze():
     try:
         urllib.request.urlopen(request, timeout=10)
     except urllib.error.HTTPError as error:
-        assert error.code in (400, 422), (
-            f"Expected 400/422 for empty JD, got {error.code}"
-        )
+        assert error.code in (
+            400,
+            422,
+        ), f"Expected 400/422 for empty JD, got {error.code}"
         error_body = error.read()
         assert (
-            b"job_description" in error_body
-            or b"Job description" in error_body
+            b"job_description" in error_body or b"Job description" in error_body
         ), f"Error body should mention the job_description field: {error_body!r}"
     else:
         raise AssertionError("Empty JD should have produced an error response.")
@@ -600,7 +616,6 @@ def test_ranking_flow_orders_candidates_by_score(scenario, data_root):
         payload = json.loads(response.read().decode("utf-8"))
 
     scores = [row["match_score"] for row in payload["ranking"] if "match_score" in row]
-    assert scores == sorted(scores, reverse=True), (
-        f"Ranking not sorted descending: {scores}"
-    )
-
+    assert scores == sorted(
+        scores, reverse=True
+    ), f"Ranking not sorted descending: {scores}"

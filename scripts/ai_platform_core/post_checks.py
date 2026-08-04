@@ -285,7 +285,9 @@ def run_post_checks(
     # flip the overall status to "failed" if the tool is genuinely unavailable
     # in this environment.
     applicable = [r for r in results if r.status != "skipped"]
-    hard_failures = [r for r in applicable if r.status == "failed" or r.status == "timeout"]
+    hard_failures = [
+        r for r in applicable if r.status == "failed" or r.status == "timeout"
+    ]
     missing_tools = [r for r in applicable if r.status == "missing"]
 
     if not applicable:

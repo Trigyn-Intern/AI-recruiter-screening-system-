@@ -6,6 +6,7 @@ Standalone renderer. Reads:
   --output  path to write the HTML report
   --filter  filter string (display only)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -126,7 +127,7 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     resume_text = (
         "\n".join(f"  - {r}" for r in resume_files) if resume_files else "  (none)"
     )
-    input_data = f"JD File: {jd_file}\n" f"Model: {model}\n" f"Resumes:\n{resume_text}"
+    input_data = f"JD File: {jd_file}\nModel: {model}\nResumes:\n{resume_text}"
 
     # Expected Result
     expected_result = (
@@ -197,9 +198,7 @@ def render_row(idx: int, tc: dict, meta: dict) -> str:
     screenshot_path = REPO_ROOT / "tests" / "ui" / "screenshots" / f"{scenario_id}.png"
     screenshot_html = ""
     if screenshot_path.exists():
-        screenshot_html = (
-            f"\n3. Screenshot: {scenario_id}.png"
-        )
+        screenshot_html = f"\n3. Screenshot: {scenario_id}.png"
     reference = (
         f"1. Case ID: 10560-{scenario_id}\n"
         f"2. Config: tests/data/scenarios.yaml"
@@ -348,7 +347,9 @@ def main() -> int:
     total = len(testcases)
 
     rows_html = "\n".join(render_row(idx, tc, meta) for idx, tc in enumerate(testcases))
-    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     filt = args.filter or "(all)"
 
     doc = f"""<!doctype html>

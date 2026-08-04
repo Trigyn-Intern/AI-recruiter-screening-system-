@@ -94,10 +94,9 @@ def test_report_id_for_is_stable_and_short(api_module):
     rid = api_module._report_id_for("reports/ci/ci-summary.html")
     assert len(rid) == 16
     assert api_module._report_id_for("reports/ci/ci-summary.html") == rid
-    assert (
-        api_module._report_id_for("reports/ci/ci-summary.html")
-        != api_module._report_id_for(".code-review/checklist-report.html")
-    )
+    assert api_module._report_id_for(
+        "reports/ci/ci-summary.html"
+    ) != api_module._report_id_for(".code-review/checklist-report.html")
 
 
 def test_safe_json_loads_direct(api_module):
@@ -107,7 +106,7 @@ def test_safe_json_loads_direct(api_module):
 
 def test_safe_json_loads_from_fenced_block(api_module):
     parsed = api_module._safe_json_loads(
-        "Some prose.\n```json\n{\"a\": 2}\n```\nTail text."
+        'Some prose.\n```json\n{"a": 2}\n```\nTail text.'
     )
     assert parsed == {"a": 2}
 

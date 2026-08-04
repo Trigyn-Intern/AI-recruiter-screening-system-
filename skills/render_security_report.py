@@ -1,4 +1,5 @@
 """Render a 13-column Security Review HTML report from JSON input."""
+
 from __future__ import annotations
 
 import argparse
@@ -54,35 +55,39 @@ def _findings_from_data(data: dict) -> list[dict]:
     rows: list[dict] = []
     for idx, check in enumerate(data.get("securityChecks") or [], start=1):
         status = check.get("status", "Fail")
-        rows.append({
-            "cr_no": f"SR-{idx:03d}",
-            "name": check.get("checkItem", "Security check"),
-            "description": check.get("checkItem", ""),
-            "prerequisite": "Changed files in git diff against main",
-            "test_steps": "Reviewed diff with security-review SKILL.md",
-            "input_data": "",
-            "expected_result": "No vulnerability",
-            "actual_result": check.get("comments", check.get("notes", "")),
-            "pass_fail": status,
-            "enhancement": check.get("comments", ""),
-            "codex_prompt": "",
-            "reference": "",
-        })
+        rows.append(
+            {
+                "cr_no": f"SR-{idx:03d}",
+                "name": check.get("checkItem", "Security check"),
+                "description": check.get("checkItem", ""),
+                "prerequisite": "Changed files in git diff against main",
+                "test_steps": "Reviewed diff with security-review SKILL.md",
+                "input_data": "",
+                "expected_result": "No vulnerability",
+                "actual_result": check.get("comments", check.get("notes", "")),
+                "pass_fail": status,
+                "enhancement": check.get("comments", ""),
+                "codex_prompt": "",
+                "reference": "",
+            }
+        )
     if not rows and data.get("finalNotes"):
-        rows.append({
-            "cr_no": "SR-001",
-            "name": "security-review / summary",
-            "description": "LLM security review summary",
-            "prerequisite": "Git diff main..HEAD",
-            "test_steps": "Automated background security review",
-            "input_data": "",
-            "expected_result": "Structured findings",
-            "actual_result": str(data.get("finalNotes", ""))[:500],
-            "pass_fail": "Warning",
-            "enhancement": "See full notes in job output",
-            "codex_prompt": "",
-            "reference": "",
-        })
+        rows.append(
+            {
+                "cr_no": "SR-001",
+                "name": "security-review / summary",
+                "description": "LLM security review summary",
+                "prerequisite": "Git diff main..HEAD",
+                "test_steps": "Automated background security review",
+                "input_data": "",
+                "expected_result": "Structured findings",
+                "actual_result": str(data.get("finalNotes", ""))[:500],
+                "pass_fail": "Warning",
+                "enhancement": "See full notes in job output",
+                "codex_prompt": "",
+                "reference": "",
+            }
+        )
     return rows
 
 
@@ -112,11 +117,21 @@ def _module_summary_html(modules: dict) -> str:
     if not modules:
         return ""
     rows = "".join(
-        "<tr><td>" + _esc(str(name)) + "</td>"
-        + "<td>" + str(p.get("Pass", 0)) + "</td>"
-        + "<td>" + str(p.get("Fail", 0)) + "</td>"
-        + "<td>" + str(p.get("Warning", 0)) + "</td>"
-        + "<td>" + str(p.get("Total", 0)) + "</td></tr>"
+        "<tr><td>"
+        + _esc(str(name))
+        + "</td>"
+        + "<td>"
+        + str(p.get("Pass", 0))
+        + "</td>"
+        + "<td>"
+        + str(p.get("Fail", 0))
+        + "</td>"
+        + "<td>"
+        + str(p.get("Warning", 0))
+        + "</td>"
+        + "<td>"
+        + str(p.get("Total", 0))
+        + "</td></tr>"
         for name, p in modules.items()
     )
     return (
@@ -131,17 +146,25 @@ def _modules_bullet_html(modules: dict) -> str:
     if not modules:
         return "<p>(no modules)</p>"
     items = "".join(
-        "<li><b>" + _esc(str(name)) + "</b>: "
-        + str(p.get("Total", 0)) + " checks ("
-        + str(p.get("Pass", 0)) + " pass, "
-        + str(p.get("Fail", 0)) + " fail, "
-        + str(p.get("Warning", 0)) + " warn)</li>"
+        "<li><b>"
+        + _esc(str(name))
+        + "</b>: "
+        + str(p.get("Total", 0))
+        + " checks ("
+        + str(p.get("Pass", 0))
+        + " pass, "
+        + str(p.get("Fail", 0))
+        + " fail, "
+        + str(p.get("Warning", 0))
+        + " warn)</li>"
         for name, p in modules.items()
     )
     return "<ul>" + items + "</ul>"
 
 
-def render_report(data: dict, mode: str, stamp: str, scope: str, template_path: Path) -> str:
+def render_report(
+    data: dict, mode: str, stamp: str, scope: str, template_path: Path
+) -> str:
     date_part = stamp.split(" ")[0] if " " in stamp else stamp[:10]
     findings_html, pass_count, fail_count, warn_count = build_findings_html(data)
 
@@ -165,7 +188,9 @@ def render_report(data: dict, mode: str, stamp: str, scope: str, template_path: 
         "__AUTHZ_STATUS__": data.get("coverage", {}).get("Authorization", ""),
         "__INPUT_STATUS__": data.get("coverage", {}).get("Input Validation", ""),
         "__SECRET_STATUS__": data.get("coverage", {}).get("Secrets Management", ""),
-        "__DEPENDENCY_STATUS__": data.get("coverage", {}).get("Dependency Security", ""),
+        "__DEPENDENCY_STATUS__": data.get("coverage", {}).get(
+            "Dependency Security", ""
+        ),
         "__CONFIG_STATUS__": data.get("coverage", {}).get("Configuration Review", ""),
         "__LOGGING_STATUS__": data.get("coverage", {}).get("Logging", ""),
         "__ERROR_STATUS__": data.get("coverage", {}).get("Error Handling", ""),
@@ -173,14 +198,19 @@ def render_report(data: dict, mode: str, stamp: str, scope: str, template_path: 
         "__BACKEND_STATUS__": data.get("coverage", {}).get("Backend Security", ""),
         "__PYTHON_STATUS__": data.get("coverage", {}).get("Python / AI Security", ""),
         "__GITHUB_STATUS__": data.get("coverage", {}).get("GitHub Actions", ""),
-        "__DOCKER_STATUS__": data.get("coverage", {}).get("Docker / Infrastructure", ""),
+        "__DOCKER_STATUS__": data.get("coverage", {}).get(
+            "Docker / Infrastructure", ""
+        ),
         "__TEST_STATUS__": data.get("coverage", {}).get("Tests & Test Data", ""),
     }
 
     risks = data.get("riskDistribution") or []
     if risks:
         risk_text = "\n".join(
-            "- " + _esc(str(r.get("Severity", ""))) + ": " + _esc(str(r.get("Recommendation", "")))
+            "- "
+            + _esc(str(r.get("Severity", "")))
+            + ": "
+            + _esc(str(r.get("Recommendation", "")))
             for r in risks
         )
     else:
@@ -242,7 +272,9 @@ def main() -> int:
     args = parser.parse_args()
 
     data = json.loads(args.data.read_text(encoding="utf-8"))
-    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     template_path = Path(__file__).resolve().parent / "reports" / "_template.html"
     if not template_path.exists():
         raise SystemExit(f"Template not found: {template_path}")

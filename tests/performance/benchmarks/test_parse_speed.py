@@ -8,6 +8,7 @@ Tests how fast extract_text() processes PDF and DOCX files.
 Run:
     pytest tests/performance/benchmarks/test_parse_speed.py -v
 """
+
 from __future__ import annotations
 
 import io

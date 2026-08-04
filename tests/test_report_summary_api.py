@@ -1,4 +1,3 @@
-
 # --- chunked report summary surface ---
 import api_report_summary as mod
 from api_report_summary import (
@@ -55,7 +54,7 @@ def test_as_str_truncates():
 
 
 def test_safe_json_loads_extracts_codeblock():
-    raw = "noise\n```json\n{\"a\": 1}\n```\nmore"
+    raw = 'noise\n```json\n{"a": 1}\n```\nmore'
     assert safe_json_loads(raw) == {"a": 1}
 
 
@@ -72,20 +71,51 @@ def test_scan_reports_discovers_html_files(tmp_path, monkeypatch):
     (proj / "out").mkdir()
     f = proj / "out" / "demo.html"
     f.write_text("<html><body>hi</body></html>", encoding="utf-8")
-    monkeypatch.setattr(mod, "SCAN_DIRS", [{"dir": str(f.relative_to(proj)), "kind": "code", "review_type": "Demo"}])
+    monkeypatch.setattr(
+        mod,
+        "SCAN_DIRS",
+        [{"dir": str(f.relative_to(proj)), "kind": "code", "review_type": "Demo"}],
+    )
     # also patch pathlib root resolution
     import pathlib as _pl
+
     real_resolve = _pl.Path.resolve
-    monkeypatch.setattr(_pl.Path, "resolve", lambda self, *a, **k: proj if str(self).endswith("api_report_summary.py") else real_resolve(self, *a, **k))
+    monkeypatch.setattr(
+        _pl.Path,
+        "resolve",
+        lambda self, *a, **k: (
+            proj
+            if str(self).endswith("api_report_summary.py")
+            else real_resolve(self, *a, **k)
+        ),
+    )
     rows = scan_reports()
     assert any(r["review_type"] == "Demo" for r in rows)
 
 
 def test_merge_chunk_summaries_dedupes_and_caps():
-    a = {"key_findings": ["one", "two"], "critical_issues": ["c1"], "medium_issues": [], "recommendations": ["r1"], "positive_observations": ["p1"], "overall_assessment": "first", "final_verdict": "v1"}
-    b = {"key_findings": ["one", "three"], "critical_issues": ["c1", "c2"], "medium_issues": ["m"], "recommendations": ["r1", "r2"], "positive_observations": ["p1"], "overall_assessment": "second", "final_verdict": "v2"}
+    a = {
+        "key_findings": ["one", "two"],
+        "critical_issues": ["c1"],
+        "medium_issues": [],
+        "recommendations": ["r1"],
+        "positive_observations": ["p1"],
+        "overall_assessment": "first",
+        "final_verdict": "v1",
+    }
+    b = {
+        "key_findings": ["one", "three"],
+        "critical_issues": ["c1", "c2"],
+        "medium_issues": ["m"],
+        "recommendations": ["r1", "r2"],
+        "positive_observations": ["p1"],
+        "overall_assessment": "second",
+        "final_verdict": "v2",
+    }
     merged = merge_chunk_summaries([a, b])
-    assert merged["key_findings"][:2] == ["one", "two"] or merged["key_findings"][:2] == ["one", "three"]
+    assert merged["key_findings"][:2] == ["one", "two"] or merged["key_findings"][
+        :2
+    ] == ["one", "three"]
     assert len(merged["key_findings"]) <= 5
     assert merged["overall_assessment"] == "first"
     assert merged["final_verdict"] == "v2"

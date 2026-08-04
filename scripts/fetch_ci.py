@@ -196,7 +196,9 @@ class RunSummary:
     logs_path: str = ""
     logs_bytes: int = 0
     artifacts: list = field(default_factory=list)
-    fetched_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    fetched_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
 
     def total_files(self) -> int:
         return sum(a.file_count for a in self.artifacts)
@@ -247,7 +249,9 @@ def latest_workflow_run(repo_path, branch, token):
     data = github_request(url, token)
     runs = data.get("workflow_runs") or []
     if not runs:
-        raise GitHubError(f"No completed {WORKFLOW_FILE} runs found for branch '{branch}'.")
+        raise GitHubError(
+            f"No completed {WORKFLOW_FILE} runs found for branch '{branch}'."
+        )
     return runs[0]
 
 
@@ -284,14 +288,18 @@ def download_bytes(url, token, byte_limit, label):
                 chunks.append(chunk)
             return b"".join(chunks)
     except urllib.error.HTTPError as exc:
-        raise GitHubError(f"{label} download failed: HTTP {exc.code} {exc.reason}") from exc
+        raise GitHubError(
+            f"{label} download failed: HTTP {exc.code} {exc.reason}"
+        ) from exc
 
 
 def download_logs(run, token, dest):
     """Fetch the run logs ZIP and write an aggregated, ordered text file."""
     logs_url = run.get("logs_url")
     if not logs_url:
-        raise GitHubError("Run has no logs_url; logs are unavailable for this workflow.")
+        raise GitHubError(
+            "Run has no logs_url; logs are unavailable for this workflow."
+        )
 
     raw = download_bytes(logs_url, token, LOGS_BYTE_LIMIT, "Logs archive")
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -374,8 +382,7 @@ def download_artifact(repo_path, artifact, token):
     """Download one artifact ZIP, extract it, and return a summary."""
     name = artifact.get("name", "unnamed")
     download_url = (
-        f"{GITHUB_API}/repos/{repo_path}/actions/artifacts/"
-        f"{artifact['id']}/zip"
+        f"{GITHUB_API}/repos/{repo_path}/actions/artifacts/{artifact['id']}/zip"
     )
     extract_root = CI_ROOT / name
     summary = ArtifactSummary(
@@ -393,7 +400,9 @@ def download_artifact(repo_path, artifact, token):
         # Wipe any previous version so the dashboard does not display stale data.
         if extract_root.exists():
             shutil.rmtree(extract_root)
-        raw = download_bytes(download_url, token, ARTIFACT_BYTE_LIMIT, f"Artifact '{name}'")
+        raw = download_bytes(
+            download_url, token, ARTIFACT_BYTE_LIMIT, f"Artifact '{name}'"
+        )
         summary.size_bytes = len(raw)
         summary.size_human = human_bytes(summary.size_bytes)
 
@@ -429,9 +438,7 @@ def build_known_artifact_index():
         "backend-node-reports": (
             "Backend Node (Express) lint, audit, and test output."
         ),
-        "dist-frontend": (
-            "Production build of the recruiter React/Vite frontend."
-        ),
+        "dist-frontend": ("Production build of the recruiter React/Vite frontend."),
         "dist-frontend-test": (
             "Production build of the React/Vite testing dashboard (port 5174)."
         ),
@@ -469,8 +476,14 @@ def _render_artifact_extras(art):
     junit = parsed.get("junit", {})
     if junit.get("present") and not junit.get("error"):
         badges = [
-            _badge(f"{junit.get('passed', 0)}/{junit.get('tests', 0)} pass",
-                   "pass" if junit.get("failures", 0) == 0 and junit.get("errors", 0) == 0 else "err"),
+            _badge(
+                f"{junit.get('passed', 0)}/{junit.get('tests', 0)} pass",
+                (
+                    "pass"
+                    if junit.get("failures", 0) == 0 and junit.get("errors", 0) == 0
+                    else "err"
+                ),
+            ),
             _badge(f"{junit.get('pass_rate', 0)}% pass rate", "muted"),
             _badge(_fmt(junit.get("duration_seconds")), "muted"),
         ]
@@ -480,12 +493,12 @@ def _render_artifact_extras(art):
             badges.append(_badge(f"{junit['errors']} errors", "err"))
         if junit.get("skipped"):
             badges.append(_badge(f"{junit['skipped']} skipped", "muted"))
-        summary = '<div class="art-extra">' + "".join(badges) + '</div>'
+        summary = '<div class="art-extra">' + "".join(badges) + "</div>"
         failed = junit.get("failed_cases") or []
         if failed:
             rows = "".join(
-                f'<li><code>{_escape(c["classname"])}::{_escape(c["name"])}</code> '
-                f'<small>({_fmt(c["duration"])})</small> &mdash; {_escape(c["message"])}</li>'
+                f"<li><code>{_escape(c['classname'])}::{_escape(c['name'])}</code> "
+                f"<small>({_fmt(c['duration'])})</small> &mdash; {_escape(c['message'])}</li>"
                 for c in failed[:10]
             )
             summary += f'<details><summary>{len(failed)} failing test(s)</summary><ul class="art-list">{rows}</ul></details>'
@@ -494,12 +507,19 @@ def _render_artifact_extras(art):
     coverage = parsed.get("coverage", {})
     if coverage.get("present") and not coverage.get("error"):
         line = coverage.get("line_rate")
-        badge = _badge(f"{line}% line coverage", "pass" if (line or 0) >= 50 else "warn") if line is not None else None
-        summary = '<div class="art-extra">' + "".join(b for b in [badge] if b) + '</div>'
+        badge = (
+            _badge(f"{line}% line coverage", "pass" if (line or 0) >= 50 else "warn")
+            if line is not None
+            else None
+        )
+        summary = (
+            '<div class="art-extra">' + "".join(b for b in [badge] if b) + "</div>"
+        )
         weakest = coverage.get("weakest") or []
         if weakest:
             rows = "".join(
-                f'<li><code>{_escape(w["file"])}</code> &mdash; {w["line_rate"]}%</li>' for w in weakest
+                f"<li><code>{_escape(w['file'])}</code> &mdash; {w['line_rate']}%</li>"
+                for w in weakest
             )
             summary += f'<details><summary>Lowest-coverage files</summary><ul class="art-list">{rows}</ul></details>'
         parts.append(summary)
@@ -509,18 +529,18 @@ def _render_artifact_extras(art):
         rows = status.get("files") or []
         if rows:
             body = "".join(
-                f'<tr><td><code>{_escape(r["file"])}</code></td>'
-                f'<td>{r["statements"]}</td><td>{r["covered"]}</td>'
-                f'<td>{r["missing"]}</td><td>{r["excluded"]}</td>'
-                f'<td>{r["line_rate"]}%</td></tr>'
+                f"<tr><td><code>{_escape(r['file'])}</code></td>"
+                f"<td>{r['statements']}</td><td>{r['covered']}</td>"
+                f"<td>{r['missing']}</td><td>{r['excluded']}</td>"
+                f"<td>{r['line_rate']}%</td></tr>"
                 for r in rows[:10]
             )
             summary = (
-                '<details><summary>Per-file coverage (statements vs missing)</summary>'
+                "<details><summary>Per-file coverage (statements vs missing)</summary>"
                 '<table class="art-table"><thead><tr>'
-                '<th>File</th><th>Statements</th><th>Covered</th><th>Missing</th>'
-                '<th>Excluded</th><th>Rate</th></tr></thead><tbody>'
-                f'{body}</tbody></table></details>'
+                "<th>File</th><th>Statements</th><th>Covered</th><th>Missing</th>"
+                "<th>Excluded</th><th>Rate</th></tr></thead><tbody>"
+                f"{body}</tbody></table></details>"
             )
             parts.append(summary)
 
@@ -529,9 +549,12 @@ def _render_artifact_extras(art):
         summary = '<div class="art-extra">'
         summary += _badge(f"{ai.get('source_files', 0)} source files", "muted")
         summary += _badge(f"{ai.get('test_modules', 0)} test modules", "muted")
-        summary += _badge(f"{ai.get('oversized_files', 0)} oversized", "warn" if ai.get("oversized_files", 0) else "muted")
+        summary += _badge(
+            f"{ai.get('oversized_files', 0)} oversized",
+            "warn" if ai.get("oversized_files", 0) else "muted",
+        )
         summary += _badge(f"{ai.get('dependency_manifests', 0)} manifests", "muted")
-        summary += '</div>'
+        summary += "</div>"
         reports = ai.get("reports") or []
         if reports:
             summary += f'<p class="muted">AI reports: {_escape(", ".join(reports))}</p>'
@@ -545,8 +568,13 @@ def _render_artifact_extras(art):
             count = sev.get(level, 0)
             if count == 0:
                 continue
-            badges.append(_badge(f"{level}: {count}", "err" if level in {"Critical", "High"} else "warn"))
-        summary = '<div class="art-extra">' + "".join(badges) + '</div>'
+            badges.append(
+                _badge(
+                    f"{level}: {count}",
+                    "err" if level in {"Critical", "High"} else "warn",
+                )
+            )
+        summary = '<div class="art-extra">' + "".join(badges) + "</div>"
         if vulns.get("fails_threshold"):
             summary += '<p class="status status-err">Threshold breached &mdash; PR gate will fail.</p>'
         parts.append(summary)
@@ -555,11 +583,13 @@ def _render_artifact_extras(art):
     if catalog.get("present") and not catalog.get("error"):
         summary = '<div class="art-extra">'
         summary += _badge(f"{catalog.get('report_count', 0)} reports", "muted")
-        summary += '</div>'
+        summary += "</div>"
         cats = ", ".join(catalog.get("categories") or [])
         if cats:
             summary += f'<p class="muted">Categories: {_escape(cats)}</p>'
-        summary += f'<p class="muted">Updated: {_escape(catalog.get("updated", ""))}</p>'
+        summary += (
+            f'<p class="muted">Updated: {_escape(catalog.get("updated", ""))}</p>'
+        )
         parts.append(summary)
 
     k6 = parsed.get("k6", {})
@@ -567,20 +597,20 @@ def _render_artifact_extras(art):
         metrics = k6.get("metrics") or {}
         if metrics:
             rows = "".join(
-                f'<tr><td><code>{_escape(name)}</code></td>'
-                f'<td>{vals.get("count", 0)}</td>'
-                f'<td>{_fmt(vals.get("min"))}</td>'
-                f'<td>{_fmt(vals.get("p50"))}</td>'
-                f'<td>{_fmt(vals.get("p95"))}</td>'
-                f'<td>{_fmt(vals.get("max"))}</td></tr>'
+                f"<tr><td><code>{_escape(name)}</code></td>"
+                f"<td>{vals.get('count', 0)}</td>"
+                f"<td>{_fmt(vals.get('min'))}</td>"
+                f"<td>{_fmt(vals.get('p50'))}</td>"
+                f"<td>{_fmt(vals.get('p95'))}</td>"
+                f"<td>{_fmt(vals.get('max'))}</td></tr>"
                 for name, vals in metrics.items()
             )
             summary = (
-                '<details><summary>k6 load metrics</summary>'
+                "<details><summary>k6 load metrics</summary>"
                 '<table class="art-table"><thead><tr>'
-                '<th>Metric</th><th>Count</th><th>Min</th><th>p50</th>'
-                '<th>p95</th><th>Max</th></tr></thead><tbody>'
-                f'{rows}</tbody></table></details>'
+                "<th>Metric</th><th>Count</th><th>Min</th><th>p50</th>"
+                "<th>p95</th><th>Max</th></tr></thead><tbody>"
+                f"{rows}</tbody></table></details>"
             )
             parts.append(summary)
 
@@ -596,9 +626,15 @@ def _render_artifact_extras(art):
             for count, level in findings:
                 color = "err" if level.lower() in ("critical", "high") else "warn"
                 audit_badges.append(_badge(f"{count} {level}", color))
-            parts.append('<div class="art-extra">&#x1F6E1; npm audit: ' + "".join(audit_badges) + '</div>')
+            parts.append(
+                '<div class="art-extra">&#x1F6E1; npm audit: '
+                + "".join(audit_badges)
+                + "</div>"
+            )
         else:
-            parts.append('<div class="art-extra">' + _badge("npm audit clean", "pass") + '</div>')
+            parts.append(
+                '<div class="art-extra">' + _badge("npm audit clean", "pass") + "</div>"
+            )
 
     if art.name == "dist-frontend-test":
         size = parsed.get("index_size_bytes", 0)
@@ -607,7 +643,7 @@ def _render_artifact_extras(art):
 
     if not parts:
         return ""
-    return '<div class="art-section">' + "".join(parts) + '</div>'
+    return '<div class="art-section">' + "".join(parts) + "</div>"
 
 
 def render_summary_html(summary, descriptions):
@@ -615,14 +651,16 @@ def render_summary_html(summary, descriptions):
     artifact_cards = []
 
     # Pre-compute pieces that are referenced by both the header and the cards.
-    getattr(summary, 'log_signals', {}) or {}
+    getattr(summary, "log_signals", {}) or {}
 
     for art in summary.artifacts:
         cls = "card" if art.status == "ok" else "card error"
         title = html_lib.escape(art.name)
         size = html_lib.escape(art.size_human)
         status_label = "downloaded" if art.status == "ok" else "error"
-        desc = html_lib.escape(descriptions.get(art.name, "Custom artifact uploaded by the workflow."))
+        desc = html_lib.escape(
+            descriptions.get(art.name, "Custom artifact uploaded by the workflow.")
+        )
         file_count = art.file_count
         if art.status == "ok":
             extras = _render_artifact_extras(art)
@@ -636,9 +674,14 @@ def render_summary_html(summary, descriptions):
             if art.top_level:
                 # Known HTML reports get clickable links; known htmlcov folder links to its index
                 _HTML_NAMES = {
-                    "junit-python.html", "junit-node.html", "junit-frontend.html",
-                    "junit-frontend-test.html", "coverage-python.html", "coverage-node.html",
-                    "coverage-frontend.html", "coverage-frontend-test.html",
+                    "junit-python.html",
+                    "junit-node.html",
+                    "junit-frontend.html",
+                    "junit-frontend-test.html",
+                    "coverage-python.html",
+                    "coverage-node.html",
+                    "coverage-frontend.html",
+                    "coverage-frontend-test.html",
                     "dependency-check-report.html",
                 }
                 top_items = ""
@@ -646,39 +689,45 @@ def render_summary_html(summary, descriptions):
                     if t in ("htmlcov-python", "htmlcov-python/"):
                         top_items += (
                             f'<li><a href="./{html_lib.escape(art.name)}/htmlcov-python/index.html" target="_blank">'
-                            f'<code>{html_lib.escape(t)} &#x2197; Interactive Coverage</code></a></li>'
+                            f"<code>{html_lib.escape(t)} &#x2197; Interactive Coverage</code></a></li>"
                         )
                     elif t in _HTML_NAMES or t.endswith(".html"):
                         top_items += (
                             f'<li><a href="./{html_lib.escape(art.name)}/{html_lib.escape(t)}" target="_blank">'
-                            f'<code>{html_lib.escape(t)}</code></a></li>'
+                            f"<code>{html_lib.escape(t)}</code></a></li>"
                         )
                     else:
-                        top_items += f'<li><code>{html_lib.escape(t)}</code></li>'
-                details += f'<h4>Top-level entries</h4><ul>{top_items}</ul>'
+                        top_items += f"<li><code>{html_lib.escape(t)}</code></li>"
+                details += f"<h4>Top-level entries</h4><ul>{top_items}</ul>"
         else:
             details = (
-                f"<p class=\"error\">{html_lib.escape(art.note or 'Unknown error')}</p>"
+                f'<p class="error">{html_lib.escape(art.note or "Unknown error")}</p>'
             )
 
         artifact_cards.append(
-            f"<section class=\"{cls}\">"
+            f'<section class="{cls}">'
             f"<header><h3>{title}</h3>"
-            f"<span class=\"status status-{art.status}\">{status_label}</span>"
+            f'<span class="status status-{art.status}">{status_label}</span>'
             "</header>"
-            f"<p class=\"desc\">{desc}</p>"
+            f'<p class="desc">{desc}</p>'
             f"{details}"
             "</section>"
         )
 
     if not artifact_cards:
         artifact_cards.append(
-            "<section class=\"card empty\"><p>No artifacts were produced by this run.</p></section>"
+            '<section class="card empty"><p>No artifacts were produced by this run.</p></section>'
         )
 
     artifact_html = "\n".join(artifact_cards)
-    verdict_class = "pass" if summary.conclusion == "success" else (
-        "fail" if summary.conclusion in {"failure", "cancelled", "timed_out"} else "warn"
+    verdict_class = (
+        "pass"
+        if summary.conclusion == "success"
+        else (
+            "fail"
+            if summary.conclusion in {"failure", "cancelled", "timed_out"}
+            else "warn"
+        )
     )
     verdict_label = (summary.conclusion or "unknown").replace("_", " ").upper()
 
@@ -767,7 +816,7 @@ def render_summary_html(summary, descriptions):
       <dt>Commit</dt><dd><code>{html_lib.escape(summary.head_sha[:12])}</code></dd>
       <dt>Started</dt><dd>{html_lib.escape(summary.created_at)}</dd>
       <dt>Updated</dt><dd>{html_lib.escape(summary.updated_at)}</dd>
-      <dt>Actor</dt><dd>{html_lib.escape(summary.actor or 'n/a')}</dd>
+      <dt>Actor</dt><dd>{html_lib.escape(summary.actor or "n/a")}</dd>
       <dt>Logs</dt><dd><code>{html_lib.escape(summary.logs_path)}</code> ({human_bytes(summary.logs_bytes)})</dd>
     </dl>
   </header>
@@ -806,21 +855,35 @@ def _enrich_artifact_summaries(summary):
             enrich_artifact(art, Path(art.output_dir))
             # Inject any generated HTML files into top_level so they appear as clickable links
             _auto_html = [
-                "junit-python.html", "coverage-python.html",
-                "junit-node.html", "coverage-node.html",
-                "junit-frontend.html", "coverage-frontend.html",
-                "junit-frontend-test.html", "coverage-frontend-test.html",
+                "junit-python.html",
+                "coverage-python.html",
+                "junit-node.html",
+                "coverage-node.html",
+                "junit-frontend.html",
+                "coverage-frontend.html",
+                "junit-frontend-test.html",
+                "coverage-frontend-test.html",
             ]
             for fname in _auto_html:
-                if fname not in art.top_level and (Path(art.output_dir) / fname).exists():
+                if (
+                    fname not in art.top_level
+                    and (Path(art.output_dir) / fname).exists()
+                ):
                     art.top_level.append(fname)
             art.top_level.sort()
-        except (ImportError, ValueError, KeyError, OSError, RuntimeError) as exc:  # never let a parser break the run
+        except (
+            ImportError,
+            ValueError,
+            KeyError,
+            OSError,
+            RuntimeError,
+        ) as exc:  # never let a parser break the run
             art.parsed = {"error": f"parse_failed: {exc}"}
 
     if summary.logs_path and Path(summary.logs_path).exists():
         try:
             from ci_report_modules import parse_log_signals
+
             text = Path(summary.logs_path).read_text(encoding="utf-8", errors="replace")
             summary.log_signals = parse_log_signals(text)
         except ImportError:
@@ -855,7 +918,9 @@ def run_fetch(dry_run=False):
     token = os.environ.get("GITHUB_TOKEN")
 
     if not token and not dry_run:
-        print("WARNING: GITHUB_TOKEN is not set. You may get a 403 Forbidden error when downloading logs.")
+        print(
+            "WARNING: GITHUB_TOKEN is not set. You may get a 403 Forbidden error when downloading logs."
+        )
 
     try:
         repo, branch = get_git_info()
@@ -893,7 +958,9 @@ def run_fetch(dry_run=False):
         logs_bytes=0,
     )
 
-    print(f"[fetch_ci] Run #{summary.run_id} ({summary.run_name}) - {summary.conclusion or summary.status}")
+    print(
+        f"[fetch_ci] Run #{summary.run_id} ({summary.run_name}) - {summary.conclusion or summary.status}"
+    )
 
     # 1. Logs
     print("[fetch_ci] Downloading workflow logs...")
@@ -953,7 +1020,9 @@ def run_fetch(dry_run=False):
     print(f"[fetch_ci] HTML  : {SUMMARY_HTML.as_posix()}")
     print(f"[fetch_ci] JSON  : {SUMMARY_JSON.as_posix()}")
     if failed:
-        print(f"[fetch_ci] {len(failed)} artifact(s) failed to download; see the HTML for details.")
+        print(
+            f"[fetch_ci] {len(failed)} artifact(s) failed to download; see the HTML for details."
+        )
         return 3
     return 0
 
@@ -981,4 +1050,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

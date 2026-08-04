@@ -10,7 +10,9 @@ import urllib.request
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 
-SUMMARY_DIR = pathlib.Path(__file__).resolve().parent / ".ai" / "temp" / "report-summaries"
+SUMMARY_DIR = (
+    pathlib.Path(__file__).resolve().parent / ".ai" / "temp" / "report-summaries"
+)
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
 # Anything that belongs to CI / logs / junit / dep-check must NOT bleed into
@@ -26,16 +28,44 @@ _EXCLUDE_FROM_PERF = (
 )
 
 SCAN_DIRS = [
-    {"dir": ".code-review",                                     "kind": "code",     "review_type": "Code Review"},
-    {"dir": "skills/reports",                                   "kind": "security", "review_type": "Security Review"},
-    {"dir": "reports/ci",                                       "kind": "ci",       "review_type": "CI Report"},
-    {"dir": "reports/ci/dependency-check-report",               "kind": "security", "review_type": "Security Review"},
-    {"dir": "reports/ci/backend-python-reports/htmlcov-python", "kind": "code",     "review_type": "Code Review (Coverage)"},
-    {"dir": "reports/ci",                                       "kind": "ci",       "review_type": "CI JUnit XML",            "include_globs": ["backend-python-reports/junit-python.xml"]},
-    {"dir": "reports/ci",                                       "kind": "security", "review_type": "OWASP Dependency-Check",  "include_globs": ["dependency-check-report/dependency-check-report.html"]},
+    {"dir": ".code-review", "kind": "code", "review_type": "Code Review"},
+    {"dir": "skills/reports", "kind": "security", "review_type": "Security Review"},
+    {"dir": "reports/ci", "kind": "ci", "review_type": "CI Report"},
+    {
+        "dir": "reports/ci/dependency-check-report",
+        "kind": "security",
+        "review_type": "Security Review",
+    },
+    {
+        "dir": "reports/ci/backend-python-reports/htmlcov-python",
+        "kind": "code",
+        "review_type": "Code Review (Coverage)",
+    },
+    {
+        "dir": "reports/ci",
+        "kind": "ci",
+        "review_type": "CI JUnit XML",
+        "include_globs": ["backend-python-reports/junit-python.xml"],
+    },
+    {
+        "dir": "reports/ci",
+        "kind": "security",
+        "review_type": "OWASP Dependency-Check",
+        "include_globs": ["dependency-check-report/dependency-check-report.html"],
+    },
     # Perf bucket -------------------------------------------------------
-    {"dir": "reports",                                          "kind": "perf",     "review_type": "Performance Review",     "include_globs": ["lighthouse-report.html"]},
-    {"dir": "reports/allure-results",                            "kind": "perf",     "review_type": "Allure Results",         "include_globs": ["*.json"]},
+    {
+        "dir": "reports",
+        "kind": "perf",
+        "review_type": "Performance Review",
+        "include_globs": ["lighthouse-report.html"],
+    },
+    {
+        "dir": "reports/allure-results",
+        "kind": "perf",
+        "review_type": "Allure Results",
+        "include_globs": ["*.json"],
+    },
 ]
 
 SYSTEM_PROMPT = (
@@ -106,7 +136,7 @@ def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP):
     step = max(1, size - overlap)
     i = 0
     while i < len(text):
-        piece = text[i:i + size].strip()
+        piece = text[i : i + size].strip()
         if piece:
             out.append(piece)
         if i + size >= len(text):
@@ -150,10 +180,11 @@ def safe_json_loads(raw):
             return json.loads(m.group(1))
         except (ValueError, TypeError):
             return None
-    s = text.find("{"); e = text.rfind("}")
+    s = text.find("{")
+    e = text.rfind("}")
     if s != -1 and e != -1 and e > s:
         try:
-            return json.loads(text[s:e + 1])
+            return json.loads(text[s : e + 1])
         except (ValueError, TypeError):
             return None
     return None
@@ -201,13 +232,17 @@ def normalize(summary):
     if not isinstance(summary, dict):
         return None
     return {
-        "overall_assessment":   as_str(summary.get("overall_assessment")),
-        "key_findings":         as_list(summary.get("key_findings")),
-        "critical_issues":      as_list(summary.get("critical_issues")),
-        "medium_issues":        as_list(summary.get("medium_issues")),
-        "recommendations":      as_list(summary.get("recommendations")),
-        "positive_observations": as_list(summary.get("positive_observations") or summary.get("positive_findings")),
-        "final_verdict":        as_str(summary.get("final_verdict") or summary.get("conclusion")),
+        "overall_assessment": as_str(summary.get("overall_assessment")),
+        "key_findings": as_list(summary.get("key_findings")),
+        "critical_issues": as_list(summary.get("critical_issues")),
+        "medium_issues": as_list(summary.get("medium_issues")),
+        "recommendations": as_list(summary.get("recommendations")),
+        "positive_observations": as_list(
+            summary.get("positive_observations") or summary.get("positive_findings")
+        ),
+        "final_verdict": as_str(
+            summary.get("final_verdict") or summary.get("conclusion")
+        ),
     }
 
 
@@ -223,6 +258,7 @@ def _is_perf_row(entry: dict, rel: str) -> bool:
 
 def scan_reports():
     import fnmatch
+
     root = pathlib.Path(__file__).resolve().parent
     seen, rows = set(), []
     for entry in SCAN_DIRS:
@@ -250,21 +286,35 @@ def scan_reports():
                     continue
                 seen.add(rid)
                 group = "performance" if _is_perf_row(entry, rel) else "report"
-                rows.append({
-                    "id":             rid,
-                    "name":           (path.stem.replace("-", " ").replace("_", " ").title() or path.name),
-                    "filename":       path.name,
-                    "review_type":    entry["review_type"],
-                    "kind":           entry["kind"],
-                    "type":           entry["review_type"],
-                    "path":           rel,
-                    "group":          group,
-                    "generated_at":   _dt.datetime.fromtimestamp(stat.st_mtime, tz=_dt.timezone.utc).isoformat(timespec="seconds"),
-                    "generated_date": _dt.datetime.fromtimestamp(stat.st_mtime, tz=_dt.timezone.utc).isoformat(timespec="seconds"),
-                    "size":           stat.st_size,
-                    "summary_exists": (SUMMARY_DIR / f"{rid}.json").exists(),
-                })
-    rows.sort(key=lambda r: (r.get("group", "report") != "performance", -(_dt.datetime.fromisoformat(r["generated_date"]).timestamp())))
+                rows.append(
+                    {
+                        "id": rid,
+                        "name": (
+                            path.stem.replace("-", " ").replace("_", " ").title()
+                            or path.name
+                        ),
+                        "filename": path.name,
+                        "review_type": entry["review_type"],
+                        "kind": entry["kind"],
+                        "type": entry["review_type"],
+                        "path": rel,
+                        "group": group,
+                        "generated_at": _dt.datetime.fromtimestamp(
+                            stat.st_mtime, tz=_dt.timezone.utc
+                        ).isoformat(timespec="seconds"),
+                        "generated_date": _dt.datetime.fromtimestamp(
+                            stat.st_mtime, tz=_dt.timezone.utc
+                        ).isoformat(timespec="seconds"),
+                        "size": stat.st_size,
+                        "summary_exists": (SUMMARY_DIR / f"{rid}.json").exists(),
+                    }
+                )
+    rows.sort(
+        key=lambda r: (
+            r.get("group", "report") != "performance",
+            -(_dt.datetime.fromisoformat(r["generated_date"]).timestamp()),
+        )
+    )
     return rows
 
 
@@ -272,11 +322,16 @@ def _gemini_call(prompt: str) -> str:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not set")
-    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
-           "gemini-2.5-flash:generateContent?key=" + api_key)
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        "gemini-2.5-flash:generateContent?key=" + api_key
+    )
     payload = {"contents": [{"parts": [{"text": SYSTEM_PROMPT + "\n\n" + prompt}]}]}
-    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
-                                 headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
     with urllib.request.urlopen(req, timeout=120) as resp:
         result = json.loads(resp.read().decode())
     return result["candidates"][0]["content"]["parts"][0]["text"]
@@ -284,8 +339,16 @@ def _gemini_call(prompt: str) -> str:
 
 def _ollama_call(prompt: str) -> str:
     host = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
-    body = json.dumps({"model": "llama3.2", "prompt": SYSTEM_PROMPT + "\n\n" + prompt, "stream": False}).encode("utf-8")
-    req = urllib.request.Request(f"{host}/api/generate", data=body, headers={"Content-Type": "application/json"})
+    body = json.dumps(
+        {
+            "model": "llama3.2",
+            "prompt": SYSTEM_PROMPT + "\n\n" + prompt,
+            "stream": False,
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        f"{host}/api/generate", data=body, headers={"Content-Type": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=120) as resp:
         result = json.loads(resp.read().decode())
     return result.get("response", "")
@@ -300,7 +363,13 @@ def call_llm(prompt: str) -> str:
 
 
 def merge_chunk_summaries(summaries):
-    fields = ["key_findings", "critical_issues", "medium_issues", "recommendations", "positive_observations"]
+    fields = [
+        "key_findings",
+        "critical_issues",
+        "medium_issues",
+        "recommendations",
+        "positive_observations",
+    ]
     merged = {f: [] for f in fields}
     assessments, verdicts = [], []
     for s in summaries:
@@ -315,13 +384,13 @@ def merge_chunk_summaries(summaries):
         for f in fields:
             merged[f].extend(as_list(s.get(f)))
     return {
-        "overall_assessment":   as_str(assessments[0]) if assessments else "",
-        "key_findings":         as_list(merged["key_findings"]),
-        "critical_issues":      as_list(merged["critical_issues"]),
-        "medium_issues":        as_list(merged["medium_issues"]),
-        "recommendations":      as_list(merged["recommendations"]),
+        "overall_assessment": as_str(assessments[0]) if assessments else "",
+        "key_findings": as_list(merged["key_findings"]),
+        "critical_issues": as_list(merged["critical_issues"]),
+        "medium_issues": as_list(merged["medium_issues"]),
+        "recommendations": as_list(merged["recommendations"]),
         "positive_observations": as_list(merged["positive_observations"]),
-        "final_verdict":        as_str(verdicts[-1]) if verdicts else "",
+        "final_verdict": as_str(verdicts[-1]) if verdicts else "",
     }
 
 
@@ -332,8 +401,10 @@ def summarize_text(report_name: str, review_type: str, text: str):
         raise RuntimeError("Empty report content")
     partials = []
     for idx, chunk in enumerate(chunks, 1):
-        prompt = (f"Summarize chunk {idx}/{len(chunks)} of report '{report_name}' "
-                  f"(review type: {review_type}). Return JSON only.\n\n{chunk}")
+        prompt = (
+            f"Summarize chunk {idx}/{len(chunks)} of report '{report_name}' "
+            f"(review type: {review_type}). Return JSON only.\n\n{chunk}"
+        )
         try:
             raw = call_llm(prompt)
         except (RuntimeError, urllib.error.URLError, json.JSONDecodeError, KeyError):
@@ -347,10 +418,12 @@ def summarize_text(report_name: str, review_type: str, text: str):
         raise RuntimeError("LLM failed for every chunk")
     merged = merge_chunk_summaries(valid)
     try:
-        synthesis_prompt = (f"Based ONLY on the chunk summaries below, produce the final JSON for "
-                            f"report '{report_name}' (review type: {review_type}). "
-                            f"Keep bullets under 160 chars, max 5 per list. JSON only.\n\n"
-                            + json.dumps(merged))
+        synthesis_prompt = (
+            f"Based ONLY on the chunk summaries below, produce the final JSON for "
+            f"report '{report_name}' (review type: {review_type}). "
+            f"Keep bullets under 160 chars, max 5 per list. JSON only.\n\n"
+            + json.dumps(merged)
+        )
         raw = call_llm(synthesis_prompt)
         final = normalize(safe_json_loads(raw))
         if final:
@@ -362,18 +435,18 @@ def summarize_text(report_name: str, review_type: str, text: str):
 
 def build_payload(report, summary, cached, source_hash, chunk_count):
     return {
-        "id":             report["id"],
-        "name":           report["name"],
-        "review_type":    report["review_type"],
-        "kind":           report["kind"],
-        "group":          report.get("group", "report"),
-        "path":           report["path"],
-        "generated_at":   report.get("generated_at") or report.get("generated_date"),
-        "size":           report["size"],
-        "summary":        summary,
-        "cached":         cached,
-        "source_hash":    source_hash,
-        "chunk_count":    chunk_count,
+        "id": report["id"],
+        "name": report["name"],
+        "review_type": report["review_type"],
+        "kind": report["kind"],
+        "group": report.get("group", "report"),
+        "path": report["path"],
+        "generated_at": report.get("generated_at") or report.get("generated_date"),
+        "size": report["size"],
+        "summary": summary,
+        "cached": cached,
+        "source_hash": source_hash,
+        "chunk_count": chunk_count,
     }
 
 
@@ -396,7 +469,13 @@ def get_summary(report_id: str, refresh: bool = False):
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             if cached.get("source_hash") == source_hash and cached.get("summary"):
-                return build_payload(report, cached["summary"], True, source_hash, cached.get("chunk_count", 1))
+                return build_payload(
+                    report,
+                    cached["summary"],
+                    True,
+                    source_hash,
+                    cached.get("chunk_count", 1),
+                )
         except (OSError, ValueError, TypeError):
             try:
                 cache_path.unlink()
@@ -409,10 +488,11 @@ def get_summary(report_id: str, refresh: bool = False):
     summary = summarize_text(report["name"], report["review_type"], extract_text(raw))
     chunk_count = max(1, len(chunk_text(extract_text(raw))))
     cache_payload = {
-        "summary":     summary,
+        "summary": summary,
         "source_hash": source_hash,
         "chunk_count": chunk_count,
-        "cached_at":   _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds") + "Z",
+        "cached_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+        + "Z",
     }
     try:
         cache_path.write_text(json.dumps(cache_payload, indent=2), encoding="utf-8")
@@ -427,16 +507,26 @@ def bulk_summary(group: str = Query("performance")):
     for r in rows:
         try:
             payload = get_summary(r["id"], refresh=False)
-            items.append({
-                "id":      r["id"],
-                "name":    r["name"],
-                "path":    r["path"],
-                "ok":      True,
-                "cached":  payload.get("cached", False),
-                "summary": payload.get("summary"),
-            })
+            items.append(
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "path": r["path"],
+                    "ok": True,
+                    "cached": payload.get("cached", False),
+                    "summary": payload.get("summary"),
+                }
+            )
         except (HTTPException, OSError, RuntimeError, ValueError) as exc:
-            items.append({"id": r["id"], "name": r["name"], "path": r["path"], "ok": False, "error": str(exc)})
+            items.append(
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "path": r["path"],
+                    "ok": False,
+                    "error": str(exc),
+                }
+            )
     return {"group": group, "total": len(items), "items": items}
 
 
@@ -446,7 +536,9 @@ def download_file(report_id: str):
     file_path = root / report["path"]
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Report file not found")
-    return FileResponse(path=str(file_path), media_type="text/html", filename=report["filename"])
+    return FileResponse(
+        path=str(file_path), media_type="text/html", filename=report["filename"]
+    )
 
 
 def view_file(report_id: str):
@@ -459,10 +551,12 @@ def view_file(report_id: str):
 
 
 router = APIRouter()
-router.add_api_route("/api/reports",                         scan_reports,                       methods=["GET"])
-router.add_api_route("/api/reports/bulk-summary",            bulk_summary,                       methods=["GET"])
-router.add_api_route("/api/reports/{report_id}/summary",     get_summary,                        methods=["GET"])
-router.add_api_route("/api/report-download/{report_id}",     download_file,                      methods=["GET"])
-router.add_api_route("/api/report-view/{report_id}",         view_file,                          methods=["GET"])
-router.add_api_route("/api/report-summary",                  lambda: {"reports": scan_reports()}, methods=["GET"])
-router.add_api_route("/api/report-summary/{report_id}",      get_summary,                        methods=["GET"])
+router.add_api_route("/api/reports", scan_reports, methods=["GET"])
+router.add_api_route("/api/reports/bulk-summary", bulk_summary, methods=["GET"])
+router.add_api_route("/api/reports/{report_id}/summary", get_summary, methods=["GET"])
+router.add_api_route("/api/report-download/{report_id}", download_file, methods=["GET"])
+router.add_api_route("/api/report-view/{report_id}", view_file, methods=["GET"])
+router.add_api_route(
+    "/api/report-summary", lambda: {"reports": scan_reports()}, methods=["GET"]
+)
+router.add_api_route("/api/report-summary/{report_id}", get_summary, methods=["GET"])

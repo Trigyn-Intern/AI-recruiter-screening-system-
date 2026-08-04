@@ -5,6 +5,7 @@ already in the FAISS index. This is the hot path: the same resume gets
 re-uploaded every time a recruiter tweaks the JD, and we want that to
 be near-free.
 """
+
 import io
 import os
 import sys

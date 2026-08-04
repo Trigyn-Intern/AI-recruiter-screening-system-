@@ -10,6 +10,7 @@ Include it for a full performance audit:
 
     pytest tests/performance/benchmarks/ -m slow -v
 """
+
 from __future__ import annotations
 
 from pathlib import Path
