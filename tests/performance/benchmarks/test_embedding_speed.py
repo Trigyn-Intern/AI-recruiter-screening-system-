@@ -10,8 +10,9 @@ Run:
 from __future__ import annotations
 
 import io
-import pytest
 from pathlib import Path
+
+import pytest
 
 from backend import extract_text, get_or_create_resume_embedding, get_resume_id
 

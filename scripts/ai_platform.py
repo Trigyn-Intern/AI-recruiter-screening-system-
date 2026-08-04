@@ -7,8 +7,8 @@ import re
 import shutil
 import sys
 from collections import Counter
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 UTC = timezone.utc
 
@@ -230,6 +230,8 @@ def _search(keyword: str) -> None:
 def main() -> int:
     from ai_platform_core.cli import (
         build_parser as core_build_parser,
+    )
+    from ai_platform_core.cli import (
         main as core_main,
     )
 

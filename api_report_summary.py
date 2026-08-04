@@ -218,9 +218,7 @@ def _is_perf_row(entry: dict, rel: str) -> bool:
     base = pathlib.PurePosixPath(rel).name
     if base in _EXCLUDE_FROM_PERF:
         return False
-    if "/ci/" in "/" + rel or rel.startswith("reports/ci/"):
-        return False
-    return True
+    return not ("/ci/" in "/" + rel or rel.startswith("reports/ci/"))
 
 
 def scan_reports():
@@ -261,8 +259,8 @@ def scan_reports():
                     "type":           entry["review_type"],
                     "path":           rel,
                     "group":          group,
-                    "generated_at":   _dt.datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
-                    "generated_date": _dt.datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+                    "generated_at":   _dt.datetime.fromtimestamp(stat.st_mtime, tz=_dt.timezone.utc).isoformat(timespec="seconds"),
+                    "generated_date": _dt.datetime.fromtimestamp(stat.st_mtime, tz=_dt.timezone.utc).isoformat(timespec="seconds"),
                     "size":           stat.st_size,
                     "summary_exists": (SUMMARY_DIR / f"{rid}.json").exists(),
                 })
@@ -296,7 +294,7 @@ def _ollama_call(prompt: str) -> str:
 def call_llm(prompt: str) -> str:
     try:
         return _gemini_call(prompt)
-    except Exception:
+    except (RuntimeError, urllib.error.URLError, json.JSONDecodeError, KeyError):
         pass
     return _ollama_call(prompt)
 
@@ -338,7 +336,7 @@ def summarize_text(report_name: str, review_type: str, text: str):
                   f"(review type: {review_type}). Return JSON only.\n\n{chunk}")
         try:
             raw = call_llm(prompt)
-        except Exception:
+        except (RuntimeError, urllib.error.URLError, json.JSONDecodeError, KeyError):
             partials.append(None)
             continue
         parsed = normalize(safe_json_loads(raw))
@@ -357,7 +355,7 @@ def summarize_text(report_name: str, review_type: str, text: str):
         final = normalize(safe_json_loads(raw))
         if final:
             return final
-    except Exception:
+    except (RuntimeError, urllib.error.URLError, json.JSONDecodeError, KeyError):
         pass
     return merged
 
@@ -414,7 +412,7 @@ def get_summary(report_id: str, refresh: bool = False):
         "summary":     summary,
         "source_hash": source_hash,
         "chunk_count": chunk_count,
-        "cached_at":   _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "cached_at":   _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds") + "Z",
     }
     try:
         cache_path.write_text(json.dumps(cache_payload, indent=2), encoding="utf-8")
@@ -437,7 +435,7 @@ def bulk_summary(group: str = Query("performance")):
                 "cached":  payload.get("cached", False),
                 "summary": payload.get("summary"),
             })
-        except Exception as exc:
+        except (HTTPException, OSError, RuntimeError, ValueError) as exc:
             items.append({"id": r["id"], "name": r["name"], "path": r["path"], "ok": False, "error": str(exc)})
     return {"group": group, "total": len(items), "items": items}
 

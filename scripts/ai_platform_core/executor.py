@@ -41,7 +41,7 @@ def _resolve_codex_binary() -> str | None:
 
 def _is_windows_shim(path: str) -> bool:
     lower = path.lower()
-    return lower.endswith(".cmd") or lower.endswith(".bat")
+    return lower.endswith((".cmd", ".bat"))
 
 
 def _cmd_quote(value: str) -> str:

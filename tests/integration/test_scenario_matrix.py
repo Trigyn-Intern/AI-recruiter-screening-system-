@@ -23,10 +23,9 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
-
 
 WEB_BASE_URL = os.environ.get("WEB_BASE_URL", "http://localhost:5173")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
@@ -43,8 +42,8 @@ SCREENSHOT_DIR = Path(__file__).resolve().parent / "screenshots"
 # Shared helpers
 # ============================================================
 
-def _http_json(url: str, method: str = "GET", body: Dict[str, Any] | None = None,
-               token: str | None = None) -> Dict[str, Any]:
+def _http_json(url: str, method: str = "GET", body: dict[str, Any] | None = None,
+               token: str | None = None) -> dict[str, Any]:
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
@@ -57,7 +56,7 @@ def _http_json(url: str, method: str = "GET", body: Dict[str, Any] | None = None
         return json.loads(response.read().decode("utf-8"))
 
 
-def _multipart(fields: Dict[str, Any], files: List[Any]) -> tuple[bytes, str]:
+def _multipart(fields: dict[str, Any], files: list[Any]) -> tuple[bytes, str]:
     boundary = "----TestBoundary7MA4YWxkTrZu0gW"
     buffer = bytearray()
     for name, value in fields.items():
@@ -189,7 +188,7 @@ def _set_provider_model(page, model: str) -> None:
     pytest.skip(f"Model '{model}' is not available in the UI dropdown.")
 
 
-def _upload_resumes(page, resume_paths: List[Path]) -> None:
+def _upload_resumes(page, resume_paths: list[Path]) -> None:
     page.locator("input[type='file']").set_input_files([str(p) for p in resume_paths])
     page.wait_for_timeout(500)
 
@@ -198,13 +197,13 @@ def _paste_job_description(page, jd_path: Path) -> None:
     page.locator("textarea").first.fill(jd_path.read_text(encoding="utf-8"))
 
 
-def _read_ranking(page) -> List[Dict[str, Any]]:
+def _read_ranking(page) -> list[dict[str, Any]]:
     """Read rows from the ranking table. The React dashboard renders a
     ``<section>`` per card, so we locate the table inside the section that
     has both an ``<h2>Ranking</h2>`` heading and a tbody of ranking rows."""
     table = page.locator("section:has(h2:text-is('Ranking')) table tbody tr")
     count = table.count()
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for index in range(count):
         cells = table.nth(index).locator("td")
         results.append(
@@ -309,6 +308,7 @@ def test_safe_json_extract_parses_embedded_json():
 @pytest.mark.backend
 def test_validate_upload_accepts_pdf_and_rejects_exe_and_oversized():
     import io
+
     from backend import validate_upload
 
     pdf = io.BytesIO(b"%PDF-1.4 test content")
@@ -332,6 +332,7 @@ def test_validate_upload_accepts_pdf_and_rejects_exe_and_oversized():
 @pytest.mark.backend
 def test_extract_text_returns_empty_for_unsupported_extension():
     import io
+
     from backend import extract_text
 
     fake = io.BytesIO(b"abc")
@@ -364,6 +365,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
     """When FAISS already has the resume the function returns the cached
     (1, 1024) ndarray and must not call the embedding encoder."""
     import numpy as np
+
     from backend import EMBEDDING_DIMENSION, get_or_create_resume_embedding
 
     cached_vector = np.asarray([0.1] * EMBEDDING_DIMENSION, dtype="float32")

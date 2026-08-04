@@ -8,7 +8,7 @@ from typing import Any
 
 UTC = timezone.utc
 
-from .wizard_defaults import ROOT  # noqa: E402
+from .wizard_defaults import ROOT
 
 
 def utc_now() -> datetime:

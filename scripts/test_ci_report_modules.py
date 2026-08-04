@@ -6,12 +6,16 @@ from pathlib import Path
 sys.path.insert(0, "scripts")
 
 from ci_report_modules import (
-    parse_junit, parse_coverage, parse_coverage_status_json,
-    parse_ai_dashboard, parse_log_signals, parse_reports_catalog,
+    parse_ai_dashboard,
+    parse_coverage,
+    parse_coverage_status_json,
+    parse_junit,
+    parse_log_signals,
+    parse_reports_catalog,
     parse_zap_html,
 )
 
-REPO = Path(".").resolve()
+REPO = Path.cwd()
 PY = REPO / "reports" / "ci" / "backend-python-reports"
 assert PY.exists(), "real backend-python-reports must be present"
 

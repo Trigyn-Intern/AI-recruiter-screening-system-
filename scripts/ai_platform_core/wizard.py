@@ -108,7 +108,7 @@ def _multiline_notes() -> str:
 def _default_target_for(area_label: str) -> str:
     """Return the default target path for a given project area label."""
 
-    for _, (label, default) in PROJECT_AREAS.items():
+    for label, default in PROJECT_AREAS.values():
         if label == area_label:
             return default
     return ""

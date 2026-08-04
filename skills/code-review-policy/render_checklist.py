@@ -1,6 +1,7 @@
 """Render a single Code Review Checklist HTML report from the two templates."""
 
 from __future__ import annotations
+
 import argparse
 import datetime
 import html
@@ -266,7 +267,7 @@ def main():
     if args.data and args.data.exists(): data = json.loads(args.data.read_text(encoding="utf-8"))
     structured_html = render_structured(data)
     detailed_html = render_detailed(data)
-    stamp = args.stamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     doc = "\n".join([
         "<!doctype html>",
         "<html lang=\"en\">",

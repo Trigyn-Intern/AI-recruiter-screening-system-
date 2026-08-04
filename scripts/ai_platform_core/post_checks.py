@@ -15,16 +15,15 @@ Design notes:
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .routing import ExecutionRequest
-from .utils import relative
 
 
 @dataclass(frozen=True)
@@ -204,7 +203,6 @@ def run_post_checks(
         }
 
     flags = _classify_area(request.project_area)
-    python = _resolve_python_executable()
 
     # --- Backend checks ------------------------------------------------------
     if flags["needs_backend"]:
@@ -302,6 +300,6 @@ def run_post_checks(
     return {
         "tools": [r.tool for r in results],
         "results": [r.to_dict() for r in results],
-        "missing_tools": [r.tool for r in r in missing_tools] if False else [r.tool for r in missing_tools],
+        "missing_tools": [r.tool for r in missing_tools],
         "status": overall,
     }

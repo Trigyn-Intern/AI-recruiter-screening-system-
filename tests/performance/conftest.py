@@ -42,10 +42,10 @@ for _real in ("docx", "pypdf"):
     sys.modules.pop(_real, None)
 
 import importlib
+
 importlib.import_module("pypdf")
 importlib.import_module("docx")
 
 # Now import backend — its torch/sentence_transformers references
 # will resolve to MagicMock, but extract_text / extract_pdf_text etc.
 # will work correctly because they only use pypdf and docx.
-import backend  # noqa: E402  (must come after stubs)

@@ -12,8 +12,9 @@ Include it for a full performance audit:
 """
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from backend import analyze_candidate_detail
 
@@ -48,5 +49,5 @@ def test_analyze_candidate_detail(benchmark, jd_text):
             ["Kubernetes"],
             resume_name="benchmark_candidate.pdf",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"LLM unavailable during benchmark (expected in CI): {e}")

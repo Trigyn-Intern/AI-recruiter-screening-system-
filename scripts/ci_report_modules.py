@@ -17,7 +17,6 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any
 
 
 def safe_xml(path: Path):
@@ -30,7 +29,7 @@ def parse_junit(xml_path: Path) -> dict:
         return {"present": False}
     try:
         root = safe_xml(xml_path)
-    except Exception as exc:
+    except (ET.ParseError, ValueError, OSError) as exc:
         return {"present": True, "error": f"Failed to parse: {exc}"}
 
     suites = root.findall(".//testsuite") or [root]
@@ -100,7 +99,7 @@ def parse_coverage(xml_path: Path) -> dict:
         return {"present": False}
     try:
         root = safe_xml(xml_path)
-    except Exception as exc:
+    except (ET.ParseError, ValueError, OSError) as exc:
         return {"present": True, "error": f"Failed to parse: {exc}"}
 
     line_rate = float(root.get("line-rate", "0") or 0)
@@ -134,7 +133,7 @@ def parse_coverage_status_json(json_path: Path) -> dict:
         return {"present": False}
     try:
         payload = json.loads(json_path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError, OSError) as exc:
         return {"present": True, "error": f"Failed to parse: {exc}"}
 
     rows: list = []
@@ -216,7 +215,7 @@ def parse_ai_dashboard(json_path: Path) -> dict:
         return {"present": False}
     try:
         payload = json.loads(json_path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError, OSError) as exc:
         return {"present": True, "error": f"Failed to parse: {exc}"}
 
     return {
@@ -285,7 +284,7 @@ def parse_reports_catalog(json_path: Path) -> dict:
         return {"present": False}
     try:
         payload = json.loads(json_path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError, OSError) as exc:
         return {"present": True, "error": f"Failed to parse: {exc}"}
 
     reports = payload.get("reports") or []
@@ -641,13 +640,13 @@ def enrich_artifact(artifact, root: Path) -> None:
                     "weakest": [],
                     "strongest": [],
                 }
-            except Exception:
+            except (json.JSONDecodeError, KeyError, ValueError, OSError):
                 parsed["coverage"] = {"present": False}
         # Also read audit log for any security issues
         audit_log = root / "audit-node.log"
         if audit_log.exists():
             audit_text = audit_log.read_text(encoding="utf-8", errors="replace")
-            vulns = re.findall(r"(\d+) (critical|high|moderate|low) severity", audit_text, re.I)
+            vulns = re.findall(r"(\d+) (critical|high|moderate|low) severity", audit_text, re.IGNORECASE)
             parsed["node_audit"] = {"present": True, "findings": vulns}
 
     if artifact.name in ("frontend-reports", "frontend-test-reports"):
@@ -674,7 +673,7 @@ def enrich_artifact(artifact, root: Path) -> None:
                 if parsed["coverage"].get("present"):
                     generate_coverage_html(parsed["coverage"], root / f"coverage-{app_name}.html",
                                            label=app_name.replace('-', ' ').title())
-            except Exception:
+            except (json.JSONDecodeError, KeyError, ValueError, OSError):
                 parsed["coverage"] = {"present": False}
 
     if artifact.name == "dist-frontend":

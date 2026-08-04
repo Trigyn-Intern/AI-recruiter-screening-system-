@@ -8,16 +8,16 @@ candidate. Run it once locally with ``python tests/data/generate_resumes.py``.
 
 
 import os
+
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
-
 
 RESUMES_DIR = os.path.join(os.path.dirname(__file__), "resumes")
 
 
 def _draw_block(c, lines, start_y=740):
     """Draw a resume PDF with simple two-column headings and body text."""
-    width, _ = LETTER
+    _, _ = LETTER
     text = c.beginText(72, start_y)
     text.setFont("Helvetica", 11)
     for line in lines:

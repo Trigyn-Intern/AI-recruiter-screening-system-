@@ -40,7 +40,7 @@ for _mod in _STUBS:
 for _real in ("docx", "pypdf"):
     sys.modules.pop(_real, None)
 
-import importlib  # noqa: E402
+import importlib
 
 importlib.import_module("pypdf")
 importlib.import_module("docx")
@@ -51,7 +51,7 @@ importlib.import_module("docx")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend import extract_text, analyze_candidate_grading  # noqa: E402
+from backend import analyze_candidate_grading, extract_text
 
 SAMPLE_RESUMES_DIR = PROJECT_ROOT / "tests" / "data" / "resumes"
 SAMPLE_JD_PATH     = PROJECT_ROOT / "tests" / "data" / "jds" / "jd_python_ml.txt"
@@ -89,7 +89,7 @@ def run_heavy_ml_task() -> None:
                 resume_name=pdf_path.name,
             )
             print("    graded OK")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"    grading skipped (LLM unreachable): {e}")
 
 

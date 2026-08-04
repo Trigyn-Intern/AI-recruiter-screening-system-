@@ -39,11 +39,11 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 
 import yaml
-
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
@@ -66,8 +66,7 @@ def _normalize_ollama_host(value):
     if "://" in v:
         return v.rstrip("/")
     if (
-        v.startswith("127.")
-        or v.startswith("localhost")
+        v.startswith(("127.", "localhost"))
         or (":" in v and not v.startswith("/"))
     ):
         return "http://" + v
@@ -81,7 +80,7 @@ OLLAMA_HOST = _normalize_ollama_host(os.environ.get("OLLAMA_HOST"))
 # YAML + filter
 # ------------------------------------------------------------
 
-def load_scenarios(path: Path) -> List[Dict[str, Any]]:
+def load_scenarios(path: Path) -> list[dict[str, Any]]:
     with path.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
     scenarios = data.get("scenarios")
@@ -91,8 +90,8 @@ def load_scenarios(path: Path) -> List[Dict[str, Any]]:
 
 
 def filter_scenarios(
-    scenarios: List[Dict[str, Any]], raw_filter: Optional[str]
-) -> List[Dict[str, Any]]:
+    scenarios: list[dict[str, Any]], raw_filter: str | None
+) -> list[dict[str, Any]]:
     if not raw_filter:
         return list(scenarios)
 
@@ -110,7 +109,7 @@ def filter_scenarios(
 # Ollama
 # ------------------------------------------------------------
 
-def _ollama_list() -> List[str]:
+def _ollama_list() -> list[str]:
     """Return the names of models currently installed locally."""
     request = urllib.request.Request(f"{OLLAMA_HOST}/api/tags")
     try:
@@ -128,10 +127,7 @@ def ensure_ollama_models(required: Iterable[str]) -> None:
     if not required_list:
         return
 
-    try:
-        installed = {name.split(":")[0] for name in _ollama_list()}
-    except SystemExit as e:
-        raise e
+    installed = {name.split(":")[0] for name in _ollama_list()}
 
     required_set = {name.split(":")[0] for name in required_list}
     missing = sorted(required_set - installed)
@@ -196,7 +192,7 @@ def _spawn(command: Sequence[str], cwd: Path, log_path: Path) -> subprocess.Pope
         stderr=subprocess.STDOUT,
         # New process group so we can terminate children cleanly.
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
-        preexec_fn=os.setsid if os.name != "nt" else None,
+        preexec_fn=os.setsid if os.name != "nt" else None,  # noqa: PLW1509
     )
 
 
@@ -291,7 +287,7 @@ class ServiceSupervisor:
     def __init__(self, log_dir: Path):
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.processes: List[Tuple[str, subprocess.Popen]] = []
+        self.processes: list[tuple[str, subprocess.Popen]] = []
 
     def add(self, label: str, process: subprocess.Popen) -> None:
         self.processes.append((label, process))
@@ -328,7 +324,7 @@ def supervised_services(log_dir: Path):
 # CLI
 # ------------------------------------------------------------
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG,
                         help="Path to scenarios.yaml (default: tests/data/scenarios.yaml)")
@@ -362,7 +358,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 
 
 def _venv_python() -> Path:
-    candidates: List[Path] = []
+    candidates: list[Path] = []
     if os.name == "nt":
         candidates.append(REPO_ROOT / "venv" / "Scripts" / "python.exe")
     else:
@@ -374,7 +370,7 @@ def _venv_python() -> Path:
     return Path(sys.executable)
 
 
-def _print_dry_run(scenarios: List[Dict[str, Any]]) -> None:
+def _print_dry_run(scenarios: list[dict[str, Any]]) -> None:
     print("[dry-run] scenario matrix:")
     for scenario in scenarios:
         print(
@@ -383,7 +379,7 @@ def _print_dry_run(scenarios: List[Dict[str, Any]]) -> None:
     print("[dry-run] pytest --scenario-config=...  tests/ui/test_scenario_matrix.py")
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     scenarios = filter_scenarios(load_scenarios(args.config), args.scenario_filter)
@@ -470,7 +466,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             print("[runner] JUnit will be written to: " + str(junit_path))
 
         print("[runner] " + " ".join(pytest_cmd))
-        result = subprocess.run(pytest_cmd, env=pytest_env)
+        result = subprocess.run(pytest_cmd, env=pytest_env, check=False)
 
         if args.keep_streamlit:
             print("[runner] --keep-streamlit set; leaving services running.")
@@ -493,7 +489,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "--stamp",  stamp,
             ]
             print("[runner] rendering report: " + " ".join(render_cmd))
-            render_result = subprocess.run(render_cmd, env=os.environ.copy())
+            render_result = subprocess.run(render_cmd, env=os.environ.copy(), check=False)
             if render_result.returncode == 0:
                 print("[runner] HTML report: " + str(html_path))
                 if args.open_report:
@@ -504,7 +500,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                             subprocess.Popen(["open", str(html_path)])
                         else:
                             subprocess.Popen(["xdg-open", str(html_path)])
-                    except Exception as exc:  # pragma: no cover
+                    except (OSError, RuntimeError) as exc:  # pragma: no cover
                         print("[runner] could not open report: " + str(exc))
             else:
                 print("[runner] renderer exited " + str(render_result.returncode) +

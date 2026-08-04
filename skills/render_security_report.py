@@ -7,7 +7,7 @@ import html
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 def _esc(value: Any) -> str:
@@ -23,7 +23,7 @@ def _status_class(pass_fail: str) -> str:
     return "fail"
 
 
-def _row_from_finding(idx: int, item: Dict[str, Any]) -> str:
+def _row_from_finding(idx: int, item: dict[str, Any]) -> str:
     pf = item.get("pass_fail") or item.get("status") or item.get("passFail") or "Fail"
     cls = _status_class(str(pf))
     steps = _esc(item.get("test_steps", "")).replace("\n", "<br>")
@@ -46,12 +46,12 @@ def _row_from_finding(idx: int, item: Dict[str, Any]) -> str:
     )
 
 
-def _findings_from_data(data: dict) -> List[dict]:
+def _findings_from_data(data: dict) -> list[dict]:
     findings = data.get("findings")
     if isinstance(findings, list) and findings:
         return findings
 
-    rows: List[dict] = []
+    rows: list[dict] = []
     for idx, check in enumerate(data.get("securityChecks") or [], start=1):
         status = check.get("status", "Fail")
         rows.append({
@@ -89,7 +89,7 @@ def _findings_from_data(data: dict) -> List[dict]:
 def build_findings_html(data: dict) -> tuple[str, int, int, int]:
     findings = _findings_from_data(data)
     pass_count = fail_count = warn_count = 0
-    rows: List[str] = []
+    rows: list[str] = []
     for idx, item in enumerate(findings, start=1):
         cls = _status_class(str(item.get("pass_fail") or item.get("status") or ""))
         if cls == "pass":
@@ -242,7 +242,7 @@ def main() -> int:
     args = parser.parse_args()
 
     data = json.loads(args.data.read_text(encoding="utf-8"))
-    stamp = args.stamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     template_path = Path(__file__).resolve().parent / "reports" / "_template.html"
     if not template_path.exists():
         raise SystemExit(f"Template not found: {template_path}")

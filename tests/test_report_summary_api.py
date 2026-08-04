@@ -1,10 +1,16 @@
 
 # --- chunked report summary surface ---
-from api_report_summary import (
-    extract_text, chunk_text, scan_reports, normalize, as_list, as_str,
-    safe_json_loads, merge_chunk_summaries, get_summary,
-)
 import api_report_summary as mod
+from api_report_summary import (
+    as_list,
+    as_str,
+    chunk_text,
+    extract_text,
+    merge_chunk_summaries,
+    normalize,
+    safe_json_loads,
+    scan_reports,
+)
 
 
 def _tmp_root(tmp_path):

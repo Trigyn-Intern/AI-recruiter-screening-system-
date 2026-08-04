@@ -15,8 +15,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
-import yaml
 
+import yaml
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -50,7 +50,7 @@ def load_junit(path: Path) -> list:
                 }
             testcases.append(tc_data)
         return testcases
-    except Exception as e:
+    except (ET.ParseError, ValueError, OSError) as e:
         print(f"Error parsing XML: {e}", file=sys.stderr)
         return []
 
@@ -67,7 +67,7 @@ def parse_yaml_meta(path: Path) -> dict:
             if "id" in s:
                 meta[s["id"]] = s
         return meta
-    except Exception as e:
+    except (yaml.YAMLError, ValueError, OSError) as e:
         print(f"Error parsing YAML metadata: {e}", file=sys.stderr)
         return {}
 
@@ -348,7 +348,7 @@ def main() -> int:
     total = len(testcases)
 
     rows_html = "\n".join(render_row(idx, tc, meta) for idx, tc in enumerate(testcases))
-    stamp = args.stamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    stamp = args.stamp or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     filt = args.filter or "(all)"
 
     doc = f"""<!doctype html>

@@ -59,7 +59,6 @@ import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -337,7 +336,7 @@ def safe_extract(zip_bytes, dest):
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         namelist = zf.namelist()
-        top_items = sorted(list(set(m.split("/")[0] for m in namelist if m)))
+        top_items = sorted({m.split("/")[0] for m in namelist if m})
         for member in namelist:
             member_path = (dest / member).resolve()
             try:
@@ -456,7 +455,7 @@ def _render_artifact_extras(art):
         except (TypeError, ValueError):
             return _escape(seconds)
         if s < 1:
-            return f"{int(round(s * 1000))} ms"
+            return f"{round(s * 1000)} ms"
         if s < 60:
             return f"{s:.2f} s"
         minutes, secs = divmod(s, 60)
@@ -616,11 +615,7 @@ def render_summary_html(summary, descriptions):
     artifact_cards = []
 
     # Pre-compute pieces that are referenced by both the header and the cards.
-    log_signals = getattr(summary, 'log_signals', {}) or {}
-    pytest_unit = log_signals.get('python_unit_tests') or {}
-    pytest_int = log_signals.get('python_integration_tests') or {}
-    cov_log = log_signals.get('coverage') or {}
-    frontend_jobs = log_signals.get('frontend_jobs') or []
+    getattr(summary, 'log_signals', {}) or {}
 
     for art in summary.artifacts:
         cls = "card" if art.status == "ok" else "card error"
@@ -820,7 +815,7 @@ def _enrich_artifact_summaries(summary):
                 if fname not in art.top_level and (Path(art.output_dir) / fname).exists():
                     art.top_level.append(fname)
             art.top_level.sort()
-        except Exception as exc:  # never let a parser break the run
+        except (ImportError, ValueError, KeyError, OSError, RuntimeError) as exc:  # never let a parser break the run
             art.parsed = {"error": f"parse_failed: {exc}"}
 
     if summary.logs_path and Path(summary.logs_path).exists():

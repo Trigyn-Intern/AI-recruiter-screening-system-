@@ -13,12 +13,12 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any
 
 import pytest
 import yaml
-
 
 TESTS_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = TESTS_DIR.parent
@@ -26,7 +26,7 @@ DEFAULT_CONFIG = TESTS_DIR / "data" / "scenarios.yaml"
 SCREENSHOT_DIR = Path(__file__).resolve().parent / "screenshots"
 
 
-def _load_yaml(path: Path) -> Dict[str, Any]:
+def _load_yaml(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise pytest.UsageError(
             f"Scenario config not found: {path}. "
@@ -42,7 +42,7 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
     return {"path": path, "scenarios": scenarios}
 
 
-def _resolve_filter(raw: str | None) -> List[str]:
+def _resolve_filter(raw: str | None) -> list[str]:
     if not raw:
         return []
     return [token.strip() for token in re.split(r"[,\s]+", raw) if token.strip()]
@@ -81,7 +81,7 @@ def scenario_config_path(request) -> Path:
 
 
 @pytest.fixture(scope="session")
-def scenarios(scenario_config_path) -> List[Dict[str, Any]]:
+def scenarios(scenario_config_path) -> list[dict[str, Any]]:
     return _load_yaml(scenario_config_path)["scenarios"]
 
 
@@ -109,7 +109,7 @@ def pytest_generate_tests(metafunc):
     selected = set(_resolve_filter(raw_filter))
 
     loaded = _load_yaml(config_path)
-    scenarios: Iterable[Dict[str, Any]] = loaded["scenarios"]
+    scenarios: Iterable[dict[str, Any]] = loaded["scenarios"]
 
     if selected:
         scenarios = [s for s in scenarios if s.get("id") in selected]

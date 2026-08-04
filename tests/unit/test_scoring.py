@@ -2,6 +2,7 @@ import numpy as np
 
 from backend import calculate_match_score, get_or_create_resume_embedding
 
+
 def test_match_score_range():
     resume = "Python Machine Learning AI"
     jd = "Python AI developer"

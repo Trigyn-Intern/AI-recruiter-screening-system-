@@ -6,10 +6,11 @@ re-uploaded every time a recruiter tweaks the JD, and we want that to
 be near-free.
 """
 import io
-import pytest
-import sys
 import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # Ensure the root directory is in the Python path
 sys.path.append(
@@ -19,9 +20,9 @@ sys.path.append(
 )
 from backend import (
     extract_text,
+    faiss_index_lookup,
     get_or_create_resume_embedding,
     get_resume_id,
-    faiss_index_lookup,
 )
 
 SAMPLE_RESUMES_DIR = Path(__file__).resolve().parents[3] / "tests" / "data" / "resumes"

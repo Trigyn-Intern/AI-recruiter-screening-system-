@@ -1,5 +1,7 @@
 import io
+
 from backend import validate_upload
+
 
 def test_valid_pdf():
     fake_pdf = io.BytesIO(b"%PDF-1.4 test content")
