@@ -1,0 +1,13 @@
+{
+  "test_id": "k6_upload_flow",
+  "file": "tests/performance/load/upload_flow.js",
+  "command": "node -c tests/performance/load/upload_flow.js",
+  "stdout": "",
+  "stderr": "",
+  "logs": "Executing command: node -c tests/performance/load/upload_flow.js\n\n--- STDOUT ---\n\n",
+  "exitCode": 0,
+  "elapsedMs": 40,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:39Z"
+}

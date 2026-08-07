@@ -1,0 +1,13 @@
+{
+  "test_id": "test_report_summary",
+  "file": "tests/unit/test_report_summary.py",
+  "command": "python3 -m pytest /app/applet/tests/unit/test_report_summary.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 6 items\n\ntests/unit/test_report_summary.py::test_strip_html_removes_tags_and_decodes_entities PASSED [ 16%]\ntests/unit/test_report_summary.py::test_report_id_for_is_stable_and_short PASSED [ 33%]\ntests/unit/test_report_summary.py::test_safe_json_loads_direct PASSED    [ 50%]\ntests/unit/test_report_summary.py::test_safe_json_loads_from_fenced_block PASSED [ 66%]\ntests/unit/test_report_summary.py::test_safe_json_loads_from_substring PASSED [ 83%]\ntests/unit/test_report_summary.py::test_safe_json_loads_returns_none_on_garbage PASSED [100%]\n\n============================== 6 passed in 0.03s ===============================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/unit/test_report_summary.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 6 items\n\ntests/unit/test_report_summary.py::test_strip_html_removes_tags_and_decodes_entities PASSED [ 16%]\ntests/unit/test_report_summary.py::test_report_id_for_is_stable_and_short PASSED [ 33%]\ntests/unit/test_report_summary.py::test_safe_json_loads_direct PASSED    [ 50%]\ntests/unit/test_report_summary.py::test_safe_json_loads_from_fenced_block PASSED [ 66%]\ntests/unit/test_report_summary.py::test_safe_json_loads_from_substring PASSED [ 83%]\ntests/unit/test_report_summary.py::test_safe_json_loads_returns_none_on_garbage PASSED [100%]\n\n============================== 6 passed in 0.03s ===============================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 393,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:24Z"
+}

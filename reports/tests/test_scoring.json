@@ -1,0 +1,13 @@
+{
+  "test_id": "test_scoring",
+  "file": "tests/unit/test_scoring.py",
+  "command": "python3 -m pytest /app/applet/tests/unit/test_scoring.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 2 items\n\ntests/unit/test_scoring.py::test_match_score_range PASSED                [ 50%]\ntests/unit/test_scoring.py::test_get_or_create_resume_embedding_uses_cached_faiss_row PASSED [100%]\n\n============================== 2 passed in 0.01s ===============================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/unit/test_scoring.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 2 items\n\ntests/unit/test_scoring.py::test_match_score_range PASSED                [ 50%]\ntests/unit/test_scoring.py::test_get_or_create_resume_embedding_uses_cached_faiss_row PASSED [100%]\n\n============================== 2 passed in 0.01s ===============================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 354,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:25Z"
+}

@@ -1,0 +1,13 @@
+{
+  "test_id": "test_json",
+  "file": "tests/unit/test_json.py",
+  "command": "python3 -m pytest /app/applet/tests/unit/test_json.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 2 items\n\ntests/unit/test_json.py::test_valid_json PASSED                          [ 50%]\ntests/unit/test_json.py::test_invalid_json PASSED                        [100%]\n\n============================== 2 passed in 0.01s ===============================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/unit/test_json.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 2 items\n\ntests/unit/test_json.py::test_valid_json PASSED                          [ 50%]\ntests/unit/test_json.py::test_invalid_json PASSED                        [100%]\n\n============================== 2 passed in 0.01s ===============================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 385,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:23Z"
+}

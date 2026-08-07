@@ -1,0 +1,13 @@
+{
+  "test_id": "run_profiler",
+  "file": "tests/performance/profiles/run_profiler.py",
+  "command": "python3 /app/applet/tests/performance/profiles/run_profiler.py",
+  "stdout": "Starting Profiler...\n\nProfiling against real sample resumes...\n  - resume_data_engineer.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_frontend.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_junior.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_strong_python.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n\nProfiling complete. Results saved to /app/applet/tests/performance/profiles/profile_results.txt\n",
+  "stderr": "",
+  "logs": "Executing command: python3 /app/applet/tests/performance/profiles/run_profiler.py\n\n--- STDOUT ---\nStarting Profiler...\n\nProfiling against real sample resumes...\n  - resume_data_engineer.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_frontend.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_junior.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n  - resume_strong_python.pdf: 0 chars extracted\n    grading skipped (LLM unreachable): catching classes that do not inherit from BaseException is not allowed\n\nProfiling complete. Results saved to /app/applet/tests/performance/profiles/profile_results.txt\n\n",
+  "exitCode": 0,
+  "elapsedMs": 170,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:39Z"
+}

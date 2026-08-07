@@ -1,0 +1,13 @@
+{
+  "test_id": "test_validation",
+  "file": "tests/unit/test_validation.py",
+  "command": "python3 -m pytest /app/applet/tests/unit/test_validation.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 4 items\n\ntests/unit/test_validation.py::test_valid_pdf PASSED                     [ 25%]\ntests/unit/test_validation.py::test_invalid_extension PASSED             [ 50%]\ntests/unit/test_validation.py::test_fake_pdf PASSED                      [ 75%]\ntests/unit/test_validation.py::test_large_file PASSED                    [100%]\n\n============================== 4 passed in 0.03s ===============================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/unit/test_validation.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 4 items\n\ntests/unit/test_validation.py::test_valid_pdf PASSED                     [ 25%]\ntests/unit/test_validation.py::test_invalid_extension PASSED             [ 50%]\ntests/unit/test_validation.py::test_fake_pdf PASSED                      [ 75%]\ntests/unit/test_validation.py::test_large_file PASSED                    [100%]\n\n============================== 4 passed in 0.03s ===============================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 399,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:25Z"
+}

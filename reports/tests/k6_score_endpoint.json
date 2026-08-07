@@ -1,0 +1,13 @@
+{
+  "test_id": "k6_score_endpoint",
+  "file": "tests/performance/load/score_endpoint.js",
+  "command": "node -c tests/performance/load/score_endpoint.js",
+  "stdout": "",
+  "stderr": "",
+  "logs": "Executing command: node -c tests/performance/load/score_endpoint.js\n\n--- STDOUT ---\n\n",
+  "exitCode": 0,
+  "elapsedMs": 39,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:39Z"
+}

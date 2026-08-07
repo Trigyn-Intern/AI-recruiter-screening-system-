@@ -1,0 +1,13 @@
+{
+  "test_id": "test_llm_only",
+  "file": "tests/performance/benchmarks/test_llm_only.py",
+  "command": "python3 -m pytest /app/applet/tests/performance/benchmarks/test_llm_only.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 1 item\n\ntests/performance/benchmarks/test_llm_only.py::test_analyze_candidate_detail PASSED [100%]\n\n=============================== warnings summary ===============================\ntests/performance/benchmarks/test_llm_only.py:38\n  /app/applet/tests/performance/benchmarks/test_llm_only.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.slow\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n========================= 1 passed, 1 warning in 0.01s =========================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/performance/benchmarks/test_llm_only.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 1 item\n\ntests/performance/benchmarks/test_llm_only.py::test_analyze_candidate_detail PASSED [100%]\n\n=============================== warnings summary ===============================\ntests/performance/benchmarks/test_llm_only.py:38\n  /app/applet/tests/performance/benchmarks/test_llm_only.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.slow\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n========================= 1 passed, 1 warning in 0.01s =========================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 313,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:38Z"
+}

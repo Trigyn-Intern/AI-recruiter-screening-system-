@@ -1,0 +1,13 @@
+{
+  "test_id": "test_embedding_speed",
+  "file": "tests/performance/benchmarks/test_embedding_speed.py",
+  "command": "python3 -m pytest /app/applet/tests/performance/benchmarks/test_embedding_speed.py -v",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 1 item\n\ntests/performance/benchmarks/test_embedding_speed.py::test_embedding_speed PASSED [100%]\n\n============================== 1 passed in 0.01s ===============================\n",
+  "stderr": "",
+  "logs": "Executing command: python3 -m pytest /app/applet/tests/performance/benchmarks/test_embedding_speed.py -v\n\n--- STDOUT ---\n============================= test session starts ==============================\nplatform linux -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0+repack -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /app/applet\ncollecting ... collected 1 item\n\ntests/performance/benchmarks/test_embedding_speed.py::test_embedding_speed PASSED [100%]\n\n============================== 1 passed in 0.01s ===============================\n\n",
+  "exitCode": 0,
+  "elapsedMs": 328,
+  "status": "Passed",
+  "artifacts": "/app/applet/reports/tests",
+  "updatedAt": "2026-08-06T05:53:38Z"
+}
