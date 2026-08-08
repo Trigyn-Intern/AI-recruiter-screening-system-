@@ -85,9 +85,36 @@ This project uses a layered security and quality toolchain covering static analy
 
 ---
 
+### How the Toolchain Helps This Project
+
+Each layer in the toolchain solves a specific problem that arises when building an AI-powered application that handles candidate data:
+
+| Challenge | Tool(s) That Address It |
+|---|---|
+| Resume text and JD could contain prompt injection | Semgrep SAST + `test_ollama.py` AI security suite |
+| Uploaded files could be malformed or malicious | `test_extraction.py`, file-type and size validation in FastAPI |
+| Auth tokens could be stolen or replayed | Bandit crypto checks, `test_api.py` auth suite, bcrypt + JWT |
+| Python dependencies could carry CVEs | pip-audit + Trivy SCA in every CI run |
+| Secrets (API keys, manager passwords) could leak into git | Gitleaks pre-CI scan across full git history |
+| UI could regress on accessibility or performance | Lighthouse CI + axe-playwright on every push |
+| LLM output could be unparseable or unsafe | `jsonschema` validation + deterministic fallback grader |
+| Code quality could drift without a reviewer | Pre-push AI review hook (`.githooks/pre-push`) |
+
+---
+
 ### 1. DevSecOps Pipeline (`.github/workflows/devsecops.yml`)
 
-The DevSecOps workflow is the backbone of the CI/CD security posture. It chains eleven jobs in order, each consuming the output of the previous, ensuring that a failing security gate stops the pipeline before the next stage runs.
+**How it helps:** The DevSecOps workflow is the backbone of the CI/CD security posture. It chains eleven jobs in order, each consuming the output of the previous, ensuring that a failing security gate stops the pipeline before the next stage runs. In a recruiting tool that processes real candidate data, a single leaked credential or insecure endpoint can expose PII; this pipeline makes that class of failure visible before any code reaches production.
+
+**How to use it in your own project:**
+
+1. Copy `.github/workflows/devsecops.yml` into your repo's `.github/workflows/` directory.
+2. The workflow is parameterised with `env:` variables at the top. Update `PYTHON_VERSION`, `NODE_VERSION`, and the Semgrep rule set to match your stack.
+3. Add the following GitHub Actions secrets to your repository (`Settings → Secrets and variables → Actions`):
+   - `SEMGREP_APP_TOKEN` — from [semgrep.dev](https://semgrep.dev) (free tier available).
+   - `GITLEAKS_LICENSE` — only required for the Enterprise edition; the community version needs no token.
+4. The pipeline will run automatically on every push to `main` or `develop`, every pull request, and on manual dispatch (`workflow_dispatch`).
+5. View results under **Actions → devsecops → latest run**. Security findings also appear under **Security → Code scanning** (SARIF results from Trivy and Semgrep).
 
 | Tool | Role |
 |---|---|
@@ -106,6 +133,14 @@ The DevSecOps workflow is the backbone of the CI/CD security posture. It chains 
 ---
 
 ### 2. Security Review (`tests/`, `.ai/skills/security.skill.md`, `.ai/checklists/security.md`)
+
+**How it helps:** A toolchain alone is not sufficient when an application calls an LLM with user-supplied content. The structured review process forces a human to walk through OWASP ASVS, the OWASP Top 10, and an LLM-specific checklist on every sprint. This ensures that prompt injection guards and output validation rules are deliberately designed, not accidentally correct.
+
+**How to use it in your own project:**
+
+1. Copy `.ai/checklists/security.md` and `.ai/skills/security.skill.md` into your own `.ai/` directory.
+2. Before any release, open `security.md` and score each ASVS control as `pass`, `risk`, or `n/a` for your application.
+3. The LLM-specific section of the checklist is relevant to any project that calls an external model. Keep it even if you swap the provider.
 
 The project follows a structured, standard-based security review process backed by three recognized frameworks:
 
@@ -135,6 +170,27 @@ Because the system uses local and hosted LLMs, a dedicated checklist section cov
 
 ### 3. Git Hooks (`.githooks/`)
 
+**How it helps:** CI pipelines catch problems after a push; git hooks catch them before. The pre-commit hook stops obvious mistakes (direct commits to `main`, syntax errors, lint failures) in under two seconds. The pre-push hook enforces a mandatory AI code review for every meaningful change — ensuring that at least one structured review happens before code reaches teammates, without requiring a separate review ticketing system.
+
+**How to deploy the hooks:**
+
+```bash
+# Point git to the project's hook directory (one-time setup per clone)
+git config core.hooksPath .githooks
+
+# Make the hooks executable (macOS / Linux)
+chmod +x .githooks/pre-commit .githooks/pre-push
+```
+
+On Windows the `chmod` step is not needed; PowerShell respects the hooks automatically once the path is set.
+
+**How to use them in your own project:**
+
+1. Copy `.githooks/` into your repo root.
+2. Edit the `PROTECTED_BRANCH` variable in `pre-commit` to match your main branch name.
+3. Run `git config core.hooksPath .githooks` in every clone, or add it to your `npm postinstall` / `Makefile` setup target so contributors get it automatically.
+4. The pre-push hook is self-contained: it reads `.code-review/last-report.md` for a `VERDICT:` line. Any AI tool that writes a Markdown review with that line at the end works — it is not tied to a specific model.
+
 Two local hooks enforce quality gates before code leaves the developer's machine:
 
 **`pre-commit`** — runs on every `git commit` and is designed to be fast (no LLM calls):
@@ -154,7 +210,32 @@ Two local hooks enforce quality gates before code leaves the developer's machine
 
 ### 4. Pytest
 
-Pytest is the primary Python test runner for all unit, integration, and performance test suites under `tests/`.
+**How it helps:** Because the analyzer relies on a local LLM, deterministic unit tests are the only reliable way to verify the surrounding logic independently of model availability. Mocking the LLM provider lets the suite run in CI without Ollama or a Gemini key, yet still covers scoring logic, JSON validation, and auth enforcement. The coverage report pinpoints which branches of `backend.py` are exercised, making it easy to spot untested fallback paths.
+
+**How to deploy and run:**
+
+```bash
+# Install test dependencies (already in requirements.txt)
+pip install pytest pytest-cov pytest-asyncio
+
+# Run the full suite with coverage
+pytest --junitxml=junit.xml --cov=. --cov-report=xml --cov-report=html
+
+# Run only the fast unit tests (no Playwright, no integration)
+pytest tests/unit/
+
+# Run a single file
+pytest tests/unit/test_scoring.py -v
+
+# Run with a filter on a specific scenario
+pwsh tests/run.ps1 -Filter python_ml_llama32
+```
+
+**How to use in your own project:**
+
+- `tests/unit/test_scoring.py` — the match score and fit bucket logic is fully decoupled from the LLM. Copy the scoring functions from `backend.py` and the corresponding test file to add semantic-similarity ranking to any Python service.
+- `tests/unit/test_ollama.py` — the mock LLM provider pattern used here (replacing the real HTTP call with a fixture that returns canned JSON) can be adapted for any project that calls an external AI API.
+- `tests/unit/test_api.py` — the FastAPI auth enforcement tests (checking for 401 on missing token, 403 on wrong role) are generic enough to serve as a baseline for any FastAPI project with JWT auth.
 
 | Suite | Location | What It Covers |
 |---|---|---|
@@ -168,17 +249,40 @@ Pytest is the primary Python test runner for all unit, integration, and performa
 | Integration tests | `tests/integration/` | End-to-end flows across the FastAPI and auth services |
 | Performance tests | `tests/performance/` | Response time benchmarks and k6 load test result validators |
 
-Tests are run with coverage reporting:
-```bash
-pytest --junitxml=junit.xml --cov=. --cov-report=xml --cov-report=html
-```
 Coverage reports are uploaded as CI artifacts on every pipeline run.
 
 ---
 
 ### 5. Playwright
 
-Playwright drives the end-to-end and scenario-matrix test suite for the React frontend.
+**How it helps:** The scenario matrix in `tests/data/scenarios.yaml` lets QA add a new test case in one YAML row — no code change needed. Playwright then drives the real browser through the full recruiter workflow, including login, file upload, JD paste, and ranking inspection. axe-core assertions piggyback on every page navigation, making accessibility a zero-cost side effect of the E2E suite rather than a separate audit.
+
+**How to deploy and run:**
+
+```bash
+# Install Playwright browsers (one-time)
+npx playwright install --with-deps chromium
+
+# Run the full scenario matrix via the PowerShell runner (Windows)
+pwsh tests/run.ps1
+
+# Run a specific scenario
+pwsh tests/run.ps1 -Filter python_ml_llama32
+
+# Run Playwright tests directly (stack must already be running)
+npx playwright test
+
+# View the HTML report after a run
+npx playwright show-report
+```
+
+**How to use in your own project:**
+
+- `tests/data/scenarios.yaml` — the scenario-matrix pattern (one YAML row = one E2E test case with inputs and expected outputs) is portable to any project. The runner reads the file and parametrizes pytest automatically.
+- `tests/ui/run_scenario_matrix.py` — the service-boot logic (start servers, wait for health check, run tests, tear down) can be adapted as a standalone test-runner harness for any microservice stack.
+- `tests/render_report.py` — the JUnit-to-HTML report renderer is not tied to this project. Give it any `junit.xml` and a YAML scenario file and it produces a single-page pass/fail table.
+
+Playwright drives the end-to-end and scenario-matrix test suite for the React frontend:
 
 - **Scenario Matrix** — `frontend-test/` is a dedicated React testing dashboard (port 5174) that streams live logs while Playwright exercises the full recruiter workflow: login → upload resumes → paste JD → run analysis → inspect results → verify ranking.
 - **Screenshot capture** — every scenario step captures a screenshot, stored under `reports/` for visual regression review.
@@ -190,7 +294,31 @@ Playwright drives the end-to-end and scenario-matrix test suite for the React fr
 
 ### 6. Lighthouse CI
 
-Lighthouse CI (`@lhci/cli`) runs Google Lighthouse headlessly against the production-built Vite app as part of the DevSecOps pipeline.
+**How it helps:** Lighthouse CI (`@lhci/cli`) enforces a performance and accessibility budget on every push. Without this gate, React bundle size creep and unoptimized images silently degrade the recruiter's experience over time. The axe-core accessibility assertions ensure that the app remains usable by keyboard and screen-reader users as the UI evolves.
+
+**How to deploy and run:**
+
+```bash
+# Install Lighthouse CI globally (or use npx)
+npm install -g @lhci/cli
+
+# Run Lighthouse locally against the running recruiter UI
+npm run build                        # build the Vite production bundle
+npx vite preview --port 5173 &      # serve it
+lhci autorun                        # run against URLs in lighthouserc.json
+
+# Or point at the dev server directly
+lighthouse http://localhost:5173 \
+  --output=html \
+  --output-path=reports/lighthouse-report.html \
+  --chrome-flags="--headless"
+```
+
+**How to use in your own project:**
+
+1. Copy `lighthouserc.json` from the project root. Update the `url` list to match your app's routes and raise or lower the `minScore` thresholds to match your standards.
+2. Add the `lighthouse` job from `.github/workflows/devsecops.yml` to your own workflow — it is self-contained and only requires a built static bundle to be served on a known port.
+3. The accessibility threshold (`minScore: 0.9` for accessibility) is a good starting baseline for any customer-facing application.
 
 **What it audits:**
 - **Performance** — First Contentful Paint, Largest Contentful Paint, Total Blocking Time, Cumulative Layout Shift, and Speed Index.
@@ -207,6 +335,50 @@ lhci autorun
 ```
 
 The `lighthouserc.json` at the project root defines the URL targets, score thresholds (e.g., Accessibility ≥ 90), and the upload destination. Reports are saved to `.lighthouseci/` and uploaded as a CI artifact named `lighthouse-report`.
+
+---
+
+### 7. Reusable Components and Modules
+
+Several parts of this codebase are generic enough to be lifted directly into other projects.
+
+#### Frontend (React)
+
+| Component / File | Location | What It Does | How to Reuse |
+|---|---|---|---|
+| **Glassmorphism Auth Screen** | `frontend/src/pages/auth/Login.jsx`, `auth.css` | A polished JWT login + signup flow with glass-effect cards, animated gradients, and inline form validation | Copy `auth/` and `auth.css` into any React + Vite project; replace the `VITE_API_URL` endpoint |
+| **`RequireAuth` Route Guard** | `frontend/src/pages/RequireAuth.jsx` | A React Router 6 wrapper that reads a JWT from `localStorage` and redirects unauthenticated users | Drop it into any React Router 6 app; update the `localStorage` key and the redirect path |
+| **`api/client.js`** | `frontend/src/api/client.js` | A thin `fetch` wrapper that attaches the `Authorization` header, handles 401 → logout, and centralises the base URL | Copy and update `VITE_API_URL` + `VITE_FASTAPI_URL` to match your backend |
+| **Skills Gap Panel** | `frontend/src/pages/dashboard/SkillsPage.jsx` | Renders matching and missing skills as visual pill groups with colour-coded fit buckets | Extract the component and pass it `matchingSkills` / `missingSkills` arrays from any skills API |
+| **Reports Panel** | `frontend/src/pages/dashboard/ReportsPanel.jsx` | Displays paginated, filterable analysis session history with expandable candidate cards | Adapt by replacing the session-fetch call; the rendering logic is fully generic |
+| **Design tokens** | `frontend/src/styles.css` | CSS custom properties for a cohesive dark-mode palette (HSL-based), Outfit font, glassmorphism utilities, and micro-animation helpers | Import the file as a global stylesheet; override `--color-*` variables to retheme |
+
+#### Python Backend
+
+| Module / Function | Location | What It Does | How to Reuse |
+|---|---|---|---|
+| **PDF + DOCX extractor** | `backend.py` → `extract_text_from_file()` | Extracts plain text from PDF (pypdf) and DOCX (python-docx) with a unified interface; returns `None` on unsupported types | Copy the function + its imports into any Python service that needs document ingestion |
+| **FAISS vector store helpers** | `backend.py` → `save_vector_store()`, `load_vector_store()` | Persist and reload a FAISS index plus a parallel JSON metadata file to / from disk | Use as a drop-in local embedding cache in any Sentence Transformers project |
+| **Deterministic fallback grader** | `backend.py` → `grade_candidate_local()` | Scores a candidate purely from skill overlap when the LLM is unavailable; requires no external API call | Pull into any ranking system that needs a rule-based fallback for when the AI provider is down |
+| **LLM JSON output validator** | `backend.py` → `validate_llm_output()` | Wraps `jsonschema.validate` and logs schema violations; returns a safe default on failure | Use to harden any endpoint that parses LLM-generated JSON |
+| **Pluggable provider router** | `backend.py` → `call_llm()` | Dispatches to Ollama or Gemini based on a runtime config flag; easy to extend with a third provider | Adopt the same `if provider == "ollama"` / `elif provider == "gemini"` pattern for any multi-provider LLM integration |
+| **Prompt template manager** | `vector_store/prompt_config.json` + `backend.py` | Loads prompt templates from a JSON file at startup; falls back to `default_prompts.py` if the file is missing | Copy the load / fallback pattern to make any LLM prompt editable at runtime without a redeployment |
+
+#### Auth API (Node.js)
+
+| Module | Location | What It Does | How to Reuse |
+|---|---|---|---|
+| **JWT issue + verify middleware** | `backend/middleware/` | Issues `HS256` JWTs on login and validates them on protected routes with role checking | Copy `middleware/auth.js` into any Express app; update `JWT_SECRET` and `JWT_EXPIRES_IN` from `.env` |
+| **Idempotent manager seeder** | `backend/seeders/seedManager.js` | Creates or rotates a seeded admin account on every server start using env variables; safe to run repeatedly | Use this pattern to guarantee a known admin account exists in any JSON-backed or MongoDB-backed Express auth service |
+| **JSON user store** | `backend/data/users.json` + `backend/models/` | A zero-dependency file-based user store for prototypes; no database required | Swap the file read/write calls for a database client when you outgrow the JSON store — the controller and route layers are unchanged |
+
+#### DevSecOps
+
+| Asset | Location | What It Does | How to Reuse |
+|---|---|---|---|
+| **Full 13-job DevSecOps pipeline** | `.github/workflows/devsecops.yml` | Lint → Test → SAST → Secret scan → SCA → Container scan → Build → Lighthouse → ZAP → API security → AI security → Upload reports | Copy the file; update `PYTHON_VERSION`, `NODE_VERSION`, working-directory paths, and any tool-specific tokens |
+| **Pre-push AI review hook** | `.githooks/pre-push` | Blocks pushes until a human completes an AI code review and the report records `VERDICT: Approve` | Copy `.githooks/` and run `git config core.hooksPath .githooks` in each clone |
+| **Scenario-matrix runner** | `tests/run.ps1`, `tests/data/scenarios.yaml` | Data-driven E2E test runner: one YAML row = one full-stack scenario | Replace the YAML rows with your own scenario definitions; the runner script needs only the service URLs and the pytest path updated |
 
 ---
 
