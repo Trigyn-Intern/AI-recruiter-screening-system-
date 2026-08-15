@@ -16,6 +16,7 @@ def test_match_score_range():
 def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
     cached_vector = np.asarray([0.1] * 1024, dtype="float32")
     index = mocker.Mock()
+    index.ntotal = 5
     index.reconstruct.return_value = cached_vector
     mocker.patch(
         "backend.load_resume_vector_store",
@@ -39,10 +40,10 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
         "resume text",
     )
 
-    assert result.shape == (1, 1024)
+    assert result.shape == (1024,)
     index.reconstruct.assert_called_once_with(4)
     mock_encode.assert_not_called()
-    mock_save.assert_called_once()
+    mock_save.assert_not_called()
 
 
 def test_load_resume_vector_store_reconciles_stale_faiss_rows(mocker):

@@ -11,6 +11,16 @@ omit =
     */__pycache__/*
     */migrations/*
     */node_modules/*
+    benchmark_*.py
+    debug_*.py
+    profile_*.py
+    test_parallel_analysis.py
+    test_timeout_fix.py
+    check_faiss_integrity.py
+    clear_caches.py
+    quick_validation.py
+    api_report_summary.py
+    append_api.py
 
 [report]
 exclude_lines =
