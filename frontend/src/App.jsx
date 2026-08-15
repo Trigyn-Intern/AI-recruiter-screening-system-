@@ -17,7 +17,7 @@ import { defaultPrompts } from "./defaultPrompts";
 import SkillsPage from "./pages/dashboard/SkillsPage";
 import "./styles.css";
 
-const API_BASE_URL = "";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const emptyConfig = {
   ai_provider: "Gemini",
@@ -310,10 +310,25 @@ function App() {
         method: "POST",
         body: formData,
       });
-      const data = await response.json();
+      const rawText = await response.text();
+      let data = null;
+
+      if (rawText.trim()) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = null;
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(data, "Analysis failed."));
+        throw new Error(
+          getErrorMessage(data, response.statusText || `Analysis failed (${response.status}).`),
+        );
+      }
+
+      if (!data) {
+        throw new Error("Analysis completed without a response body.");
       }
 
       setResult(data);

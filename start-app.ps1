@@ -115,8 +115,9 @@ Install-NodeDeps -Name "recruiter frontend" -Dir $frontendRoot
 Install-NodeDeps -Name "testing dashboard"  -Dir $testingRoot
 
 # 6. Start the Python FastAPI analyzer on :8000.
-# 4 workers, bounded in-flight analyzes, 90s hard timeout.
-$uvicornCmd = ". '$venvActivate'; `$env:ANALYZE_MAX_INFLIGHT='4'; `$env:ANALYZE_TIMEOUT_S='90'; uvicorn api:api --host 127.0.0.1 --port 8000 --workers 4"
+# Use the venv interpreter explicitly so it does not accidentally run against
+# a different Python install. The app object is api:api.
+$uvicornCmd = ". '$venvActivate'; `$env:ANALYZE_MAX_INFLIGHT='4'; `$env:ANALYZE_TIMEOUT_S='90'; python -m uvicorn api:api --host 127.0.0.1 --port 8000 --workers 4"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $uvicornCmd -WorkingDirectory $projectRoot
 
 # 7. Start the Node auth API (Express + in-process JSON store) on :4000.

@@ -14,6 +14,7 @@ import html
 import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,8 +40,10 @@ from backend import (
     analyze_job_description_cached as analyze_job_description,
     clear_runtime_status,
     display_value,
+    encode_text_embedding,
     extract_text,
     ensure_candidate_grading,
+    faiss_semantic_search,
     get_configuration,
     get_indexed_resume_analysis_records,
     get_or_create_resume_embedding,
@@ -77,7 +80,10 @@ initialize_project_storage_files()
 # Bound concurrent in-flight analyze calls per worker so one slow LLM
 # call can't starve the rest.
 ANALYZE_MAX_INFLIGHT = int(os.environ.get("ANALYZE_MAX_INFLIGHT", "4"))
-ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "90"))
+# Timeout increased to 600s (10 min) to accommodate slow local Ollama pipeline.
+# Observed runs on llama3.2 with 5 resumes: ~560s total (51s JD analysis + ~509s for embeddings, skills, grading).
+# This timeout ensures legitimate multi-resume analyses complete without false 504 errors.
+ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "600"))
 _analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
 
 
@@ -175,16 +181,18 @@ async def analyze(
     """
     started = time.perf_counter()
     try:
-        async with asyncio.timeout(ANALYZE_TIMEOUT_S):
-            async with _analyze_sem:
-                result = await asyncio.to_thread(
+        async with _analyze_sem:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
                     _run_analyze_blocking,
                     job_description,
                     provider,
                     model_name,
                     detail_limit,
                     resumes,
-                )
+                ),
+                timeout=ANALYZE_TIMEOUT_S,
+            )
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="analyze timed out")
     except HTTPException:
@@ -206,6 +214,10 @@ def _run_analyze_blocking(
 ) -> dict:
     """Synchronous analyzer pipeline."""
     clear_runtime_status()
+    pipeline_started = time.perf_counter()
+    timings = {}
+
+    print("[ANALYZE] Pipeline START")
 
     if provider not in AI_PROVIDER_OPTIONS:
         raise HTTPException(status_code=400, detail="Unsupported provider.")
@@ -218,15 +230,22 @@ def _run_analyze_blocking(
 
     detail_limit = max(1, min(int(detail_limit), 50))
 
+    print("[ANALYZE] JD analysis START")
+    jd_started = time.perf_counter()
     jd_info = analyze_job_description(
         job_description,
         model_name=model_name,
         provider=provider,
     )
+    timings["jd_analysis_ms"] = int((time.perf_counter() - jd_started) * 1000)
+    print(f"[ANALYZE] JD analysis END duration={timings['jd_analysis_ms']/1000:.2f}s")
 
     invalid_resumes = []
     uploaded_records = {}
 
+    print("[ANALYZE] Uploaded resume processing START")
+    upload_processing_started = time.perf_counter()
+    
     for resume in resumes or []:
         content = resume.file.read()
         resume_file = InMemoryUpload(content, resume.filename)
@@ -237,7 +256,9 @@ def _run_analyze_blocking(
             continue
 
         resume_id = get_resume_id(resume_file)
+        extract_started = time.perf_counter()
         resume_text = extract_text(resume_file)
+        timings[f"extract_{resume.filename}"] = int((time.perf_counter() - extract_started) * 1000)
 
         if not resume_text.strip():
             invalid_resumes.append({
@@ -249,16 +270,21 @@ def _run_analyze_blocking(
             })
             continue
 
+        embed_started = time.perf_counter()
         resume_embedding = get_or_create_resume_embedding(
             resume_id,
             resume.filename,
             resume_text,
         )
+        timings[f"embed_{resume.filename}"] = int((time.perf_counter() - embed_started) * 1000)
+
+        skill_started = time.perf_counter()
         resume_skill_profile = get_resume_skill_profile(
             resume_id,
             resume.filename,
             resume_text,
         )
+        timings[f"skill_{resume.filename}"] = int((time.perf_counter() - skill_started) * 1000)
         uploaded_records[resume_id] = {
             "resume_id": resume_id,
             "resume_name": resume.filename,
@@ -266,11 +292,47 @@ def _run_analyze_blocking(
             "resume_embedding": resume_embedding,
             "resume_skill_profile": resume_skill_profile,
         }
+    
+    upload_processing_duration = time.perf_counter() - upload_processing_started
+    print(f"[ANALYZE] Uploaded resume processing END duration={upload_processing_duration:.2f}s")
 
+    # Optimize: Use FAISS semantic search to pre-filter candidates before expensive LLM analysis
+    print("[ANALYZE] JD embedding START")
+    jd_embedding_started = time.perf_counter()
+    
+    # Create JD embedding for semantic search
+    jd_embedding = encode_text_embedding(
+        job_description,
+        "Represent this description for matching:",
+    )
+    
+    jd_embedding_duration = time.perf_counter() - jd_embedding_started
+    print(f"[ANALYZE] JD embedding END duration={jd_embedding_duration:.2f}s")
+    
+    print("[ANALYZE] FAISS search START")
+    search_started = time.perf_counter()
+    
+    # Use FAISS to find top candidates (2x detail_limit to have room for uploaded resumes)
+    faiss_search_k = max(10, detail_limit * 3)
+    top_candidates_from_search = faiss_semantic_search(jd_embedding, top_k=faiss_search_k)
+    top_candidate_ids = {resume_id for resume_id, _ in top_candidates_from_search}
+    
+    timings["faiss_search_ms"] = int((time.perf_counter() - search_started) * 1000)
+    print(f"[ANALYZE] FAISS search END duration={timings['faiss_search_ms']/1000:.2f}s")
+    
+    print("[ANALYZE] Candidate retrieval/merge START")
+    retrieval_started = time.perf_counter()
+    
     file_cache = []
     indexed_resume_ids = set()
+    all_indexed_records = get_indexed_resume_analysis_records()
 
-    for item in get_indexed_resume_analysis_records():
+    # Only process indexed resumes that are in the FAISS search results
+    # This significantly reduces the candidate set before expensive LLM analysis
+    for item in all_indexed_records:
+        if item["resume_id"] not in top_candidate_ids:
+            continue  # Skip resumes not in FAISS top results
+            
         indexed_resume_ids.add(item["resume_id"])
         uploaded_item = uploaded_records.get(item["resume_id"])
         resume_text = (
@@ -308,6 +370,9 @@ def _run_analyze_blocking(
             "resume_text": item["resume_text"],
             "resume_skill_profile": item["resume_skill_profile"],
         })
+    
+    retrieval_duration = time.perf_counter() - retrieval_started
+    print(f"[ANALYZE] Candidate retrieval/merge END duration={retrieval_duration:.2f}s")
 
     if not file_cache:
         raise HTTPException(
@@ -318,6 +383,10 @@ def _run_analyze_blocking(
             ),
         )
 
+    print("[analyze-timing]", timings)
+    
+    print("[ANALYZE] Ranking START")
+    ranking_started = time.perf_counter()
     valid_records = [item["record"] for item in file_cache]
     ranking = sorted(valid_records, key=lambda item: item["match_score"], reverse=True)
     detail_records = ranking[:detail_limit]
@@ -326,12 +395,20 @@ def _run_analyze_blocking(
         record["resume_id"]: index
         for index, record in enumerate(detail_records)
     }
-    top_details = []
-
-    for item in file_cache:
+    ranking_duration = time.perf_counter() - ranking_started
+    print(f"[ANALYZE] Ranking END duration={ranking_duration:.2f}s")
+    def _process_candidate_detail(item):
+        """Process a single candidate's detail analysis and grading."""
+        import threading
+        import time
+        
+        candidate_start = time.perf_counter()
+        thread_id = threading.get_ident()
         record = item["record"]
-        if record["resume_id"] not in detail_ids:
-            continue
+        resume_name = record["resume_name"]
+        
+        print(f"[CANDIDATE {resume_name}] PROCESS START thread={thread_id}")
+        
         detail = analyze_candidate_detail(
             item["resume_text"],
             job_description,
@@ -348,19 +425,50 @@ def _run_analyze_blocking(
             matching_skills=detail.get("matching_skills", []),
             missing_skills=detail.get("missing_skills", []),
         )
-        top_details.append({**record, **detail})
+        
+        candidate_duration = time.perf_counter() - candidate_start
+        print(f"[CANDIDATE {resume_name}] PROCESS END duration={candidate_duration:.2f}s thread={thread_id}")
+        
+        return {**record, **detail}
 
+    # Filter candidates that need detail analysis
+    candidates_to_process = [
+        item for item in file_cache
+        if item["record"]["resume_id"] in detail_ids
+    ]
+
+    print(f"[ANALYZE] Parallel candidate analysis START candidates={len(candidates_to_process)}")
+    parallel_analysis_started = time.perf_counter()
+    
+    # Process candidates concurrently using ThreadPoolExecutor
+    # Limit concurrency to ANALYZE_MAX_INFLIGHT to respect system limits
+    with ThreadPoolExecutor(max_workers=ANALYZE_MAX_INFLIGHT) as executor:
+        top_details = list(executor.map(_process_candidate_detail, candidates_to_process))
+    
+    parallel_analysis_duration = time.perf_counter() - parallel_analysis_started
+    print(f"[ANALYZE] Parallel candidate analysis END duration={parallel_analysis_duration:.2f}s")
+
+    print("[ANALYZE] Result sorting START")
+    sorting_started = time.perf_counter()
     top_details = sorted(
         top_details,
         key=lambda item: detail_order.get(item["resume_id"], 0),
     )
+    sorting_duration = time.perf_counter() - sorting_started
+    print(f"[ANALYZE] Result sorting END duration={sorting_duration:.2f}s")
 
+    print("[ANALYZE] Category building START")
+    categories_started = time.perf_counter()
     categories = {
         "good_fit": [r["resume_name"] for r in ranking if r["fit"] == "Good Fit"],
         "moderate_fit": [r["resume_name"] for r in ranking if r["fit"] == "Moderate Fit"],
         "bad_fit": [r["resume_name"] for r in ranking if r["fit"] == "Bad Fit"],
     }
+    categories_duration = time.perf_counter() - categories_started
+    print(f"[ANALYZE] Category building END duration={categories_duration:.2f}s")
 
+    print("[ANALYZE] Session persistence START")
+    persistence_started = time.perf_counter()
     payload = {
         "job_description": job_description,
         "provider": provider,
@@ -369,6 +477,12 @@ def _run_analyze_blocking(
         "file_cache": file_cache,
     }
     persist_analysis_session(payload)
+    persistence_duration = time.perf_counter() - persistence_started
+    print(f"[ANALYZE] Session persistence END duration={persistence_duration:.2f}s")
+    
+    timings["total_pipeline_ms"] = int((time.perf_counter() - pipeline_started) * 1000)
+    print(f"[ANALYZE] Pipeline END total_duration={timings['total_pipeline_ms']/1000:.2f}s")
+    print("[analyze-timing] pipeline", timings)
 
     return {
         "job_description": serialize_jd_info(jd_info),
@@ -378,6 +492,7 @@ def _run_analyze_blocking(
         "categories": categories,
         "invalid_resumes": invalid_resumes,
         "runtime_status": get_runtime_status(),
+        "timings_ms": timings,
     }
 
 

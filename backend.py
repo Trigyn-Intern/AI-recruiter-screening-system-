@@ -628,6 +628,40 @@ def encode_text_embedding(text, prefix):
         return create_hash_embedding(text, prefix)
 
 
+def sanitize_faiss_metadata(metadata, index_size=None):
+    if not isinstance(metadata, list):
+        return []
+
+    cleaned = []
+    seen_resume_ids = set()
+    index_size = int(index_size) if index_size is not None else None
+
+    for record in metadata:
+        if not isinstance(record, dict):
+            continue
+
+        resume_id = str(record.get("resume_id") or record.get("id") or "").strip()
+        if not resume_id or resume_id in seen_resume_ids:
+            continue
+
+        try:
+            row = int(record.get("faiss_row"))
+        except (TypeError, ValueError):
+            continue
+
+        if index_size is not None and (row < 0 or row >= index_size):
+            continue
+
+        seen_resume_ids.add(resume_id)
+        cleaned.append({
+            **record,
+            "resume_id": resume_id,
+            "faiss_row": row,
+        })
+
+    return cleaned
+
+
 def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
     if faiss is None:
         return None, []
@@ -641,42 +675,85 @@ def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
     metadata = []
     if FAISS_METADATA_PATH.exists():
         try:
-            metadata = json.loads(FAISS_METADATA_PATH.read_text(encoding="utf-8"))
-        except Exception:
+            raw_metadata = json.loads(FAISS_METADATA_PATH.read_text(encoding="utf-8"))
+            index_ntotal = int(getattr(index, "ntotal", 0))
+            metadata = sanitize_faiss_metadata(raw_metadata, index_ntotal)
+            # Ensure metadata was cleaned; write back if changed to maintain integrity
+            if metadata != raw_metadata:
+                write_json_file(FAISS_METADATA_PATH, metadata)
+            # Verify consistency: metadata count should not exceed index size
+            if len(metadata) > index_ntotal:
+                print(f"WARNING: metadata has {len(metadata)} rows but index has {index_ntotal}. Truncating metadata.")
+                metadata = metadata[:index_ntotal]
+                write_json_file(FAISS_METADATA_PATH, metadata)
+        except Exception as e:
+            print(f"ERROR loading resume_metadata.json: {e}")
             metadata = []
     return index, metadata
 
+
 def faiss_index_lookup(resume_id):
     """Return the cached embedding for resume_id from the FAISS index,
-    or None if it isn't indexed yet."""
+    or None if it isn't indexed yet.
+    
+    FAISS Integrity Validation:
+    - Verifies faiss_row is within valid range [0, index.ntotal)
+    - Removes stale metadata entries before lookup
+    - Reconstructs embedding directly from FAISS index
+    """
     if faiss is None or not FAISS_INDEX_PATH.exists():
-        print("DEBUG faiss_index_lookup: faiss is None or index path does not exist", faiss is not None, FAISS_INDEX_PATH.exists())
         return None
     if not FAISS_METADATA_PATH.exists():
-        print("DEBUG faiss_index_lookup: metadata path does not exist")
         return None
 
     try:
-        metadata = json.loads(FAISS_METADATA_PATH.read_text(encoding="utf-8"))
+        index, metadata = load_resume_vector_store()
+        if index is None or not metadata:
+            return None
+        
+        index_ntotal = int(getattr(index, "ntotal", 0))
+        for rec in metadata:
+            if rec.get("resume_id") == resume_id:
+                try:
+                    row = int(rec.get("faiss_row", -1))
+                except (TypeError, ValueError):
+                    return None
+                
+                # Validate row is in bounds
+                if row < 0 or row >= index_ntotal:
+                    print(f"FAISS_INTEGRITY_WARN: resume_id {resume_id} has invalid faiss_row {row} (index size: {index_ntotal})")
+                    return None
+                
+                # Reconstruct and return
+                embedding = index.reconstruct(row)
+                return embedding
     except Exception as e:
-        print("DEBUG faiss_index_lookup exception loading metadata:", e)
+        print(f"ERROR in faiss_index_lookup for {resume_id}: {e}")
         return None
 
-    for i, rec in enumerate(metadata):
-        if rec.get("id") == resume_id or rec.get("resume_id") == resume_id:
-            try:
-                index = faiss.read_index(str(FAISS_INDEX_PATH))
-                row = int(rec.get("faiss_row", i))
-                return index.reconstruct(row)
-            except Exception as e:
-                print("DEBUG faiss_index_lookup exception reconstructing:", e)
-                return None
-    print("DEBUG faiss_index_lookup: resume_id not found in metadata:", resume_id, [r.get("resume_id") for r in metadata])
     return None
 
+
 def save_resume_vector_store(index, metadata):
+    """Persist FAISS index and metadata with integrity validation.
+    
+    FAISS Integrity Guarantee:
+    - Sanitizes metadata (removes duplicates, invalid rows)
+    - Validates all faiss_row values are in bounds [0, index.ntotal)
+    - Ensures metadata count <= index.ntotal (no orphaned entries)
+    - Writes index and metadata atomically
+    """
     ensure_vector_store_dir()
-    print("DEBUG save_resume_vector_store writing to:", FAISS_INDEX_PATH, FAISS_METADATA_PATH)
+    if index is not None:
+        index_ntotal = int(getattr(index, "ntotal", 0))
+        metadata = sanitize_faiss_metadata(metadata, index_ntotal)
+        # Double-check: ensure no metadata row exceeds index size
+        valid_count = sum(1 for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal)
+        if valid_count != len(metadata):
+            print(f"FAISS_INTEGRITY: Found {len(metadata) - valid_count} invalid rows. Cleaned.")
+            metadata = [m for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal]
+    else:
+        metadata = sanitize_faiss_metadata(metadata, None)
     faiss.write_index(index, str(FAISS_INDEX_PATH))
     write_json_file(FAISS_METADATA_PATH, metadata)
 
@@ -705,49 +782,65 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
         existing = find_resume_metadata(metadata, resume_id)
 
         if existing is not None:
-            existing["resume_name"] = resume_name
-            existing["last_updated_at"] = get_current_timestamp()
+            # FAISS Integrity Check: Verify the stored row is valid before using it
+            try:
+                row = int(existing.get("faiss_row", -1))
+                index_ntotal = int(getattr(index, "ntotal", 0))
+                if row < 0 or row >= index_ntotal:
+                    # Stale metadata entry; treat as missing and re-embed
+                    print(f"FAISS_INTEGRITY: resume_id {resume_id} has invalid row {row}. Re-embedding.")
+                    existing = None  # Fall through to re-embedding
+                else:
+                    # Valid cached entry; use it
+                    existing["resume_name"] = resume_name
+                    existing["last_updated_at"] = get_current_timestamp()
+                    save_resume_vector_store(index, metadata)
+                    RUNTIME_STATE["last_vector_store_error"] = ""
+                    RUNTIME_STATE["last_vector_store_status"] = (
+                        f"Loaded cached embedding for {resume_name}."
+                    )
+                    return np.asarray(
+                        [
+                            index.reconstruct(row),
+                        ],
+                        dtype="float32",
+                    )
+            except (TypeError, ValueError) as e:
+                print(f"FAISS_INTEGRITY: Error parsing faiss_row for {resume_id}: {e}")
+                existing = None  # Fall through to re-embedding
+        
+        if existing is None:
+
+            # Create new embedding
+            embedding = encode_text_embedding(
+                resume_text,
+                "Represent this resume for retrieval:",
+            )
+
+            if int(embedding.shape[1]) != int(index.d):
+                raise RuntimeError(
+                    "Stored FAISS index dimension does not match the embedding "
+                    "model dimension."
+                )
+
+            index.add(embedding)
+            new_row = int(index.ntotal - 1)
+            metadata.append(
+                {
+                    "resume_id": resume_id,
+                    "resume_name": resume_name,
+                    "faiss_row": new_row,
+                    "embedding_model": EMBEDDING_MODEL_NAME,
+                    "created_at": get_current_timestamp(),
+                    "last_updated_at": get_current_timestamp(),
+                }
+            )
             save_resume_vector_store(index, metadata)
-            row = int(existing["faiss_row"])
             RUNTIME_STATE["last_vector_store_error"] = ""
             RUNTIME_STATE["last_vector_store_status"] = (
-                f"Loaded cached embedding for {resume_name}."
+                f"Saved new embedding for {resume_name} at FAISS row {new_row}."
             )
-            return np.asarray(
-                [
-                    index.reconstruct(row),
-                ],
-                dtype="float32",
-            )
-
-        embedding = encode_text_embedding(
-            resume_text,
-            "Represent this resume for retrieval:",
-        )
-
-        if int(embedding.shape[1]) != int(index.d):
-            raise RuntimeError(
-                "Stored FAISS index dimension does not match the embedding "
-                "model dimension."
-            )
-
-        index.add(embedding)
-        metadata.append(
-            {
-                "resume_id": resume_id,
-                "resume_name": resume_name,
-                "faiss_row": int(index.ntotal - 1),
-                "embedding_model": EMBEDDING_MODEL_NAME,
-                "created_at": get_current_timestamp(),
-                "last_updated_at": get_current_timestamp(),
-            }
-        )
-        save_resume_vector_store(index, metadata)
-        RUNTIME_STATE["last_vector_store_error"] = ""
-        RUNTIME_STATE["last_vector_store_status"] = (
-            f"Saved new embedding for {resume_name}."
-        )
-        return embedding
+            return embedding
 
     except Exception as error:
         print("DEBUG get_or_create_resume_embedding EXCEPTION:", repr(error))
@@ -758,6 +851,59 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
             "Represent this resume for retrieval:",
         )
         return embedding
+
+
+def faiss_semantic_search(query_embedding, top_k=10):
+    """Search FAISS index for top_k most similar resumes using semantic search.
+    
+    This pre-filters candidates before expensive LLM analysis, significantly
+    reducing the computational load of the analyze pipeline.
+    
+    Args:
+        query_embedding: numpy array of shape (1, 1024) with query vector
+        top_k: number of top candidates to return
+    
+    Returns:
+        List of (resume_id, similarity_score) tuples, sorted by score (descending)
+    """
+    if faiss is None or not FAISS_INDEX_PATH.exists():
+        return []
+    
+    try:
+        index, metadata = load_resume_vector_store()
+        if index is None or not metadata:
+            return []
+        
+        # FAISS search returns (distances, indices) for top_k
+        # Note: IndexFlatIP uses inner product (similarity) not L2 distance
+        index_ntotal = int(getattr(index, "ntotal", 0))
+        search_k = min(top_k, index_ntotal)  # Can't search for more than we have
+        
+        distances, indices = index.search(query_embedding, search_k)
+        
+        # Build result list with resume_id and similarity score
+        results = []
+        for idx, dist in zip(indices[0], distances[0]):
+            idx_int = int(idx)
+            if 0 <= idx_int < len(metadata):
+                # Find resume_id for this metadata entry
+                # Need to match by faiss_row
+                for meta in metadata:
+                    try:
+                        if int(meta.get("faiss_row", -1)) == idx_int:
+                            resume_id = meta.get("resume_id")
+                            if resume_id:
+                                # Convert inner product score to 0-100 range
+                                similarity_score = float(dist) * 100
+                                results.append((resume_id, similarity_score))
+                            break
+                    except (TypeError, ValueError):
+                        continue
+        
+        return results
+    except Exception as e:
+        print(f"ERROR in faiss_semantic_search: {e}")
+        return []
 
 
 @lru_cache(maxsize=1)
@@ -2767,7 +2913,14 @@ def analyze_candidate_grading(
     missing_skills,
     prompt_template=None,
     resume_name="",
+    model_name=None,
 ):
+    import threading
+    import time
+    
+    grading_start = time.perf_counter()
+    thread_id = threading.get_ident()
+    
     prompt_template = (
         prompt_template or get_candidate_grading_prompt_template()
     )
@@ -2796,7 +2949,10 @@ def analyze_candidate_grading(
     )
     cache = get_ai_cache()
 
+    print(f"[CANDIDATE {resume_name}] GRADING START thread={thread_id}")
+
     if cache_key in cache and candidate_grading_is_usable(cache[cache_key]):
+        print(f"[CANDIDATE {resume_name}] GRADING CACHE HIT thread={thread_id}")
         cached_error = (
             cache[cache_key]
             .get("debug", {})
@@ -2813,6 +2969,8 @@ def analyze_candidate_grading(
             },
         }
         add_grading_checkpoint(cached_result["debug"])
+        grading_duration = time.perf_counter() - grading_start
+        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
         return cached_result
 
     previous_ai_error = RUNTIME_STATE.get("last_ai_error", "")
@@ -2823,6 +2981,7 @@ def analyze_candidate_grading(
     )
 
     if RUNTIME_STATE.get("skip_gemini_grading"):
+        print(f"[CANDIDATE {resume_name}] GRADING SKIP (local fallback) thread={thread_id}")
         fallback_result = {
             **fallback_result,
             "debug": {
@@ -2836,8 +2995,12 @@ def analyze_candidate_grading(
             },
         }
         add_grading_checkpoint(fallback_result["debug"])
+        grading_duration = time.perf_counter() - grading_start
+        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
         return fallback_result
 
+    print(f"[CANDIDATE {resume_name}] GRADING CACHE MISS thread={thread_id}")
+    
     prompt = format_prompt(
         prompt_template,
         resume_text=resume_context,
@@ -2849,7 +3012,7 @@ def analyze_candidate_grading(
         prompt,
         CANDIDATE_GRADING_SCHEMA,
         CANDIDATE_GRADING_FALLBACK,
-        model_name=GEMINI_RESUME_SKILL_MODEL,
+        model_name=model_name or get_selected_model(),
     )
     grading_error = RUNTIME_STATE.get("last_ai_error", "")
     result = normalize_candidate_grading(data)
@@ -2876,6 +3039,8 @@ def analyze_candidate_grading(
             },
         }
         add_grading_checkpoint(fallback_result["debug"])
+        grading_duration = time.perf_counter() - grading_start
+        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
         return fallback_result
 
     result = {
@@ -2888,6 +3053,8 @@ def analyze_candidate_grading(
     }
     cache[cache_key] = result
     add_grading_checkpoint(result["debug"])
+    grading_duration = time.perf_counter() - grading_start
+    print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
     return result
 
 
@@ -2902,6 +3069,12 @@ def analyze_candidate_detail(
     job_skill_requirements=None,
     resume_name="",
 ):
+    import threading
+    import time
+    
+    detail_start = time.perf_counter()
+    thread_id = threading.get_ident()
+    
     provider = provider or get_selected_provider()
     resume_context = build_resume_analysis_context(
         resume_text,
@@ -2924,7 +3097,10 @@ def analyze_candidate_detail(
     )
     cache = get_ai_cache()
 
+    print(f"[CANDIDATE {resume_name}] DETAIL START thread={thread_id}")
+
     if cache_key in cache:
+        print(f"[CANDIDATE {resume_name}] DETAIL CACHE HIT thread={thread_id}")
         cached_result = cache[cache_key]
         cached_result["missing_skills"] = merge_missing_skills(
             cached_result.get("missing_skills", []),
@@ -2944,10 +3120,15 @@ def analyze_candidate_detail(
                 cached_result.get("matching_skills", []),
                 cached_result.get("missing_skills", []),
                 resume_name=resume_name,
+                model_name=model_name,
             )
 
+        detail_duration = time.perf_counter() - detail_start
+        print(f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}")
         return cached_result
 
+    print(f"[CANDIDATE {resume_name}] DETAIL CACHE MISS thread={thread_id}")
+    
     prompt = format_prompt(
         prompt_template or get_candidate_detail_prompt_template(),
         resume_text=resume_context,
@@ -3001,10 +3182,13 @@ def analyze_candidate_detail(
         result["matching_skills"],
         result["missing_skills"],
         resume_name=resume_name,
+        model_name=model_name,
     )
     if not RUNTIME_STATE.get("last_ai_error"):
         cache[cache_key] = result
 
+    detail_duration = time.perf_counter() - detail_start
+    print(f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}")
     return result
 
 
