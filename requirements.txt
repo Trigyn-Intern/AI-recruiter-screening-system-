@@ -18,3 +18,4 @@ sentence-transformers>=3.0.0
 transformers>=4.0.0
 torch>=2.2.0
 google-genai>=1.0.0
+python-dotenv>=1.0.0

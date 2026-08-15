@@ -49,3 +49,43 @@ ignore = ["BLE001"]
 "tests/run_all.py" = ["E501", "E741"]  # Allow long lines, ambiguous var names
 "backend.py" = ["E501", "W293"]  # Allow long lines and trailing whitespace for debug print statements
 "api.py" = ["E501", "W293", "E402"]  # Allow long lines, trailing whitespace, and late imports (dotenv must load before backend)
+
+[tool.black]
+# Same as Ruff
+line-length = 88
+target-version = ["py311"]
+
+# Exclude the same untracked debug/benchmark files as Ruff
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | node_modules
+  | dist
+  | build
+  | \.eggs
+  | \.egg-info
+  | benchmark_.*\.py
+  | debug_.*\.py
+  | profile_.*\.py
+  | test_parallel_analysis\.py
+  | test_timeout_fix\.py
+  | check_faiss_integrity\.py
+  | clear_caches\.py
+  | quick_validation\.py
+  | .*_report\.md
+  | .*_SUMMARY\.md
+  | FIX_REPORT\.md
+  | package-lock\.json
+  | skills
+  | scripts
+  | tests/data
+  | tests/performance
+  | tests/integration
+  | tests/render_report\.py
+  | tests/test_report_summary_api\.py
+  | api_report_summary\.py
+  | append_api\.py
+)/
+'''
