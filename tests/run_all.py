@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import os
-import sys
-import subprocess
 import json
-import time
 import shutil
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +20,7 @@ def run_command_for_target(cmd_list, test_id, rel_file):
     print(f"Executing [{test_id}]: {' '.join(cmd_list)}")
     start_time = time.time()
     try:
-        res = subprocess.run(cmd_list, cwd=ROOT_DIR, capture_output=True, text=True, timeout=120)
+        res = subprocess.run(cmd_list, cwd=ROOT_DIR, capture_output=True, text=True, timeout=120, check=False)
         exit_code = res.returncode
         stdout = res.stdout
         stderr = res.stderr

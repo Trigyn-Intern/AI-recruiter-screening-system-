@@ -1,6 +1,7 @@
-import json
 import hashlib
+import json
 import os
+import sys
 import time
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -10,9 +11,8 @@ os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 import numpy as np
 import ollama
-import pandas as pd
 from docx import Document
-from jsonschema import ValidationError, validate
+from jsonschema import validate
 from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -710,7 +710,7 @@ def faiss_index_lookup(resume_id):
         index, metadata = load_resume_vector_store()
         if index is None or not metadata:
             return None
-        
+
         index_ntotal = int(getattr(index, "ntotal", 0))
         for rec in metadata:
             if rec.get("resume_id") == resume_id:
@@ -718,12 +718,12 @@ def faiss_index_lookup(resume_id):
                     row = int(rec.get("faiss_row", -1))
                 except (TypeError, ValueError):
                     return None
-                
+
                 # Validate row is in bounds
                 if row < 0 or row >= index_ntotal:
                     print(f"FAISS_INTEGRITY_WARN: resume_id {resume_id} has invalid faiss_row {row} (index size: {index_ntotal})")
                     return None
-                
+
                 # Reconstruct and return
                 embedding = index.reconstruct(row)
                 return embedding
@@ -808,7 +808,7 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
             except (TypeError, ValueError) as e:
                 print(f"FAISS_INTEGRITY: Error parsing faiss_row for {resume_id}: {e}")
                 existing = None  # Fall through to re-embedding
-        
+
         if existing is None:
 
             # Create new embedding
@@ -868,19 +868,19 @@ def faiss_semantic_search(query_embedding, top_k=10):
     """
     if faiss is None or not FAISS_INDEX_PATH.exists():
         return []
-    
+
     try:
         index, metadata = load_resume_vector_store()
         if index is None or not metadata:
             return []
-        
+
         # FAISS search returns (distances, indices) for top_k
         # Note: IndexFlatIP uses inner product (similarity) not L2 distance
         index_ntotal = int(getattr(index, "ntotal", 0))
         search_k = min(top_k, index_ntotal)  # Can't search for more than we have
-        
+
         distances, indices = index.search(query_embedding, search_k)
-        
+
         # Build result list with resume_id and similarity score
         results = []
         for idx, dist in zip(indices[0], distances[0]):
@@ -899,7 +899,7 @@ def faiss_semantic_search(query_embedding, top_k=10):
                             break
                     except (TypeError, ValueError):
                         continue
-        
+
         return results
     except Exception as e:
         print(f"ERROR in faiss_semantic_search: {e}")
@@ -1460,7 +1460,7 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
         RUNTIME_STATE["last_ai_error"] = ""
         return data
 
-    except (KeyError, TypeError, ValidationError, Exception) as error:
+    except Exception as error:
         RUNTIME_STATE["last_ai_error"] = str(error)
         return fallback
 
@@ -1511,7 +1511,7 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None):
         RUNTIME_STATE["last_ai_error"] = ""
         return data
 
-    except (KeyError, TypeError, ValidationError, Exception) as error:
+    except Exception as error:
         RUNTIME_STATE["last_ai_error"] = str(error)
         return fallback
 
@@ -1595,11 +1595,9 @@ def normalize_skill_list(value):
 
     if isinstance(value, str):
         value = [
-            item.strip(
-                " -ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢\t"
-            )
-            for item in value.replace("\n", ",").split(",")
-        ]
+        item.strip(" \t-•–—")
+        for item in value.replace("\n", ",").split(",")
+    ]
 
     if not isinstance(value, list):
         return []
@@ -2917,10 +2915,10 @@ def analyze_candidate_grading(
 ):
     import threading
     import time
-    
+
     grading_start = time.perf_counter()
     thread_id = threading.get_ident()
-    
+
     prompt_template = (
         prompt_template or get_candidate_grading_prompt_template()
     )
@@ -3000,7 +2998,7 @@ def analyze_candidate_grading(
         return fallback_result
 
     print(f"[CANDIDATE {resume_name}] GRADING CACHE MISS thread={thread_id}")
-    
+
     prompt = format_prompt(
         prompt_template,
         resume_text=resume_context,
@@ -3071,10 +3069,10 @@ def analyze_candidate_detail(
 ):
     import threading
     import time
-    
+
     detail_start = time.perf_counter()
     thread_id = threading.get_ident()
-    
+
     provider = provider or get_selected_provider()
     resume_context = build_resume_analysis_context(
         resume_text,
@@ -3128,7 +3126,7 @@ def analyze_candidate_detail(
         return cached_result
 
     print(f"[CANDIDATE {resume_name}] DETAIL CACHE MISS thread={thread_id}")
-    
+
     prompt = format_prompt(
         prompt_template or get_candidate_detail_prompt_template(),
         resume_text=resume_context,
@@ -3228,8 +3226,8 @@ def persist_analysis_session(*args, **kwargs) -> str:
     ``file_cache=``). All extra args are folded into the stored payload
     so any caller shape works.
     """
-    import os
     import json
+    import os
     import uuid
 
     if args and isinstance(args[0], dict) and not kwargs:

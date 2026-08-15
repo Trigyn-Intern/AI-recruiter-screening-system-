@@ -1,32 +1,30 @@
-import io
-import os
 import asyncio
-import time
-import json
-import uuid
-import threading
-import subprocess
-import sys
-import datetime
-import re
 import hashlib
 import html
-import urllib.request
+import io
+import json
+import os
+import re
+import threading
+import time
 import urllib.error
-from typing import Any, Dict, List, Optional
+import urllib.request
+import uuid
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 try:
     from google import genai
 except ImportError:
     genai = None
 
-from dotenv import load_dotenv
 import pathlib
+
+from dotenv import load_dotenv
 
 _env_path = pathlib.Path(__file__).resolve().parent / "backend" / ".env"
 if _env_path.exists():
@@ -37,12 +35,12 @@ from backend import (
     GEMINI_MODEL_OPTIONS,
     OLLAMA_MODEL_OPTIONS,
     analyze_candidate_detail,
-    analyze_job_description_cached as analyze_job_description,
+    calculate_match_score,
     clear_runtime_status,
     display_value,
     encode_text_embedding,
-    extract_text,
     ensure_candidate_grading,
+    extract_text,
     faiss_semantic_search,
     get_configuration,
     get_indexed_resume_analysis_records,
@@ -52,13 +50,14 @@ from backend import (
     get_resume_skill_profile,
     get_runtime_status,
     initialize_project_storage_files,
-    calculate_match_score,
     persist_analysis_session,
     reset_configuration,
     update_configuration,
     validate_upload,
 )
-
+from backend import (
+    analyze_job_description_cached as analyze_job_description,
+)
 
 api = FastAPI(title="Resume Analyzer API")
 
@@ -245,7 +244,7 @@ def _run_analyze_blocking(
 
     print("[ANALYZE] Uploaded resume processing START")
     upload_processing_started = time.perf_counter()
-    
+
     for resume in resumes or []:
         content = resume.file.read()
         resume_file = InMemoryUpload(content, resume.filename)
@@ -292,37 +291,37 @@ def _run_analyze_blocking(
             "resume_embedding": resume_embedding,
             "resume_skill_profile": resume_skill_profile,
         }
-    
+
     upload_processing_duration = time.perf_counter() - upload_processing_started
     print(f"[ANALYZE] Uploaded resume processing END duration={upload_processing_duration:.2f}s")
 
     # Optimize: Use FAISS semantic search to pre-filter candidates before expensive LLM analysis
     print("[ANALYZE] JD embedding START")
     jd_embedding_started = time.perf_counter()
-    
+
     # Create JD embedding for semantic search
     jd_embedding = encode_text_embedding(
         job_description,
         "Represent this description for matching:",
     )
-    
+
     jd_embedding_duration = time.perf_counter() - jd_embedding_started
     print(f"[ANALYZE] JD embedding END duration={jd_embedding_duration:.2f}s")
-    
+
     print("[ANALYZE] FAISS search START")
     search_started = time.perf_counter()
-    
+
     # Use FAISS to find top candidates (2x detail_limit to have room for uploaded resumes)
     faiss_search_k = max(10, detail_limit * 3)
     top_candidates_from_search = faiss_semantic_search(jd_embedding, top_k=faiss_search_k)
     top_candidate_ids = {resume_id for resume_id, _ in top_candidates_from_search}
-    
+
     timings["faiss_search_ms"] = int((time.perf_counter() - search_started) * 1000)
     print(f"[ANALYZE] FAISS search END duration={timings['faiss_search_ms']/1000:.2f}s")
-    
+
     print("[ANALYZE] Candidate retrieval/merge START")
     retrieval_started = time.perf_counter()
-    
+
     file_cache = []
     indexed_resume_ids = set()
     all_indexed_records = get_indexed_resume_analysis_records()
@@ -332,7 +331,7 @@ def _run_analyze_blocking(
     for item in all_indexed_records:
         if item["resume_id"] not in top_candidate_ids:
             continue  # Skip resumes not in FAISS top results
-            
+
         indexed_resume_ids.add(item["resume_id"])
         uploaded_item = uploaded_records.get(item["resume_id"])
         resume_text = (
@@ -370,7 +369,7 @@ def _run_analyze_blocking(
             "resume_text": item["resume_text"],
             "resume_skill_profile": item["resume_skill_profile"],
         })
-    
+
     retrieval_duration = time.perf_counter() - retrieval_started
     print(f"[ANALYZE] Candidate retrieval/merge END duration={retrieval_duration:.2f}s")
 
@@ -384,7 +383,7 @@ def _run_analyze_blocking(
         )
 
     print("[analyze-timing]", timings)
-    
+
     print("[ANALYZE] Ranking START")
     ranking_started = time.perf_counter()
     valid_records = [item["record"] for item in file_cache]
@@ -399,16 +398,15 @@ def _run_analyze_blocking(
     print(f"[ANALYZE] Ranking END duration={ranking_duration:.2f}s")
     def _process_candidate_detail(item):
         """Process a single candidate's detail analysis and grading."""
-        import threading
         import time
-        
+
         candidate_start = time.perf_counter()
         thread_id = threading.get_ident()
         record = item["record"]
         resume_name = record["resume_name"]
-        
+
         print(f"[CANDIDATE {resume_name}] PROCESS START thread={thread_id}")
-        
+
         detail = analyze_candidate_detail(
             item["resume_text"],
             job_description,
@@ -425,10 +423,10 @@ def _run_analyze_blocking(
             matching_skills=detail.get("matching_skills", []),
             missing_skills=detail.get("missing_skills", []),
         )
-        
+
         candidate_duration = time.perf_counter() - candidate_start
         print(f"[CANDIDATE {resume_name}] PROCESS END duration={candidate_duration:.2f}s thread={thread_id}")
-        
+
         return {**record, **detail}
 
     # Filter candidates that need detail analysis
@@ -439,12 +437,12 @@ def _run_analyze_blocking(
 
     print(f"[ANALYZE] Parallel candidate analysis START candidates={len(candidates_to_process)}")
     parallel_analysis_started = time.perf_counter()
-    
+
     # Process candidates concurrently using ThreadPoolExecutor
     # Limit concurrency to ANALYZE_MAX_INFLIGHT to respect system limits
     with ThreadPoolExecutor(max_workers=ANALYZE_MAX_INFLIGHT) as executor:
         top_details = list(executor.map(_process_candidate_detail, candidates_to_process))
-    
+
     parallel_analysis_duration = time.perf_counter() - parallel_analysis_started
     print(f"[ANALYZE] Parallel candidate analysis END duration={parallel_analysis_duration:.2f}s")
 
@@ -479,7 +477,7 @@ def _run_analyze_blocking(
     persist_analysis_session(payload)
     persistence_duration = time.perf_counter() - persistence_started
     print(f"[ANALYZE] Session persistence END duration={persistence_duration:.2f}s")
-    
+
     timings["total_pipeline_ms"] = int((time.perf_counter() - pipeline_started) * 1000)
     print(f"[ANALYZE] Pipeline END total_duration={timings['total_pipeline_ms']/1000:.2f}s")
     print("[analyze-timing] pipeline", timings)
@@ -526,8 +524,8 @@ def run_review_bg(job_id: str, code: str, provider: str, model_name: str, system
                     "contents": [{"parts": [{"text": f"{system_prompt}\n\n{user_prompt_text}"}]}]
                 }
                 req = urllib.request.Request(
-                    url, 
-                    data=json.dumps(payload_data).encode("utf-8"), 
+                    url,
+                    data=json.dumps(payload_data).encode("utf-8"),
                     headers={"Content-Type": "application/json"}
                 )
                 with urllib.request.urlopen(req, timeout=120) as response:
@@ -685,17 +683,17 @@ def _safe_json_loads(s: str):
     try:
         return json.loads(s)
     except Exception:
-        pass
+        pass  # Intentionally silent - fallback to next pattern
     match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', s)
     if match:
         try:
             return json.loads(match.group(1))
         except Exception:
-            pass
+            pass  # Intentionally silent - fallback to next pattern
     match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', s)
     if match:
         try:
             return json.loads(match.group(1))
         except Exception:
-            pass
+            pass  # Intentionally silent - fallback to None
     return None

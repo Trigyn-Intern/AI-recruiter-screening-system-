@@ -1,0 +1,51 @@
+[tool.ruff]
+# Same as Black.
+line-length = 88
+target-version = "py311"
+
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "dist",
+    "build",
+    ".eggs",
+    "*.egg-info",
+    "benchmark_*.py",
+    "debug_*.py", 
+    "profile_*.py",
+    "test_parallel_analysis.py",
+    "test_timeout_fix.py",
+    "check_faiss_integrity.py",
+    "clear_caches.py",
+    "quick_validation.py",
+    "*_report.md",
+    "*_SUMMARY.md",
+    "FIX_REPORT.md",
+    "package-lock.json",
+    "skills/*",
+    "scripts/*",
+    "tests/data/*",
+    "tests/performance/*",
+    "tests/integration/*",
+    "tests/render_report.py",
+    "tests/test_report_summary_api.py",
+    "api_report_summary.py",
+    "append_api.py",
+]
+
+[tool.ruff.lint]
+# Enable pycodestyle (E, W), Pyflakes (F), and isort (I) by default.
+select = ["E", "W", "F", "I"]
+
+# Ignore BLE001 (blind exception) for defensive error handling patterns.
+# These are intentional fallback handlers for FAISS, embedding, AI, and storage operations.
+ignore = ["BLE001"]
+
+[tool.ruff.lint.per-file-ignores]
+# Additional per-file ignores for core test files
+"tests/unit/*" = ["S101", "E501"]  # Allow assert, long lines in unit tests
+"tests/run_all.py" = ["E501", "E741"]  # Allow long lines, ambiguous var names
+"backend.py" = ["E501", "W293"]  # Allow long lines and trailing whitespace for debug print statements
+"api.py" = ["E501", "W293", "E402"]  # Allow long lines, trailing whitespace, and late imports (dotenv must load before backend)
