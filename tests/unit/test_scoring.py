@@ -70,4 +70,6 @@ def test_load_resume_vector_store_reconciles_stale_faiss_rows(mocker):
 
     assert result_index is index
     assert result_metadata == [mocked_metadata[0]]
-    mock_write.assert_called_once_with(__import__("backend").FAISS_METADATA_PATH, [mocked_metadata[0]])
+    mock_write.assert_called_once_with(
+        __import__("backend").FAISS_METADATA_PATH, [mocked_metadata[0]]
+    )

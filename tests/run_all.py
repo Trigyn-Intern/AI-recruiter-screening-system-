@@ -16,11 +16,19 @@ DIRECTORIES = [
     "tests/performance",
 ]
 
+
 def run_command_for_target(cmd_list, test_id, rel_file):
     print(f"Executing [{test_id}]: {' '.join(cmd_list)}")
     start_time = time.time()
     try:
-        res = subprocess.run(cmd_list, cwd=ROOT_DIR, capture_output=True, text=True, timeout=120, check=False)
+        res = subprocess.run(
+            cmd_list,
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
         exit_code = res.returncode
         stdout = res.stdout
         stderr = res.stderr
@@ -42,7 +50,8 @@ def run_command_for_target(cmd_list, test_id, rel_file):
         "command": " ".join(cmd_list),
         "stdout": stdout,
         "stderr": stderr,
-        "logs": f"Executing command: {' '.join(cmd_list)}\n\n--- STDOUT ---\n{stdout}\n" + (f"\n--- STDERR ---\n{stderr}\n" if stderr else ""),
+        "logs": f"Executing command: {' '.join(cmd_list)}\n\n--- STDOUT ---\n{stdout}\n"
+        + (f"\n--- STDERR ---\n{stderr}\n" if stderr else ""),
         "exitCode": exit_code,
         "elapsedMs": elapsed_ms,
         "status": status,
@@ -56,6 +65,7 @@ def run_command_for_target(cmd_list, test_id, rel_file):
 
     print(f"[{status}] {test_id} ({elapsed_ms}ms)")
     return status == "Passed"
+
 
 def main():
     passed = 0
@@ -139,7 +149,9 @@ def main():
                 try:
                     rdata = json.loads(rep_file.read_text(encoding="utf-8"))
                     print(f" - [{tid}] ExitCode: {rdata.get('exitCode')}")
-                    err_lines = [l for l in rdata.get('stderr', '').splitlines() if l.strip()]
+                    err_lines = [
+                        l for l in rdata.get("stderr", "").splitlines() if l.strip()
+                    ]
                     if err_lines:
                         print(f"   Error snippet: {err_lines[-1]}")
                 except Exception:
@@ -148,6 +160,7 @@ def main():
                 print(f" - [{tid}] (No report artifact found)")
     print("========================================")
     sys.exit(0 if failed == 0 else 1)
+
 
 if __name__ == "__main__":
     main()

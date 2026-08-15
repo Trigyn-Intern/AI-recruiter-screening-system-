@@ -29,21 +29,28 @@ except ImportError:
 
 if faiss is None:
     import types
+
     faiss = types.ModuleType("faiss")
+
     class DummyIndex:
         def __init__(self, d=1024):
             self.d = d
             self.ntotal = 0
             self.vectors = {}
+
         def add(self, x):
             for vec in x:
                 self.vectors[self.ntotal] = vec
                 self.ntotal += 1
+
         def reconstruct(self, i):
             return self.vectors.get(i, [0.1] * self.d)
+
     _FAISS_STORAGE = {}
     faiss.IndexFlatIP = lambda d=1024: DummyIndex(d)
-    faiss.write_index = lambda idx, path: _FAISS_STORAGE.update({str(path): idx}) or Path(path).write_bytes(b"FAISS_DUMMY_INDEX")
+    faiss.write_index = lambda idx, path: _FAISS_STORAGE.update(
+        {str(path): idx}
+    ) or Path(path).write_bytes(b"FAISS_DUMMY_INDEX")
     faiss.read_index = lambda path: _FAISS_STORAGE.get(str(path), DummyIndex(1024))
     sys.modules["faiss"] = faiss
 
@@ -580,6 +587,7 @@ RUNTIME_STATE = {
 # LOAD EMBEDDING MODEL
 # ==================================================
 
+
 @lru_cache(maxsize=1)
 def load_model():
     try:
@@ -653,11 +661,13 @@ def sanitize_faiss_metadata(metadata, index_size=None):
             continue
 
         seen_resume_ids.add(resume_id)
-        cleaned.append({
-            **record,
-            "resume_id": resume_id,
-            "faiss_row": row,
-        })
+        cleaned.append(
+            {
+                **record,
+                "resume_id": resume_id,
+                "faiss_row": row,
+            }
+        )
 
     return cleaned
 
@@ -683,7 +693,9 @@ def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
                 write_json_file(FAISS_METADATA_PATH, metadata)
             # Verify consistency: metadata count should not exceed index size
             if len(metadata) > index_ntotal:
-                print(f"WARNING: metadata has {len(metadata)} rows but index has {index_ntotal}. Truncating metadata.")
+                print(
+                    f"WARNING: metadata has {len(metadata)} rows but index has {index_ntotal}. Truncating metadata."
+                )
                 metadata = metadata[:index_ntotal]
                 write_json_file(FAISS_METADATA_PATH, metadata)
         except Exception as e:
@@ -695,7 +707,7 @@ def load_resume_vector_store(dimension=EMBEDDING_DIMENSION):
 def faiss_index_lookup(resume_id):
     """Return the cached embedding for resume_id from the FAISS index,
     or None if it isn't indexed yet.
-    
+
     FAISS Integrity Validation:
     - Verifies faiss_row is within valid range [0, index.ntotal)
     - Removes stale metadata entries before lookup
@@ -721,7 +733,9 @@ def faiss_index_lookup(resume_id):
 
                 # Validate row is in bounds
                 if row < 0 or row >= index_ntotal:
-                    print(f"FAISS_INTEGRITY_WARN: resume_id {resume_id} has invalid faiss_row {row} (index size: {index_ntotal})")
+                    print(
+                        f"FAISS_INTEGRITY_WARN: resume_id {resume_id} has invalid faiss_row {row} (index size: {index_ntotal})"
+                    )
                     return None
 
                 # Reconstruct and return
@@ -736,7 +750,7 @@ def faiss_index_lookup(resume_id):
 
 def save_resume_vector_store(index, metadata):
     """Persist FAISS index and metadata with integrity validation.
-    
+
     FAISS Integrity Guarantee:
     - Sanitizes metadata (removes duplicates, invalid rows)
     - Validates all faiss_row values are in bounds [0, index.ntotal)
@@ -748,10 +762,16 @@ def save_resume_vector_store(index, metadata):
         index_ntotal = int(getattr(index, "ntotal", 0))
         metadata = sanitize_faiss_metadata(metadata, index_ntotal)
         # Double-check: ensure no metadata row exceeds index size
-        valid_count = sum(1 for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal)
+        valid_count = sum(
+            1 for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal
+        )
         if valid_count != len(metadata):
-            print(f"FAISS_INTEGRITY: Found {len(metadata) - valid_count} invalid rows. Cleaned.")
-            metadata = [m for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal]
+            print(
+                f"FAISS_INTEGRITY: Found {len(metadata) - valid_count} invalid rows. Cleaned."
+            )
+            metadata = [
+                m for m in metadata if 0 <= int(m.get("faiss_row", -1)) < index_ntotal
+            ]
     else:
         metadata = sanitize_faiss_metadata(metadata, None)
     faiss.write_index(index, str(FAISS_INDEX_PATH))
@@ -788,7 +808,9 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
                 index_ntotal = int(getattr(index, "ntotal", 0))
                 if row < 0 or row >= index_ntotal:
                     # Stale metadata entry; treat as missing and re-embed
-                    print(f"FAISS_INTEGRITY: resume_id {resume_id} has invalid row {row}. Re-embedding.")
+                    print(
+                        f"FAISS_INTEGRITY: resume_id {resume_id} has invalid row {row}. Re-embedding."
+                    )
                     existing = None  # Fall through to re-embedding
                 else:
                     # Valid cached entry; use it
@@ -855,14 +877,14 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
 
 def faiss_semantic_search(query_embedding, top_k=10):
     """Search FAISS index for top_k most similar resumes using semantic search.
-    
+
     This pre-filters candidates before expensive LLM analysis, significantly
     reducing the computational load of the analyze pipeline.
-    
+
     Args:
         query_embedding: numpy array of shape (1, 1024) with query vector
         top_k: number of top candidates to return
-    
+
     Returns:
         List of (resume_id, similarity_score) tuples, sorted by score (descending)
     """
@@ -921,10 +943,7 @@ def get_available_ollama_models():
             if isinstance(model, dict):
                 name = model.get("name") or model.get("model")
             else:
-                name = (
-                    getattr(model, "name", None)
-                    or getattr(model, "model", None)
-                )
+                name = getattr(model, "name", None) or getattr(model, "model", None)
 
             if name:
                 names.append(name)
@@ -938,6 +957,7 @@ def get_available_ollama_models():
 # ==================================================
 # HELPERS
 # ==================================================
+
 
 def init_configuration_state():
     if RUNTIME_STATE.get("ai_provider") not in AI_PROVIDER_OPTIONS:
@@ -973,9 +993,7 @@ def init_configuration_state():
     )
 
     if not RUNTIME_STATE["use_custom_jd_prompt"]:
-        RUNTIME_STATE["active_jd_prompt_template"] = (
-            DEFAULT_JD_PROMPT_TEMPLATE
-        )
+        RUNTIME_STATE["active_jd_prompt_template"] = DEFAULT_JD_PROMPT_TEMPLATE
 
     if not RUNTIME_STATE["use_custom_skill_gap_prompt"]:
         RUNTIME_STATE["active_skill_gap_prompt_template"] = (
@@ -1143,9 +1161,8 @@ def get_resume_database_records():
         existing["skills_model"] = item.get("model", "")
         existing["skill_count"] = len(profile_skills)
         existing["skills_indexed"] = has_skill_signal
-        existing["last_updated_at"] = (
-            existing.get("last_updated_at")
-            or item.get("last_updated_at", "")
+        existing["last_updated_at"] = existing.get("last_updated_at") or item.get(
+            "last_updated_at", ""
         )
 
     for record in records.values():
@@ -1202,10 +1219,7 @@ def get_indexed_resume_analysis_records():
             resume_skill_profile = normalize_resume_skill_profile(
                 skills_item.get("skills", {}) or {}
             )
-            last_updated_at = (
-                last_updated_at
-                or skills_item.get("last_updated_at", "")
-            )
+            last_updated_at = last_updated_at or skills_item.get("last_updated_at", "")
 
         analysis_records.append(
             {
@@ -1282,10 +1296,7 @@ def normalize_configuration(config):
             DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE
         )
 
-    if (
-        "Do not use or mention the existing match score"
-        not in candidate_grading_prompt
-    ):
+    if "Do not use or mention the existing match score" not in candidate_grading_prompt:
         normalized_config["candidate_grading_prompt_template"] = (
             DEFAULT_CANDIDATE_GRADING_PROMPT_TEMPLATE
         )
@@ -1451,9 +1462,7 @@ def safe_ollama_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(result)
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = (
-                "The model did not return valid JSON."
-            )
+            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1502,9 +1511,7 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None):
         data = safe_json_extract(response.text or "")
 
         if data is None:
-            RUNTIME_STATE["last_ai_error"] = (
-                "The model did not return valid JSON."
-            )
+            RUNTIME_STATE["last_ai_error"] = "The model did not return valid JSON."
             return fallback
 
         validate(instance=data, schema=schema)
@@ -1594,10 +1601,7 @@ def normalize_skill_list(value):
         value = list(value.values())
 
     if isinstance(value, str):
-        value = [
-        item.strip(" \t-•–—")
-        for item in value.replace("\n", ",").split(",")
-    ]
+        value = [item.strip(" \t-•–—") for item in value.replace("\n", ",").split(",")]
 
     if not isinstance(value, list):
         return []
@@ -2171,6 +2175,7 @@ def summarize_gemini_error(error):
 # EXTRACT TEXT
 # ==================================================
 
+
 def extract_pdf_text(pdf_file):
     text = ""
     reader = PdfReader(pdf_file)
@@ -2226,6 +2231,7 @@ def extract_text(file):
 # MATCH SCORE
 # ==================================================
 
+
 def calculate_match_score(resume_embedding, job_text):
     if isinstance(resume_embedding, str):
         resume_embedding = encode_text_embedding(
@@ -2264,6 +2270,7 @@ def analyze_job_description_cached(job_text, model_name=None, provider=None):
     result = analyze_job_description(job_text, model_name=model_name, provider=provider)
     _JD_ANALYSIS_CACHE[key] = result
     return result
+
 
 def analyze_job_description(
     job_text,
@@ -2627,7 +2634,8 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
 
     if (
         isinstance(existing, dict)
-        and existing.get("model") in [
+        and existing.get("model")
+        in [
             GEMINI_RESUME_SKILL_MODEL,
             "local-fallback",
         ]
@@ -2919,9 +2927,7 @@ def analyze_candidate_grading(
     grading_start = time.perf_counter()
     thread_id = threading.get_ident()
 
-    prompt_template = (
-        prompt_template or get_candidate_grading_prompt_template()
-    )
+    prompt_template = prompt_template or get_candidate_grading_prompt_template()
     matching_skills = remove_placeholder_skills(matching_skills)
     missing_skills = remove_placeholder_skills(missing_skills)
     debug = {
@@ -2951,11 +2957,7 @@ def analyze_candidate_grading(
 
     if cache_key in cache and candidate_grading_is_usable(cache[cache_key]):
         print(f"[CANDIDATE {resume_name}] GRADING CACHE HIT thread={thread_id}")
-        cached_error = (
-            cache[cache_key]
-            .get("debug", {})
-            .get("gemini_error", "")
-        )
+        cached_error = cache[cache_key].get("debug", {}).get("gemini_error", "")
         cached_result = {
             **cache[cache_key],
             "debug": {
@@ -2968,7 +2970,9 @@ def analyze_candidate_grading(
         }
         add_grading_checkpoint(cached_result["debug"])
         grading_duration = time.perf_counter() - grading_start
-        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
+        print(
+            f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}"
+        )
         return cached_result
 
     previous_ai_error = RUNTIME_STATE.get("last_ai_error", "")
@@ -2979,7 +2983,9 @@ def analyze_candidate_grading(
     )
 
     if RUNTIME_STATE.get("skip_gemini_grading"):
-        print(f"[CANDIDATE {resume_name}] GRADING SKIP (local fallback) thread={thread_id}")
+        print(
+            f"[CANDIDATE {resume_name}] GRADING SKIP (local fallback) thread={thread_id}"
+        )
         fallback_result = {
             **fallback_result,
             "debug": {
@@ -2994,7 +3000,9 @@ def analyze_candidate_grading(
         }
         add_grading_checkpoint(fallback_result["debug"])
         grading_duration = time.perf_counter() - grading_start
-        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
+        print(
+            f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}"
+        )
         return fallback_result
 
     print(f"[CANDIDATE {resume_name}] GRADING CACHE MISS thread={thread_id}")
@@ -3038,7 +3046,9 @@ def analyze_candidate_grading(
         }
         add_grading_checkpoint(fallback_result["debug"])
         grading_duration = time.perf_counter() - grading_start
-        print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
+        print(
+            f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}"
+        )
         return fallback_result
 
     result = {
@@ -3052,7 +3062,9 @@ def analyze_candidate_grading(
     cache[cache_key] = result
     add_grading_checkpoint(result["debug"])
     grading_duration = time.perf_counter() - grading_start
-    print(f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}")
+    print(
+        f"[CANDIDATE {resume_name}] GRADING END duration={grading_duration:.2f}s thread={thread_id}"
+    )
     return result
 
 
@@ -3122,7 +3134,9 @@ def analyze_candidate_detail(
             )
 
         detail_duration = time.perf_counter() - detail_start
-        print(f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}")
+        print(
+            f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}"
+        )
         return cached_result
 
     print(f"[CANDIDATE {resume_name}] DETAIL CACHE MISS thread={thread_id}")
@@ -3186,13 +3200,16 @@ def analyze_candidate_detail(
         cache[cache_key] = result
 
     detail_duration = time.perf_counter() - detail_start
-    print(f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}")
+    print(
+        f"[CANDIDATE {resume_name}] DETAIL END duration={detail_duration:.2f}s thread={thread_id}"
+    )
     return result
 
 
 # ==================================================
 # PROCESS SINGLE RESUME
 # ==================================================
+
 
 def process_resume(resume_file, job_description):
     resume_id = get_resume_id(resume_file)
@@ -3217,6 +3234,7 @@ def process_resume(resume_file, job_description):
         "Resume ID": resume_id,
         "Match Score (%)": score,
     }
+
 
 def persist_analysis_session(*args, **kwargs) -> str:
     """Append one analysis session to vector_store/analysis_sessions.json.
@@ -3251,10 +3269,3 @@ def persist_analysis_session(*args, **kwargs) -> str:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(sessions, f, ensure_ascii=False, indent=2)
     return payload["session_id"]
-
-
-
-
-
-
-
