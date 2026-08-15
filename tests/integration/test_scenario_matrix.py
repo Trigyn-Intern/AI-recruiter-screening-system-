@@ -376,6 +376,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
 
     cached_vector = np.asarray([0.1] * EMBEDDING_DIMENSION, dtype="float32")
     index = mocker.Mock()
+    index.ntotal = 5
     index.reconstruct.return_value = cached_vector
     mocker.patch(
         "backend.load_resume_vector_store",
@@ -390,6 +391,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
             ],
         ),
     )
+    mocker.patch("backend.faiss_index_lookup", return_value=None)
     mock_encode = mocker.patch("backend.encode_text_embedding")
 
     result = get_or_create_resume_embedding("resume-1", "resume.pdf", "resume text")
