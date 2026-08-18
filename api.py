@@ -41,7 +41,9 @@ from backend import (
     encode_text_embedding,
     ensure_candidate_grading,
     extract_text,
+    faiss_index_lookup,
     faiss_semantic_search,
+    get_active_resume_db_records,
     get_configuration,
     get_indexed_resume_analysis_records,
     get_or_create_resume_embedding,
@@ -153,6 +155,9 @@ def resume_database():
         ),
         "embedding_indexed": sum(
             1 for record in records if record.get("embedding_indexed")
+        ),
+        "skills_indexed": sum(
+            1 for record in records if record.get("skills_indexed")
         ),
     }
 
@@ -306,72 +311,48 @@ def _run_analyze_blocking(
         f"[ANALYZE] Uploaded resume processing END duration={upload_processing_duration:.2f}s"
     )
 
-    # Optimize: Use FAISS semantic search to pre-filter candidates before expensive LLM analysis
-    print("[ANALYZE] JD embedding START")
-    jd_embedding_started = time.perf_counter()
+    # Step 1: Load active Resume DB independently of FAISS (source of truth)
+    print("[ANALYZE] Active Resume DB load START")
+    active_resume_db = get_active_resume_db_records()
+    print(f"[ANALYZE] Active Resume DB loaded: {len(active_resume_db)} resumes")
 
-    # Create JD embedding for semantic search
-    jd_embedding = encode_text_embedding(
-        job_description,
-        "Represent this description for matching:",
-    )
-
-    jd_embedding_duration = time.perf_counter() - jd_embedding_started
-    print(f"[ANALYZE] JD embedding END duration={jd_embedding_duration:.2f}s")
-
-    print("[ANALYZE] FAISS search START")
-    search_started = time.perf_counter()
-
-    # Use FAISS to find top candidates (2x detail_limit to have room for uploaded resumes)
-    faiss_search_k = max(10, detail_limit * 3)
-    top_candidates_from_search = faiss_semantic_search(
-        jd_embedding, top_k=faiss_search_k
-    )
-    top_candidate_ids = {resume_id for resume_id, _ in top_candidates_from_search}
-
-    timings["faiss_search_ms"] = int((time.perf_counter() - search_started) * 1000)
-    print(f"[ANALYZE] FAISS search END duration={timings['faiss_search_ms']/1000:.2f}s")
-
-    print("[ANALYZE] Candidate retrieval/merge START")
-    retrieval_started = time.perf_counter()
+    # Step 2: Combine candidate pool (existing Resume DB + new uploads)
+    print("[ANALYZE] Candidate pool merge START")
+    merge_started = time.perf_counter()
 
     file_cache = []
     indexed_resume_ids = set()
-    all_indexed_records = get_indexed_resume_analysis_records()
 
-    # Only process indexed resumes that are in the FAISS search results
-    # This significantly reduces the candidate set before expensive LLM analysis
-    for item in all_indexed_records:
-        if item["resume_id"] not in top_candidate_ids:
-            continue  # Skip resumes not in FAISS top results
+    # Add existing Resume DB candidates
+    for resume_id, record in active_resume_db.items():
+        if resume_id in uploaded_records:
+            # Will be handled in uploaded records section
+            continue
+        
+        # Try to get embedding from FAISS (optimization layer)
+        embedding = faiss_index_lookup(resume_id)
+        if embedding is not None:
+            # Resume has embedding in FAISS - add to candidate pool
+            score = calculate_match_score(embedding, job_description)
+            file_cache.append({
+                "record": {
+                    "resume_name": record["resume_name"],
+                    "resume_id": resume_id,
+                    "match_score": score,
+                    "fit": build_fit_bucket(score),
+                },
+                "resume_text": "",  # Not stored in Resume DB
+                "resume_skill_profile": record["resume_skill_profile"],
+            })
+            indexed_resume_ids.add(resume_id)
+        else:
+            # Resume in DB but no embedding - skip (will need re-upload)
+            print(f"[ANALYZE] Resume {record['resume_name']} in DB but no embedding, skipping")
 
-        indexed_resume_ids.add(item["resume_id"])
-        uploaded_item = uploaded_records.get(item["resume_id"])
-        resume_text = (
-            uploaded_item["resume_text"] if uploaded_item else item["resume_text"]
-        )
-        resume_skill_profile = (
-            uploaded_item["resume_skill_profile"]
-            if uploaded_item
-            else item["resume_skill_profile"]
-        )
-        score = calculate_match_score(item["resume_embedding"], job_description)
-        record = {
-            "resume_name": item["resume_name"],
-            "resume_id": item["resume_id"],
-            "match_score": score,
-            "fit": build_fit_bucket(score),
-        }
-        file_cache.append(
-            {
-                "record": record,
-                "resume_text": resume_text,
-                "resume_skill_profile": resume_skill_profile,
-            }
-        )
-
+    # Add uploaded resumes to candidate pool
     for resume_id, item in uploaded_records.items():
         if resume_id in indexed_resume_ids:
+            # Already added from Resume DB
             continue
         score = calculate_match_score(item["resume_embedding"], job_description)
         record = {
@@ -380,24 +361,63 @@ def _run_analyze_blocking(
             "match_score": score,
             "fit": build_fit_bucket(score),
         }
-        file_cache.append(
-            {
-                "record": record,
-                "resume_text": item["resume_text"],
-                "resume_skill_profile": item["resume_skill_profile"],
-            }
+        file_cache.append({
+            "record": record,
+            "resume_text": item["resume_text"],
+            "resume_skill_profile": item["resume_skill_profile"],
+        })
+        indexed_resume_ids.add(resume_id)
+
+    merge_duration = time.perf_counter() - merge_started
+    print(f"[ANALYZE] Candidate pool merge END duration={merge_duration:.2f}s")
+    print(f"[ANALYZE] Total candidate pool size: {len(file_cache)}")
+
+    # Step 3: FAISS pre-filtering (optimization layer)
+    if file_cache:
+        print("[ANALYZE] JD embedding START")
+        jd_embedding_started = time.perf_counter()
+
+        # Create JD embedding for semantic search
+        jd_embedding = encode_text_embedding(
+            job_description,
+            "Represent this description for matching:",
         )
 
-    retrieval_duration = time.perf_counter() - retrieval_started
-    print(f"[ANALYZE] Candidate retrieval/merge END duration={retrieval_duration:.2f}s")
+        jd_embedding_duration = time.perf_counter() - jd_embedding_started
+        print(f"[ANALYZE] JD embedding END duration={jd_embedding_duration:.2f}s")
 
+        print("[ANALYZE] FAISS search START")
+        search_started = time.perf_counter()
+
+        # Use FAISS to find top candidates (optimization)
+        faiss_search_k = max(10, detail_limit * 3)
+        try:
+            top_candidates_from_search = faiss_semantic_search(
+                jd_embedding, top_k=faiss_search_k
+            )
+            top_candidate_ids = {resume_id for resume_id, _ in top_candidates_from_search}
+
+            timings["faiss_search_ms"] = int((time.perf_counter() - search_started) * 1000)
+            print(f"[ANALYZE] FAISS search END duration={timings['faiss_search_ms']/1000:.2f}s")
+            print(f"[ANALYZE] FAISS returned {len(top_candidate_ids)} candidates")
+
+            # Prioritize FAISS results, but keep all candidates as fallback
+            if top_candidate_ids:
+                prioritized = [c for c in file_cache if c["record"]["resume_id"] in top_candidate_ids]
+                others = [c for c in file_cache if c["record"]["resume_id"] not in top_candidate_ids]
+                file_cache = prioritized + others
+                print(f"[ANALYZE] Candidate pool prioritized: {len(prioritized)} FAISS, {len(others)} fallback")
+            else:
+                print("[ANALYZE] FAISS search returned empty, using full candidate pool")
+        except Exception as e:
+            print(f"[ANALYZE] FAISS search failed, using full candidate pool: {e}")
+            # Fall back to full candidate pool (no filtering)
+
+    # Step 4: Check if candidate pool is empty
     if not file_cache:
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Resume DB is empty. Upload at least one PDF or DOCX resume "
-                "to create the index."
-            ),
+            detail="No resumes available. Upload at least one PDF or DOCX resume.",
         )
 
     print("[analyze-timing]", timings)

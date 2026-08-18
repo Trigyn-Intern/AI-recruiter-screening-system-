@@ -20,7 +20,7 @@ import "./styles.css";
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 const emptyConfig = {
-  ai_provider: "Gemini",
+  ai_provider: "Ollama",
   ollama_model: defaultOllamaModels[0],
   gemini_model: defaultGeminiModels[0],
   ...defaultPrompts,

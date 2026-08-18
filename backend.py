@@ -738,9 +738,9 @@ def faiss_index_lookup(resume_id):
                     )
                     return None
 
-                # Reconstruct and return
+                # Reconstruct and return as 2D array (1, embedding_dim)
                 embedding = index.reconstruct(row)
-                return embedding
+                return np.asarray([embedding], dtype="float32")
     except Exception as e:
         print(f"ERROR in faiss_index_lookup for {resume_id}: {e}")
         return None
@@ -1091,6 +1091,34 @@ def get_faiss_index_size():
     except Exception as error:
         RUNTIME_STATE["last_vector_store_error"] = str(error)
         return 0
+
+
+def get_active_resume_db_records():
+    """
+    Load active Resume DB records independently of FAISS.
+    
+    This is the source of truth for the active candidate pool.
+    FAISS is an optimization layer on top of this.
+    
+    Returns:
+        Dict mapping resume_id to resume record (skills, name, etc.)
+    """
+    initialize_project_storage_files()
+    skills_store = read_json_file(RESUME_SKILLS_PATH, {})
+    
+    # Filter to only resumes with valid skills
+    records = {}
+    for resume_id, data in skills_store.items():
+        if isinstance(data, dict) and data.get("skills"):
+            records[resume_id] = {
+                "resume_id": resume_id,
+                "resume_name": data.get("resume_name", ""),
+                "resume_skill_profile": data.get("skills"),
+                "skills_model": data.get("model", ""),
+                "last_updated_at": data.get("last_updated_at", ""),
+            }
+    
+    return records
 
 
 def get_resume_database_records():
@@ -2920,6 +2948,7 @@ def analyze_candidate_grading(
     prompt_template=None,
     resume_name="",
     model_name=None,
+    provider=None,
 ):
     import threading
     import time
@@ -2942,9 +2971,13 @@ def analyze_candidate_grading(
         "gemini_grade": "",
         "final_grade": "",
     }
+    provider = provider or get_selected_provider()
+    model_name = model_name or get_selected_model()
+    
     cache_key = get_ai_cache_key(
-        "candidate_grading_v3",
-        GEMINI_RESUME_SKILL_MODEL,
+        "candidate_grading_v4",
+        provider,
+        model_name,
         resume_context,
         job_text,
         json.dumps(matching_skills, ensure_ascii=False),
@@ -3014,11 +3047,12 @@ def analyze_candidate_grading(
         matching_skills=json.dumps(matching_skills, ensure_ascii=False),
         missing_skills=json.dumps(missing_skills, ensure_ascii=False),
     )
-    data = safe_gemini_json(
+    data = safe_ai_json(
         prompt,
         CANDIDATE_GRADING_SCHEMA,
         CANDIDATE_GRADING_FALLBACK,
-        model_name=model_name or get_selected_model(),
+        model_name=model_name,
+        provider=provider,
     )
     grading_error = RUNTIME_STATE.get("last_ai_error", "")
     result = normalize_candidate_grading(data)
@@ -3131,6 +3165,7 @@ def analyze_candidate_detail(
                 cached_result.get("missing_skills", []),
                 resume_name=resume_name,
                 model_name=model_name,
+                provider=provider,
             )
 
         detail_duration = time.perf_counter() - detail_start
@@ -3195,6 +3230,7 @@ def analyze_candidate_detail(
         result["missing_skills"],
         resume_name=resume_name,
         model_name=model_name,
+        provider=provider,
     )
     if not RUNTIME_STATE.get("last_ai_error"):
         cache[cache_key] = result

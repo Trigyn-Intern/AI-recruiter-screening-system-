@@ -167,6 +167,16 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
             "justification": "Strong Python and SQL match. AWS is missing.",
         },
     )
+    # Mock grading to avoid additional safe_ai_json call
+    mocker.patch(
+        "backend.analyze_candidate_grading",
+        return_value={
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
+    )
 
     result = analyze_candidate_detail(
         "Python SQL resume",
@@ -186,6 +196,12 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "matching_skills": ["Python"],
         "missing_skills": [],
         "justification": "Cached justification.",
+        "candidate_grading": {
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
@@ -312,6 +328,7 @@ def test_candidate_grading_falls_back_without_not_found(mocker):
         "Need Python, Docker, AWS.",
         ["Python", "Docker"],
         ["AWS"],
+        provider="Ollama",
     )
 
     assert result["grade"] in ["A", "B", "C", "D", "F"]
