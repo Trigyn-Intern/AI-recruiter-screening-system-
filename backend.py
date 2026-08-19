@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -64,12 +65,18 @@ DEFAULT_AI_PROVIDER = "Ollama"
 GEMINI_RESUME_SKILL_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL_NAME = "BAAI/bge-large-en-v1.5"
 EMBEDDING_DIMENSION = 1024
+
+# Chunking configuration
+MAX_CHUNK_SIZE = 1000  # Maximum characters per chunk
+CHUNK_OVERLAP = 100    # Overlap between chunks when recursive splitting is needed
+MIN_CHUNK_SIZE = 200   # Minimum characters for a valid chunk
 PROJECT_ROOT = Path(__file__).resolve().parent
 VECTOR_STORE_DIR = PROJECT_ROOT / "vector_store"
 FAISS_INDEX_PATH = VECTOR_STORE_DIR / "resume_embeddings.faiss"
 FAISS_METADATA_PATH = VECTOR_STORE_DIR / "resume_metadata.json"
 RESUME_SKILLS_PATH = VECTOR_STORE_DIR / "resume_skills.json"
 PROMPT_CONFIG_PATH = VECTOR_STORE_DIR / "prompt_config.json"
+RESUME_CHUNKS_PATH = VECTOR_STORE_DIR / "resume_chunks.json"
 
 AI_PROVIDER_OPTIONS = [
     "Ollama",
@@ -790,8 +797,29 @@ def get_current_timestamp():
     return datetime.now(timezone.utc).isoformat()
 
 
-def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
+def get_or_create_resume_embedding(resume_id, resume_name, resume_text, use_chunking=True):
+    """Get or create resume embedding.
 
+    Args:
+        resume_id: Resume identifier
+        resume_name: Resume filename
+        resume_text: Resume text (or text_items if use_chunking)
+        use_chunking: If True, use chunk-based approach; if False, use legacy single-embedding
+
+    Returns:
+        If use_chunking: dict with 'embeddings' (list of arrays) and 'chunks' (list of chunk metadata)
+        If not use_chunking: single embedding array (legacy behavior)
+    """
+    if not use_chunking:
+        # Legacy behavior for backward compatibility
+        return get_or_create_resume_embedding_legacy(resume_id, resume_name, resume_text)
+
+    # Chunk-based approach (Phase 1)
+    return get_or_create_resume_embeddings_chunked(resume_id, resume_name, resume_text)
+
+
+def get_or_create_resume_embedding_legacy(resume_id, resume_name, resume_text):
+    """Legacy single-embedding approach for backward compatibility."""
     # Fast path: if the embedding is already in FAISS, skip the model
     # call entirely. This makes repeat uploads of the same resume free.
     cached_embedding = faiss_index_lookup(resume_id)
@@ -873,6 +901,163 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text):
             "Represent this resume for retrieval:",
         )
         return embedding
+
+
+def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
+    """Get or create chunk-based embeddings for a resume.
+
+    Args:
+        resume_id: Resume identifier
+        resume_name: Resume filename
+        text_items: List of dicts with 'page' and 'text' keys
+
+    Returns:
+        dict with 'embeddings' (list of numpy arrays) and 'chunks' (list of chunk metadata)
+    """
+    # Check if chunks already exist for this resume
+    chunks_store = read_json_file(RESUME_CHUNKS_PATH, {})
+    existing_chunks = chunks_store.get(resume_id, [])
+
+    if existing_chunks:
+        # Chunks already exist, load their embeddings from FAISS
+        index, metadata = load_resume_vector_store()
+        if index is not None:
+            embeddings = []
+            valid_chunks = []
+
+            for chunk in existing_chunks:
+                chunk_id = chunk.get('chunk_id')
+                faiss_row = chunk.get('faiss_row')
+
+                if faiss_row is not None and 0 <= faiss_row < index.ntotal:
+                    try:
+                        embedding = index.reconstruct(faiss_row)
+                        embeddings.append(np.asarray([embedding], dtype="float32"))
+                        valid_chunks.append(chunk)
+                    except Exception as e:
+                        print(f"Error reconstructing embedding for {chunk_id}: {e}")
+
+            if embeddings and valid_chunks:
+                RUNTIME_STATE["last_vector_store_status"] = (
+                    f"Loaded {len(embeddings)} cached chunk embeddings for {resume_name}."
+                )
+                return {
+                    'embeddings': embeddings,
+                    'chunks': valid_chunks
+                }
+
+    # Process resume into chunks
+    chunks = process_resume_into_chunks(resume_id, resume_name, text_items)
+
+    if not chunks:
+        RUNTIME_STATE["last_vector_store_error"] = "No chunks could be created from resume."
+        return {
+            'embeddings': [],
+            'chunks': []
+        }
+
+    # Generate embeddings for each chunk
+    index, metadata = load_resume_vector_store()
+    embeddings = []
+
+    for chunk in chunks:
+        chunk_text = chunk['text']
+        chunk_id = chunk['chunk_id']
+
+        # Generate embedding for this chunk
+        embedding = encode_text_embedding(
+            chunk_text,
+            "Represent this resume chunk for retrieval:",
+        )
+
+        if int(embedding.shape[1]) != int(index.d):
+            raise RuntimeError(
+                "Stored FAISS index dimension does not match the embedding "
+                "model dimension."
+            )
+
+        # Add to FAISS index
+        index.add(embedding)
+        new_row = int(index.ntotal - 1)
+
+        # Update chunk with FAISS row
+        chunk['faiss_row'] = new_row
+
+        embeddings.append(embedding)
+
+    # Save updated FAISS index
+    save_resume_vector_store(index, metadata)
+
+    # Save chunks metadata
+    chunks_store[resume_id] = chunks
+    write_json_file(RESUME_CHUNKS_PATH, chunks_store)
+
+    RUNTIME_STATE["last_vector_store_status"] = (
+        f"Created {len(chunks)} new chunk embeddings for {resume_name}."
+    )
+
+    return {
+        'embeddings': embeddings,
+        'chunks': chunks
+    }
+
+
+def search_chunks_by_embedding(query_embedding, top_k=10):
+    """Search chunks using FAISS semantic search.
+
+    Args:
+        query_embedding: Query embedding (numpy array)
+        top_k: Number of results to return
+
+    Returns:
+        List of dicts with chunk metadata and similarity scores
+    """
+    if faiss is None or not FAISS_INDEX_PATH.exists():
+        return []
+
+    try:
+        index, metadata = load_resume_vector_store()
+        if index is None:
+            return []
+
+        # Load chunks store
+        chunks_store = read_json_file(RESUME_CHUNKS_PATH, {})
+
+        # FAISS search
+        index_ntotal = int(getattr(index, "ntotal", 0))
+        search_k = min(top_k, index_ntotal)
+
+        distances, indices = index.search(query_embedding, search_k)
+
+        # Build results with chunk metadata
+        results = []
+        for idx, dist in zip(indices[0], distances[0]):
+            idx_int = int(idx)
+            if idx_int < 0 or idx_int >= index_ntotal:
+                continue
+
+            # Find chunk with this faiss_row
+            for resume_id, chunks in chunks_store.items():
+                for chunk in chunks:
+                    if chunk.get('faiss_row') == idx_int:
+                        similarity_score = float(dist) * 100
+                        results.append({
+                            'chunk': chunk,
+                            'similarity_score': similarity_score,
+                            'resume_id': resume_id
+                        })
+                        break
+                if results:
+                    break
+
+        # Sort by similarity score
+        results.sort(key=lambda x: x['similarity_score'], reverse=True)
+
+        return results[:top_k]
+
+    except Exception as e:
+        print(f"ERROR in search_chunks_by_embedding: {e}")
+        return []
 
 
 def faiss_semantic_search(query_embedding, top_k=10):
@@ -1077,6 +1262,9 @@ def initialize_project_storage_files():
 
     if not PROMPT_CONFIG_PATH.exists():
         write_json_file(PROMPT_CONFIG_PATH, get_default_configuration())
+
+    if not RESUME_CHUNKS_PATH.exists():
+        write_json_file(RESUME_CHUNKS_PATH, {})
 
     load_configuration()
 
@@ -2200,34 +2388,884 @@ def summarize_gemini_error(error):
 
 
 # ==================================================
+# RESUME PROCESSING - PHASE 1
+# ==================================================
+
+def clean_resume_text(text):
+    """Clean resume text while preserving structure.
+
+    Removes excessive whitespace and artifacts but preserves:
+    - Section headings
+    - Project/company names
+    - Useful punctuation
+    - Meaningful structure
+    """
+    if not text:
+        return ""
+
+    # Remove excessive blank lines (more than 2 consecutive)
+    text = re.sub(r'\n\s*\n\s*\n+', '\n\n', text)
+
+    # Normalize whitespace within lines
+    lines = []
+    for line in text.split('\n'):
+        # Remove leading/trailing whitespace but preserve internal spacing
+        cleaned = line.strip()
+        if cleaned:
+            lines.append(cleaned)
+
+    return '\n'.join(lines)
+
+
+def normalize_section_heading(heading):
+    """Normalize section heading to standard form.
+
+    Maps variations like:
+    "WORK EXPERIENCE", "Work Experience", "Professional Experience"
+    to standard: "Experience"
+    """
+    if not heading:
+        return None
+
+    # Normalize: lowercase, remove extra spaces, remove special chars
+    normalized = re.sub(r'[^a-zA-Z\s]', '', heading.lower().strip())
+
+    # Section mapping rules
+    section_mappings = {
+        # Skills
+        'skills': 'Skills',
+        'technical skills': 'Skills',
+        'technical': 'Skills',
+        'core skills': 'Skills',
+        'key skills': 'Skills',
+        'technologies': 'Skills',
+        'tech stack': 'Skills',
+        'programming languages': 'Skills',
+
+        # Experience
+        'experience': 'Experience',
+        'work experience': 'Experience',
+        'professional experience': 'Experience',
+        'employment': 'Experience',
+        'work history': 'Experience',
+        'professional background': 'Experience',
+        'internships': 'Experience',
+        'internship experience': 'Experience',
+
+        # Projects
+        'projects': 'Projects',
+        'project experience': 'Projects',
+        'personal projects': 'Projects',
+        'academic projects': 'Projects',
+        'key projects': 'Projects',
+
+        # Education
+        'education': 'Education',
+        'educational background': 'Education',
+        'academic background': 'Education',
+        'qualifications': 'Education',
+        'academic': 'Education',
+
+        # Certifications
+        'certifications': 'Certifications',
+        'certificates': 'Certifications',
+        'certification': 'Certifications',
+        'credentials': 'Certifications',
+
+        # Achievements
+        'achievements': 'Achievements',
+        'accomplishments': 'Achievements',
+        'awards': 'Achievements',
+        'honors': 'Achievements',
+
+        # Publications
+        'publications': 'Publications',
+        'research papers': 'Publications',
+        'papers': 'Publications',
+
+        # Research
+        'research': 'Research',
+        'research experience': 'Research',
+
+        # Summary
+        'summary': 'Summary',
+        'profile': 'Summary',
+        'professional summary': 'Summary',
+        'career summary': 'Summary',
+        'objective': 'Summary',
+        'career objective': 'Summary',
+    }
+
+    # Try exact match first
+    if normalized in section_mappings:
+        return section_mappings[normalized]
+
+    # Try partial match
+    for key, value in section_mappings.items():
+        if key in normalized or normalized in key:
+            return value
+
+    # If no match, return capitalized original (without special chars)
+    return heading.strip().title()
+
+
+def detect_resume_sections(text_items):
+    """Detect resume sections from text items.
+
+    Args:
+        text_items: List of dicts with 'page' and 'text' keys
+
+    Returns:
+        List of dicts with section information:
+        {
+            'section': 'Experience',
+            'heading': 'WORK EXPERIENCE',
+            'start_index': 5,
+            'page': 1
+        }
+    """
+    sections = []
+    common_headings = [
+        'SKILLS', 'TECHNICAL SKILLS', 'EXPERIENCE', 'WORK EXPERIENCE',
+        'PROFESSIONAL EXPERIENCE', 'PROJECTS', 'CERTIFICATIONS',
+        'EDUCATION', 'ACHIEVEMENTS', 'PUBLICATIONS', 'RESEARCH',
+        'SUMMARY', 'PROFILE', 'INTERNSHIPS', 'EMPLOYMENT'
+    ]
+
+    for idx, item in enumerate(text_items):
+        text = item['text'].strip()
+        if not text:
+            continue
+
+        # Check if this line looks like a heading
+        # Heuristics: short, uppercase or title case, common heading words
+        is_heading = False
+
+        # Check exact matches with common headings
+        if text.upper() in common_headings:
+            is_heading = True
+        # Check if it's a short line (headings are usually short)
+        elif len(text) < 50 and len(text.split()) <= 5:
+            # Check if it's mostly uppercase or title case
+            if text.isupper() or text.istitle():
+                # Check if it contains section-like words
+                section_words = ['skill', 'experience', 'project', 'education',
+                              'certification', 'achievement', 'publication',
+                              'research', 'summary', 'profile', 'internship']
+                if any(word in text.lower() for word in section_words):
+                    is_heading = True
+
+        if is_heading:
+            normalized_section = normalize_section_heading(text)
+            if normalized_section:
+                sections.append({
+                    'section': normalized_section,
+                    'heading': text,
+                    'start_index': idx,
+                    'page': item.get('page')
+                })
+
+    return sections
+
+
+def create_context_aware_chunks(text_items, sections):
+    """Create context-aware chunks based on sections.
+
+    Args:
+        text_items: List of dicts with 'page' and 'text' keys
+        sections: List of detected sections
+
+    Returns:
+        List of chunk dicts with metadata
+    """
+    chunks = []
+
+    if not sections:
+        # No sections detected - treat entire document as one chunk
+        full_text = '\n'.join(item['text'] for item in text_items)
+        if full_text.strip():
+            chunks.append({
+                'section': 'Summary',
+                'subsection': None,
+                'text': full_text,
+                'page': text_items[0].get('page') if text_items else None,
+                'start_index': 0,
+                'end_index': len(text_items) - 1
+            })
+        return chunks
+
+    # Process each section
+    for i, section in enumerate(sections):
+        section_name = section['section']
+        start_idx = section['start_index']
+
+        # Determine end index (next section or end of document)
+        if i + 1 < len(sections):
+            end_idx = sections[i + 1]['start_index']
+        else:
+            end_idx = len(text_items)
+
+        # Extract text for this section
+        section_text_items = text_items[start_idx:end_idx]
+        section_text = '\n'.join(item['text'] for item in section_text_items)
+
+        if not section_text.strip():
+            continue
+
+        # Apply section-specific chunking strategies
+        if section_name == 'Projects':
+            section_chunks = chunk_projects_section(section_text_items, section, start_idx)
+        elif section_name == 'Experience':
+            section_chunks = chunk_experience_section(section_text_items, section, start_idx)
+        elif section_name == 'Skills':
+            section_chunks = chunk_skills_section(section_text_items, section, start_idx)
+        elif section_name == 'Education':
+            section_chunks = chunk_education_section(section_text_items, section, start_idx)
+        elif section_name == 'Certifications':
+            section_chunks = chunk_certifications_section(section_text_items, section, start_idx)
+        else:
+            # Generic chunking for other sections
+            section_chunks = chunk_generic_section(section_text_items, section, start_idx)
+
+        chunks.extend(section_chunks)
+
+    return chunks
+
+
+def chunk_projects_section(text_items, section_info, base_index):
+    """Chunk projects section by individual projects."""
+    chunks = []
+    current_project = None
+    current_project_lines = []
+
+    # Words that commonly start result/achievement sentences
+    result_starting_words = {
+        'achieved', 'achieve', 'built', 'build', 'developed', 'develop',
+        'implemented', 'implement', 'created', 'create', 'designed', 'design',
+        'reduced', 'reduce', 'increased', 'increase', 'improved', 'improve',
+        'optimized', 'optimize', 'led', 'lead', 'managed', 'manage',
+        'delivered', 'deliver', 'deployed', 'deploy', 'launched', 'launch',
+        'won', 'win', 'received', 'receive', 'published', 'publish',
+        'completed', 'complete', 'finished', 'finish', 'executed', 'execute'
+    }
+
+    # Section headers to skip
+    section_headers = ['PROJECTS', 'PROJECT', 'KEY PROJECTS', 'PERSONAL PROJECTS', 'ACADEMIC PROJECTS']
+
+    def is_project_name(text, idx, text_items):
+        """Check if text looks like a project name."""
+        text_stripped = text.strip()
+        text_upper = text_stripped.upper()
+
+        # Empty lines are not project names
+        if not text_stripped:
+            return False
+
+        # Skip section headers
+        if text_upper in section_headers:
+            return False
+
+        # Lines starting with bullets/dashes are content, not project names
+        if text_stripped.startswith(('•', '-', '*')):
+            return False
+
+        # Lines starting with numbers are content, not project names
+        if text_stripped[0].isdigit():
+            return False
+
+        # Lines starting with month abbreviations are content, not project names
+        if text_stripped[:3].lower() in ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'n', 'dec']:
+            return False
+
+        # Lines with colons are descriptions, not project names
+        if ':' in text_stripped:
+            return False
+
+        # Lines with percentages are results, not project names
+        if '%' in text_stripped:
+            return False
+
+        # Lines that start with result verbs are content, not project names
+        first_word = text_stripped.split()[0].lower() if text_stripped.split() else ''
+        if first_word in result_starting_words:
+            return False
+
+        # Project names are typically short (< 60 chars)
+        if len(text_stripped) > 60:
+            return False
+
+        # Project names often have title case or capital letters
+        if not (text_stripped[0].isupper() or text_stripped.istitle()):
+            return False
+
+        # Check if previous line was empty or this is the first line after section header
+        # This indicates a new project is starting
+        if idx > 0:
+            prev_text = text_items[idx - 1]['text'].strip()
+            if not prev_text or prev_text.upper() in section_headers:
+                return True
+
+        # If it has 2-5 words and passes other checks, it's likely a project name
+        word_count = len(text_stripped.split())
+        if 2 <= word_count <= 5:
+            return True
+
+        return False
+
+    for idx, item in enumerate(text_items):
+        text = item['text'].strip()
+        text_upper = text.upper()
+
+        # Skip section headers and empty lines
+        if not text or text_upper in section_headers:
+            continue
+
+        # Check if this line is a project name
+        if is_project_name(text, idx, text_items):
+            if current_project:
+                # Save previous project - include project name in chunk text
+                if current_project_lines:
+                    # Include project name at the start of the chunk
+                    chunk_text = current_project + '\n' + '\n'.join(current_project_lines)
+                    chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+                    for split_chunk in chunk_text:
+                        chunks.append({
+                            'section': 'Projects',
+                            'subsection': current_project,
+                            'text': split_chunk,
+                            'page': item.get('page'),
+                            'start_index': base_index,
+                            'end_index': base_index + idx
+                        })
+                current_project_lines = []
+                current_project = text
+            else:
+                current_project = text
+        else:
+            # This is a content line (description, technologies, results)
+            if not current_project:
+                # If we haven't found a project name yet, and this is the first content,
+                # use a generic project name
+                current_project = "Project Details"
+            current_project_lines.append(text)
+
+    # Don't forget the last project - include project name in chunk text
+    if current_project and current_project_lines:
+        # Include project name at the start of the chunk
+        chunk_text = current_project + '\n' + '\n'.join(current_project_lines)
+        chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+        for split_chunk in chunk_text:
+            chunks.append({
+                'section': 'Projects',
+                'subsection': current_project,
+                'text': split_chunk,
+                'page': text_items[-1].get('page') if text_items else None,
+                'start_index': base_index,
+                'end_index': base_index + len(text_items) - 1
+            })
+
+    return chunks
+
+
+def chunk_experience_section(text_items, section_info, base_index):
+    """Chunk experience section by company/role."""
+    chunks = []
+    current_company = None
+    current_role = None
+    current_experience_lines = []
+
+    # Skip section headers
+    section_headers = ['WORK EXPERIENCE', 'EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT', 'WORK HISTORY', 'PROFESSIONAL BACKGROUND', 'INTERNSHIPS', 'INTERNSHIP EXPERIENCE']
+
+    for idx, item in enumerate(text_items):
+        text = item['text'].strip()
+        text_upper = text.upper()
+
+        # Skip section headers
+        if text_upper in section_headers:
+            continue
+
+        if not text:
+            continue
+
+        # Heuristic: company/role lines are often prominent
+        # Look for lines that might be company names or roles
+        is_company_role = (
+            len(text) < 100 and
+            not text.startswith('•') and
+            not text.startswith('-') and
+            any(keyword in text.lower() for keyword in ['company', 'corporation', 'inc', 'llc', 'ltd', 'intern', 'engineer', 'developer', 'manager', 'analyst'])
+        )
+
+        if is_company_role and current_company:
+            # Save previous experience - include company/role in chunk text
+            if current_experience_lines:
+                # Include company/role at the start of the chunk
+                header = f"{current_company} - {current_role}" if current_role else current_company
+                chunk_text = header + '\n' + '\n'.join(current_experience_lines)
+                chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+                for split_chunk in chunk_text:
+                    chunks.append({
+                        'section': 'Experience',
+                        'subsection': header,
+                        'text': split_chunk,
+                        'page': item.get('page'),
+                        'start_index': base_index,
+                        'end_index': base_index + idx
+                    })
+            current_experience_lines = []
+            current_company = text
+            current_role = None
+        elif is_company_role:
+            current_company = text
+        else:
+            if not current_company:
+                current_company = "Unnamed Company"
+            current_experience_lines.append(text)
+
+    # Don't forget the last experience - include company/role in chunk text
+    if current_company and current_experience_lines:
+        header = f"{current_company} - {current_role}" if current_role else current_company
+        chunk_text = header + '\n' + '\n'.join(current_experience_lines)
+        chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+        for split_chunk in chunk_text:
+            chunks.append({
+                'section': 'Experience',
+                'subsection': header,
+                'text': split_chunk,
+                'page': text_items[-1].get('page') if text_items else None,
+                'start_index': base_index,
+                'end_index': base_index + len(text_items) - 1
+            })
+
+    return chunks
+
+
+def chunk_skills_section(text_items, section_info, base_index):
+    """Chunk skills section - keep as one chunk if reasonable."""
+    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
+
+    chunks = []
+    for split_chunk in section_text:
+        chunks.append({
+            'section': 'Skills',
+            'subsection': None,
+            'text': split_chunk,
+            'page': text_items[0].get('page') if text_items else None,
+            'start_index': base_index,
+            'end_index': base_index + len(text_items) - 1
+        })
+
+    return chunks
+
+
+def chunk_education_section(text_items, section_info, base_index):
+    """Chunk education section by degree/institution."""
+    chunks = []
+    current_education = None
+    current_education_lines = []
+
+    for idx, item in enumerate(text_items):
+        text = item['text'].strip()
+        if not text:
+            continue
+
+        # Heuristic: education entries often contain degree words
+        is_education_start = (
+            any(keyword in text.lower() for keyword in ['bachelor', 'master', 'phd', 'doctor', 'degree', 'university', 'college', 'institute'])
+            and len(text) < 150
+        )
+
+        if is_education_start and current_education:
+            # Save previous education
+            if current_education_lines:
+                chunk_text = '\n'.join(current_education_lines)
+                chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+                for split_chunk in chunk_text:
+                    chunks.append({
+                        'section': 'Education',
+                        'subsection': current_education,
+                        'text': split_chunk,
+                        'page': item.get('page'),
+                        'start_index': base_index,
+                        'end_index': base_index + idx
+                    })
+            current_education_lines = []
+            current_education = text
+        elif is_education_start:
+            current_education = text
+        else:
+            if not current_education:
+                current_education = "Education Entry"
+            current_education_lines.append(text)
+
+    # Don't forget the last education
+    if current_education and current_education_lines:
+        chunk_text = '\n'.join(current_education_lines)
+        chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+        for split_chunk in chunk_text:
+            chunks.append({
+                'section': 'Education',
+                'subsection': current_education,
+                'text': split_chunk,
+                'page': text_items[-1].get('page') if text_items else None,
+                'start_index': base_index,
+                'end_index': base_index + len(text_items) - 1
+            })
+
+    return chunks
+
+
+def chunk_certifications_section(text_items, section_info, base_index):
+    """Chunk certifications section - keep as one chunk if reasonable."""
+    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
+
+    chunks = []
+    for split_chunk in section_text:
+        chunks.append({
+            'section': 'Certifications',
+            'subsection': None,
+            'text': split_chunk,
+            'page': text_items[0].get('page') if text_items else None,
+            'start_index': base_index,
+            'end_index': base_index + len(text_items) - 1
+        })
+
+    return chunks
+
+
+def chunk_generic_section(text_items, section_info, base_index):
+    """Generic chunking for sections without specific logic."""
+    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
+
+    chunks = []
+    for split_chunk in section_text:
+        chunks.append({
+            'section': section_info['section'],
+            'subsection': None,
+            'text': split_chunk,
+            'page': text_items[0].get('page') if text_items else None,
+            'start_index': base_index,
+            'end_index': base_index + len(text_items) - 1
+        })
+
+    return chunks
+
+
+def recursively_split_large_chunk(text, max_size):
+    """Recursively split large chunks while preserving context.
+
+    Priority:
+    1. Try to split at sentence boundaries
+    2. Try to split at line boundaries
+    3. Force split at max_size (last resort)
+    """
+    if len(text) <= max_size:
+        return [text]
+
+    chunks = []
+
+    # Try to split at sentence boundaries (., !, ?)
+    sentence_endings = r'(?<=[.!?])\s+'
+    sentence_splits = list(re.finditer(sentence_endings, text))
+
+    if sentence_splits:
+        # Find the best split point
+        best_split = None
+        for match in sentence_splits:
+            split_pos = match.end()
+            if abs(split_pos - max_size / 2) < abs(max_size / 2):  # Prefer middle
+                best_split = split_pos
+                break
+
+        if best_split and best_split < len(text):
+            first_part = text[:best_split].strip()
+            second_part = text[best_split:].strip()
+
+            if len(first_part) >= MIN_CHUNK_SIZE and len(second_part) >= MIN_CHUNK_SIZE:
+                chunks.extend(recursively_split_large_chunk(first_part, max_size))
+                chunks.extend(recursively_split_large_chunk(second_part, max_size))
+                return chunks
+
+    # Try to split at line boundaries
+    lines = text.split('\n')
+    if len(lines) > 1:
+        # Find best line split
+        current_length = 0
+        split_idx = 0
+
+        for i, line in enumerate(lines):
+            if current_length + len(line) > max_size:
+                split_idx = i
+                break
+            current_length += len(line) + 1  # +1 for newline
+
+        if split_idx > 0 and split_idx < len(lines):
+            first_part = '\n'.join(lines[:split_idx]).strip()
+            second_part = '\n'.join(lines[split_idx:]).strip()
+
+            if len(first_part) >= MIN_CHUNK_SIZE and len(second_part) >= MIN_CHUNK_SIZE:
+                chunks.extend(recursively_split_large_chunk(first_part, max_size))
+                chunks.extend(recursively_split_large_chunk(second_part, max_size))
+                return chunks
+
+    # Last resort: force split at max_size with overlap
+    if len(text) > max_size:
+        first_part = text[:max_size].strip()
+        second_part = text[max_size - CHUNK_OVERLAP:].strip()
+
+        if len(first_part) >= MIN_CHUNK_SIZE:
+            chunks.append(first_part)
+        if len(second_part) >= MIN_CHUNK_SIZE:
+            chunks.extend(recursively_split_large_chunk(second_part, max_size))
+    else:
+        chunks.append(text)
+
+    return chunks
+
+
+def enrich_chunk_metadata(chunks, resume_id, resume_name):
+    """Enrich chunks with comprehensive metadata.
+
+    Args:
+        chunks: List of chunk dicts from context-aware chunking
+        resume_id: Resume identifier
+        resume_name: Resume filename
+
+    Returns:
+        List of enriched chunk dicts with full metadata
+    """
+    enriched_chunks = []
+
+    for idx, chunk in enumerate(chunks):
+        chunk_id = f"{resume_id}_chunk_{idx:03d}"
+
+        # Extract additional metadata from chunk text
+        text = chunk['text']
+        company = extract_company_from_chunk(text, chunk['section'])
+        role = extract_role_from_chunk(text, chunk['section'])
+        project = extract_project_from_chunk(text, chunk['section'])
+        technologies = extract_technologies_from_chunk(text)
+        skills = extract_skills_from_chunk(text)
+
+        enriched_chunk = {
+            'chunk_id': chunk_id,
+            'resume_id': resume_id,
+            'resume_name': resume_name,
+            'section': chunk['section'],
+            'subsection': chunk.get('subsection'),
+            'text': chunk['text'],
+            'page': chunk.get('page'),
+            'company': company,
+            'role': role,
+            'project': project,
+            'technologies': technologies,
+            'skills': skills,
+            'chunk_index': idx,
+            'parent_chunk_id': None,  # Will be set if this is a split chunk
+            'source': 'resume',
+            'created_at': get_current_timestamp()
+        }
+
+        enriched_chunks.append(enriched_chunk)
+
+    return enriched_chunks
+
+
+def extract_company_from_chunk(text, section):
+    """Extract company name from chunk text."""
+    if section != 'Experience':
+        return None
+
+    # Simple heuristic: look for company-like patterns
+    company_patterns = [
+        r'([A-Z][A-Za-z\s]+(?:Inc|LLC|Ltd|Corp|Company|Corporation))',
+        r'([A-Z][A-Za-z\s+(?:Technologies|Solutions|Systems)])',
+    ]
+
+    for pattern in company_patterns:
+        matches = re.findall(pattern, text)
+        if matches:
+            return matches[0].strip()
+
+    return None
+
+
+def extract_role_from_chunk(text, section):
+    """Extract role/title from chunk text."""
+    if section != 'Experience':
+        return None
+
+    # Simple heuristic: look for role-like patterns
+    role_patterns = [
+        r'(?:Senior|Junior|Lead|Principal)?\s*(?:Software|Data|Machine Learning|AI|Full Stack|Backend|Frontend)?\s*(?:Engineer|Developer|Analyst|Manager|Director|Intern)',
+        r'(?:Software|Data|Machine Learning|AI)?\s*(?:Engineer|Developer|Analyst|Manager|Director)',
+    ]
+
+    for pattern in role_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            return matches[0].strip()
+
+    return None
+
+
+def extract_project_from_chunk(text, section):
+    """Extract project name from chunk text."""
+    if section != 'Projects':
+        return None
+
+    # Use subsection if available, otherwise try to extract from text
+    lines = text.split('\n')
+    if lines:
+        first_line = lines[0].strip()
+        if len(first_line) < 80 and ':' not in first_line:
+            return first_line
+
+    return None
+
+
+def extract_technologies_from_chunk(text):
+    """Extract technology mentions from chunk text."""
+    # Common technology keywords
+    tech_keywords = [
+        'Python', 'Java', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue',
+        'Node.js', 'FastAPI', 'Flask', 'Django', 'Spring Boot', 'SQL', 'PostgreSQL',
+        'MySQL', 'MongoDB', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Git',
+        'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy', 'Linux', 'REST',
+        'GraphQL', 'Machine Learning', 'Deep Learning', 'NLP', 'CI/CD', 'Jenkins'
+    ]
+
+    found_tech = []
+    lower_text = text.lower()
+
+    for tech in tech_keywords:
+        if tech.lower() in lower_text:
+            found_tech.append(tech)
+
+    return found_tech[:10]  # Limit to top 10
+
+
+def extract_skills_from_chunk(text):
+    """Extract skill mentions from chunk text."""
+    # This is similar to technologies but broader
+    skill_keywords = [
+        'Python', 'Java', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue',
+        'Node.js', 'FastAPI', 'Flask', 'Django', 'SQL', 'PostgreSQL', 'MySQL',
+        'MongoDB', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Git', 'Machine Learning',
+        'Deep Learning', 'NLP', 'TensorFlow', 'PyTorch', 'Pandas', 'NumPy', 'Data Analysis',
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+    ]
+
+    found_skills = []
+    lower_text = text.lower()
+
+    for skill in skill_keywords:
+        if skill.lower() in lower_text:
+            found_skills.append(skill)
+
+    return found_skills[:10]  # Limit to top 10
+
+
+def process_resume_into_chunks(resume_id, resume_name, text_items):
+    """Main function to process resume into chunks.
+
+    Args:
+        resume_id: Resume identifier
+        resume_name: Resume filename
+        text_items: List of dicts with 'page' and 'text' keys
+
+    Returns:
+        List of enriched chunk dicts with full metadata
+    """
+    # Clean text while preserving structure
+    cleaned_items = []
+    for item in text_items:
+        cleaned_text = clean_resume_text(item['text'])
+        if cleaned_text:
+            cleaned_items.append({
+                'page': item.get('page'),
+                'text': cleaned_text
+            })
+
+    if not cleaned_items:
+        return []
+
+    # Detect sections
+    sections = detect_resume_sections(cleaned_items)
+
+    # Create context-aware chunks
+    chunks = create_context_aware_chunks(cleaned_items, sections)
+
+    # Enrich with metadata
+    enriched_chunks = enrich_chunk_metadata(chunks, resume_id, resume_name)
+
+    return enriched_chunks
+
+
+# ==================================================
 # EXTRACT TEXT
 # ==================================================
 
 
 def extract_pdf_text(pdf_file):
-    text = ""
+    """Extract text from PDF preserving page boundaries."""
+    pages = []
     reader = PdfReader(pdf_file)
 
-    for page in reader.pages:
+    for page_num, page in enumerate(reader.pages, start=1):
         page_text = page.extract_text()
-
         if page_text:
-            text += page_text + "\n"
+            pages.append({
+                "page": page_num,
+                "text": page_text
+            })
 
-    return text
+    return pages
+
+
+def extract_pdf_text_legacy(pdf_file):
+    """Legacy PDF extraction for backward compatibility."""
+    pages = extract_pdf_text(pdf_file)
+    return "\n".join(page["text"] for page in pages)
 
 
 def extract_docx_text(docx_file):
+    """Extract text from DOCX preserving paragraph structure."""
     document = Document(docx_file)
-    text = ""
+    paragraphs = []
 
-    for paragraph in document.paragraphs:
-        text += paragraph.text + "\n"
+    for para in document.paragraphs:
+        if para.text.strip():
+            paragraphs.append({
+                "page": None,  # DOCX doesn't have reliable page numbers
+                "text": para.text
+            })
 
-    return text
+    return paragraphs
 
 
-def extract_text(file):
+def extract_docx_text_legacy(docx_file):
+    """Legacy DOCX extraction for backward compatibility."""
+    paragraphs = extract_docx_text(docx_file)
+    return "\n".join(para["text"] for para in paragraphs)
+
+
+def extract_text(file, preserve_structure=False):
+    """Extract text from file with optional structure preservation.
+
+    Args:
+        file: File object (PDF or DOCX)
+        preserve_structure: If True, returns list of pages/paragraphs with metadata.
+                           If False, returns concatenated text (legacy behavior).
+
+    Returns:
+        If preserve_structure: List of dicts with 'page' and 'text' keys
+        If not preserve_structure: Concatenated text string
+    """
     if hasattr(file, "seek"):
         file.seek(0)
 
@@ -2238,19 +3276,23 @@ def extract_text(file):
     name = getattr(file, "name", "") or ""
     lower_name = name.lower()
     if lower_name.endswith(".pdf"):
-        return extract_pdf_text(file)
+        pages = extract_pdf_text(file)
+        return pages if preserve_structure else extract_pdf_text_legacy(file)
 
     if lower_name.endswith(".docx"):
-        return extract_docx_text(file)
+        paragraphs = extract_docx_text(file)
+        return paragraphs if preserve_structure else extract_docx_text_legacy(file)
 
     if hasattr(file, "read"):
         head = file.read(4)
         if hasattr(file, "seek"):
             file.seek(0)
         if head.startswith(b"%PDF"):
-            return extract_pdf_text(file)
+            pages = extract_pdf_text(file)
+            return pages if preserve_structure else extract_pdf_text_legacy(file)
         if head[:2] == b"PK":
-            return extract_docx_text(file)
+            paragraphs = extract_docx_text(file)
+            return paragraphs if preserve_structure else extract_docx_text_legacy(file)
 
     return ""
 

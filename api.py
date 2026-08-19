@@ -53,7 +53,9 @@ from backend import (
     get_runtime_status,
     initialize_project_storage_files,
     persist_analysis_session,
+    process_resume_into_chunks,
     reset_configuration,
+    search_chunks_by_embedding,
     update_configuration,
     validate_upload,
 )
@@ -262,7 +264,8 @@ def _run_analyze_blocking(
 
         resume_id = get_resume_id(resume_file)
         extract_started = time.perf_counter()
-        resume_text = extract_text(resume_file)
+        resume_text_items = extract_text(resume_file, preserve_structure=True)
+        resume_text = extract_text(resume_file, preserve_structure=False)  # Keep legacy text for compatibility
         timings[f"extract_{resume.filename}"] = int(
             (time.perf_counter() - extract_started) * 1000
         )
@@ -280,10 +283,19 @@ def _run_analyze_blocking(
             continue
 
         embed_started = time.perf_counter()
+        # Use chunk-based embeddings (Phase 1)
+        chunk_data = get_or_create_resume_embedding(
+            resume_id,
+            resume.filename,
+            resume_text_items,
+            use_chunking=True,
+        )
+        # For backward compatibility, also create legacy embedding
         resume_embedding = get_or_create_resume_embedding(
             resume_id,
             resume.filename,
             resume_text,
+            use_chunking=False,
         )
         timings[f"embed_{resume.filename}"] = int(
             (time.perf_counter() - embed_started) * 1000
@@ -302,7 +314,9 @@ def _run_analyze_blocking(
             "resume_id": resume_id,
             "resume_name": resume.filename,
             "resume_text": resume_text,
-            "resume_embedding": resume_embedding,
+            "resume_text_items": resume_text_items,  # New: preserve structure
+            "resume_embedding": resume_embedding,  # Legacy: for backward compatibility
+            "chunk_data": chunk_data,  # New: chunk-based embeddings
             "resume_skill_profile": resume_skill_profile,
         }
 
@@ -354,6 +368,7 @@ def _run_analyze_blocking(
         if resume_id in indexed_resume_ids:
             # Already added from Resume DB
             continue
+        # Use legacy embedding for backward compatibility
         score = calculate_match_score(item["resume_embedding"], job_description)
         record = {
             "resume_name": item["resume_name"],
@@ -365,6 +380,8 @@ def _run_analyze_blocking(
             "record": record,
             "resume_text": item["resume_text"],
             "resume_skill_profile": item["resume_skill_profile"],
+            # Store chunk data for future use (Phase 2+)
+            "chunk_data": item.get("chunk_data"),
         })
         indexed_resume_ids.add(resume_id)
 
