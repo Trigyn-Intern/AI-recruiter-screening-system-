@@ -5,12 +5,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mediapipe/face_detection": "^0.4.1646425229",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest",
-    "react-router-dom": "^6.26.2"
-  },
-  "devDependencies": {}
+    "react-router-dom": "^6.26.2",
+    "vite": "latest"
+  }
 }

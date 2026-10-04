@@ -13,7 +13,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -48,20 +48,265 @@ from backend import (
     get_indexed_resume_analysis_records,
     get_or_create_resume_embedding,
     get_resume_database_records,
+    compare_selected_candidates,
+    compare_selected_candidates_gpt4,
+    generate_evidence_assessment,
     get_resume_id,
     get_resume_skill_profile,
+    fetch_captapi_linkedin_profile,
     get_runtime_status,
+    get_github_evidence,
     initialize_project_storage_files,
+    LINKEDIN_VERIFICATION_FALLBACK,
     persist_analysis_session,
     process_resume_into_chunks,
+    read_json_file,
+    RESUME_CHUNKS_PATH,
     reset_configuration,
     search_chunks_by_embedding,
     update_configuration,
     validate_upload,
+    verify_linkedin_evidence_against_resume,
+    verify_github_evidence_against_resume,
+    add_candidate_to_shortlist,
+    create_shortlist,
+    delete_shortlist,
+    get_shortlist,
+    get_shortlists,
+    get_user_shortlists,
+    remove_candidate_from_shortlist,
+    update_shortlist_status,
+    verify_candidate_exists,
+    verify_shortlist_ownership,
 )
 from backend import (
     analyze_job_description_cached as analyze_job_description,
 )
+
+# Helper function for PDF generation (local to avoid backend dependency)
+def _pdf_display_value(value):
+    """Safe display value helper for PDF generation."""
+    if value is None:
+        return "Not specified"
+    if isinstance(value, list):
+        return ", ".join(str(v) for v in value)
+    return str(value)
+
+# PDF generation function defined locally to avoid backend import issues
+def generate_comparison_report_pdf(evidence_assessment, gpt4_result, gpt5_result, job_description):
+    """Generate a PDF report for candidate comparison."""
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+        from reportlab.lib import colors
+        from io import BytesIO
+    except ImportError as e:
+        print(f"[PDF GENERATION ERROR] ReportLab import failed: {e}")
+        return b""
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceAfter=30,
+    )
+    
+    section_style = ParagraphStyle(
+        'CustomSection',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#34495e'),
+        spaceAfter=12,
+    )
+    
+    subsection_style = ParagraphStyle(
+        'CustomSubsection',
+        parent=styles['Heading3'],
+        fontSize=12,
+        textColor=colors.HexColor('#7f8c8d'),
+        spaceAfter=8,
+    )
+    
+    body_style = ParagraphStyle(
+        'CustomBody',
+        parent=styles['BodyText'],
+        fontSize=10,
+        spaceAfter=6,
+    )
+    
+    content = []
+    
+    # Title
+    content.append(Paragraph("Candidate Comparison Report", title_style))
+    content.append(Spacer(1, 0.2 * inch))
+    
+    # Candidates being compared
+    if gpt5_result and gpt5_result.get('candidates'):
+        candidates = gpt5_result['candidates']
+        candidate_names = [c.get('candidate_name', 'Unknown') for c in candidates]
+        content.append(Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style))
+        content.append(Spacer(1, 0.2 * inch))
+    elif gpt4_result and gpt4_result.get('candidates'):
+        candidates = gpt4_result['candidates']
+        candidate_names = [c.get('candidate_name', 'Unknown') for c in candidates]
+        content.append(Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style))
+        content.append(Spacer(1, 0.2 * inch))
+    
+    # Job Description Summary
+    if job_description:
+        content.append(Paragraph("Job Description", section_style))
+        jd_text = f"Experience: {_pdf_display_value(job_description.get('experience'))}<br/>"
+        jd_text += f"Primary Skills: {_pdf_display_value(job_description.get('primary_skills'))}<br/>"
+        jd_text += f"Secondary Skills: {_pdf_display_value(job_description.get('secondary_skills'))}<br/>"
+        jd_text += f"Education: {_pdf_display_value(job_description.get('education'))}"
+        content.append(Paragraph(jd_text, body_style))
+        content.append(Spacer(1, 0.3 * inch))
+    
+    # AI Evidence Assessment
+    if evidence_assessment:
+        content.append(Paragraph("AI Evidence Assessment", section_style))
+        
+        if evidence_assessment.get('strongest_candidate'):
+            content.append(Paragraph("Strongest Candidate", subsection_style))
+            content.append(Paragraph(f"<b>{_pdf_display_value(evidence_assessment['strongest_candidate'])}</b>", body_style))
+            content.append(Spacer(1, 0.1 * inch))
+        
+        if evidence_assessment.get('assessment_summary'):
+            content.append(Paragraph("Assessment Summary", subsection_style))
+            content.append(Paragraph(_pdf_display_value(evidence_assessment['assessment_summary']), body_style))
+            content.append(Spacer(1, 0.1 * inch))
+        
+        if evidence_assessment.get('supporting_points'):
+            content.append(Paragraph("Supporting Points", subsection_style))
+            for point in evidence_assessment['supporting_points']:
+                content.append(Paragraph(f"• {_pdf_display_value(point)}", body_style))
+            content.append(Spacer(1, 0.3 * inch))
+    
+    # GPT-4 Assessment
+    if gpt4_result:
+        content.append(PageBreak())
+        content.append(Paragraph("GPT-4 Assessment", section_style))
+        
+        if gpt4_result.get('comparison_summary'):
+            content.append(Paragraph("Comparison Summary", subsection_style))
+            content.append(Paragraph(_pdf_display_value(gpt4_result['comparison_summary']), body_style))
+            content.append(Spacer(1, 0.2 * inch))
+        
+        # Candidate details
+        if gpt4_result.get('candidates'):
+            for candidate in gpt4_result['candidates']:
+                candidate_name = candidate.get('candidate_name', 'Unknown')
+                content.append(Paragraph(f"Candidate: {candidate_name}", subsection_style))
+                
+                if candidate.get('strengths'):
+                    content.append(Paragraph("Strengths:", body_style))
+                    for strength in candidate['strengths']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(strength)}", body_style))
+                
+                if candidate.get('gaps'):
+                    content.append(Paragraph("Gaps:", body_style))
+                    for gap in candidate['gaps']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(gap)}", body_style))
+                
+                if candidate.get('jd_coverage'):
+                    content.append(Paragraph("JD Coverage:", body_style))
+                    for coverage in candidate['jd_coverage']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(coverage)}", body_style))
+                
+                if candidate.get('evidence'):
+                    content.append(Paragraph("Evidence:", body_style))
+                    for evidence in candidate['evidence']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(evidence)}", body_style))
+                
+                content.append(Spacer(1, 0.2 * inch))
+        
+        # Comparisons
+        if gpt4_result.get('comparisons'):
+            content.append(Paragraph("Detailed Comparisons", subsection_style))
+            for comparison in gpt4_result['comparisons']:
+                if comparison.get('criterion'):
+                    content.append(Paragraph(f"Criterion: {_pdf_display_value(comparison['criterion'])}", body_style))
+                
+                if comparison.get('candidate_observations'):
+                    for obs in comparison['candidate_observations']:
+                        obs_text = f"  {obs.get('candidate_id', 'Unknown')}: {obs.get('status', 'Unknown')}"
+                        if obs.get('evidence'):
+                            obs_text += f" - {_pdf_display_value(obs['evidence'])}"
+                        content.append(Paragraph(obs_text, body_style))
+                
+                if comparison.get('summary'):
+                    content.append(Paragraph(f"Summary: {_pdf_display_value(comparison['summary'])}", body_style))
+                
+                content.append(Spacer(1, 0.1 * inch))
+    
+    # GPT-5 Assessment
+    if gpt5_result:
+        content.append(PageBreak())
+        content.append(Paragraph("GPT-5 Assessment", section_style))
+        
+        if gpt5_result.get('comparison_summary'):
+            content.append(Paragraph("Comparison Summary", subsection_style))
+            content.append(Paragraph(_pdf_display_value(gpt5_result['comparison_summary']), body_style))
+            content.append(Spacer(1, 0.2 * inch))
+        
+        # Candidate details
+        if gpt5_result.get('candidates'):
+            for candidate in gpt5_result['candidates']:
+                candidate_name = candidate.get('candidate_name', 'Unknown')
+                content.append(Paragraph(f"Candidate: {candidate_name}", subsection_style))
+                
+                if candidate.get('strengths'):
+                    content.append(Paragraph("Strengths:", body_style))
+                    for strength in candidate['strengths']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(strength)}", body_style))
+                
+                if candidate.get('gaps'):
+                    content.append(Paragraph("Gaps:", body_style))
+                    for gap in candidate['gaps']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(gap)}", body_style))
+                
+                if candidate.get('jd_coverage'):
+                    content.append(Paragraph("JD Coverage:", body_style))
+                    for coverage in candidate['jd_coverage']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(coverage)}", body_style))
+                
+                if candidate.get('evidence'):
+                    content.append(Paragraph("Evidence:", body_style))
+                    for evidence in candidate['evidence']:
+                        content.append(Paragraph(f"  • {_pdf_display_value(evidence)}", body_style))
+                
+                content.append(Spacer(1, 0.2 * inch))
+        
+        # Comparisons
+        if gpt5_result.get('comparisons'):
+            content.append(Paragraph("Detailed Comparisons", subsection_style))
+            for comparison in gpt5_result['comparisons']:
+                if comparison.get('criterion'):
+                    content.append(Paragraph(f"Criterion: {_pdf_display_value(comparison['criterion'])}", body_style))
+                
+                if comparison.get('candidate_observations'):
+                    for obs in comparison['candidate_observations']:
+                        obs_text = f"  {obs.get('candidate_id', 'Unknown')}: {obs.get('status', 'Unknown')}"
+                        if obs.get('evidence'):
+                            obs_text += f" - {_pdf_display_value(obs['evidence'])}"
+                        content.append(Paragraph(obs_text, body_style))
+                
+                if comparison.get('summary'):
+                    content.append(Paragraph(f"Summary: {_pdf_display_value(comparison['summary'])}", body_style))
+                
+                content.append(Spacer(1, 0.1 * inch))
+    
+    # Build PDF
+    doc.build(content)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 api = FastAPI(title="Resume Analyzer API")
 
@@ -90,11 +335,52 @@ ANALYZE_TIMEOUT_S = float(os.environ.get("ANALYZE_TIMEOUT_S", "600"))
 _analyze_sem = asyncio.Semaphore(ANALYZE_MAX_INFLIGHT)
 
 
+def restore_candidate_profile_fields(resume_skill_profile, jd_structured=None):
+    profile = resume_skill_profile if isinstance(resume_skill_profile, dict) else {}
+    skills = profile.get("skills", profile)
+    skills = skills if isinstance(skills, dict) else {}
+    contact_info = skills.get("contact_info", {})
+    contact_info = contact_info if isinstance(contact_info, dict) else {}
+
+    restored = {"contact_info": contact_info}
+    linkedin_url = contact_info.get("linkedin")
+    linkedin_profile = None
+
+    if linkedin_url:
+        linkedin_profile = fetch_captapi_linkedin_profile(linkedin_url)
+        if linkedin_profile:
+            restored["linkedin_profile"] = linkedin_profile
+
+    try:
+        restored["linkedin_verification"] = verify_linkedin_evidence_against_resume(
+            skills,
+            linkedin_profile,
+            jd_structured,
+        )
+    except Exception:
+        restored["linkedin_verification"] = dict(LINKEDIN_VERIFICATION_FALLBACK)
+
+    github_url = contact_info.get("github")
+    if github_url:
+        github_evidence = get_github_evidence(github_url)
+        restored["github_verification"] = verify_github_evidence_against_resume(
+            skills,
+            github_evidence,
+        )
+
+    return restored
+
+
 class CodeReviewRequest(BaseModel):
     code: Optional[str] = ""
     provider: Optional[str] = "Gemini"
     model_name: Optional[str] = "gemini-2.5-flash"
     background: Optional[bool] = False
+
+
+class CandidateComparisonRequest(BaseModel):
+    candidate_ids: List[str]
+    jd_info: Dict[str, Any]
 
 
 class InMemoryUpload(io.BytesIO):
@@ -113,6 +399,7 @@ def build_fit_bucket(score: float) -> str:
 
 def serialize_jd_info(jd_info: Dict[str, Any]) -> Dict[str, str]:
     return {
+        "job_title": display_value(jd_info.get("job_title")),
         "experience": display_value(jd_info.get("experience")),
         "primary_skills": display_value(jd_info.get("primary_skills")),
         "secondary_skills": display_value(jd_info.get("secondary_skills")),
@@ -164,6 +451,42 @@ def resume_database():
     }
 
 
+@api.get("/resume/{resume_id}")
+def resume_detail(resume_id: str):
+    chunks_store = read_json_file(RESUME_CHUNKS_PATH, [])
+
+    if isinstance(chunks_store, dict):
+        chunks = chunks_store.get(resume_id, [])
+    elif isinstance(chunks_store, list):
+        chunks = [
+            chunk
+            for chunk in chunks_store
+            if isinstance(chunk, dict) and chunk.get("resume_id") == resume_id
+        ]
+    else:
+        chunks = []
+
+    if not isinstance(chunks, list) or not chunks:
+        raise HTTPException(status_code=404, detail="Resume not found.")
+
+    ordered_chunks = sorted(
+        chunks,
+        key=lambda chunk: chunk.get("chunk_index", 0)
+        if isinstance(chunk, dict)
+        else 0,
+    )
+    resume_text = "\n\n".join(
+        chunk.get("text", "")
+        for chunk in ordered_chunks
+        if isinstance(chunk, dict) and chunk.get("text")
+    )
+
+    return {
+        "resume_text": resume_text,
+        "chunks": chunks,
+    }
+
+
 @api.put("/configuration")
 def save_configuration(config: dict):
     return {"configuration": update_configuration(config)}
@@ -172,6 +495,48 @@ def save_configuration(config: dict):
 @api.post("/configuration/reset")
 def reset_saved_configuration():
     return {"configuration": reset_configuration()}
+
+
+@api.get("/session")
+async def get_last_analysis_session():
+    """Get the last saved analysis session for restoration after refresh."""
+    try:
+        import os
+        import json
+        
+        base_dir = "vector_store"
+        path = os.path.join(base_dir, "analysis_sessions.json")
+        
+        if not os.path.isfile(path):
+            return {"session": None}
+        
+        with open(path, "r", encoding="utf-8") as f:
+            sessions = json.load(f) or []
+        
+        if not sessions or not isinstance(sessions, list) or len(sessions) == 0:
+            return {"session": None}
+        
+        # Return the most recent session (last in array)
+        last_session = sessions[-1] if isinstance(sessions[-1], dict) else None
+        
+        return {"session": last_session}
+    except Exception as e:
+        print(f"[SESSION] Error loading session: {e}")
+        return {"session": None}
+
+
+class EvidenceAlignmentRequest(BaseModel):
+    resume_id: str
+    resume_name: str
+    job_description: str
+    linkedin_verification: Optional[dict] = None
+    github_verification: Optional[dict] = None
+
+
+@api.get("/test-evidence-alignment")
+async def test_evidence_alignment():
+    """Test route to verify routing works."""
+    return {"status": "ok", "message": "Route is registered"}
 
 
 @api.post("/analyze")
@@ -210,6 +575,62 @@ async def analyze(
     result = dict(result)
     result["_elapsed_ms"] = int((time.perf_counter() - started) * 1000)
     return result
+
+
+@api.post("/evidence-alignment")
+async def get_evidence_alignment(request: EvidenceAlignmentRequest):
+    """Generate evidence alignment for resume highlighting."""
+    try:
+        from backend import read_json_file, RESUME_CHUNKS_PATH
+        
+        # Load resume chunks using resume_id
+        chunks_store = read_json_file(RESUME_CHUNKS_PATH, {})
+        
+        # Filter chunks for this resume
+        resume_chunks = []
+        if isinstance(chunks_store, list):
+            resume_chunks = [c for c in chunks_store if c.get("resume_id") == request.resume_id]
+        elif isinstance(chunks_store, dict):
+            resume_chunks = [c for c in chunks_store.values() if c.get("resume_id") == request.resume_id]
+        
+        if not resume_chunks:
+            return {
+                "resume_id": request.resume_id,
+                "matches": [],
+                "skipped": True,
+                "reason": "No resume chunks found."
+            }
+        
+        # Generate evidence alignment
+        try:
+            import sys
+            sys.path.insert(0, '.')
+            from backend import generate_evidence_alignment
+            result = generate_evidence_alignment(
+                resume_chunks=resume_chunks,
+                job_description=request.job_description,
+                linkedin_verification=request.linkedin_verification,
+                github_verification=request.github_verification,
+                resume_id=request.resume_id,
+            )
+        except ImportError as e:
+            print(f"[EVIDENCE ALIGNMENT] Import error: {e}")
+            return {
+                "resume_id": request.resume_id,
+                "matches": [],
+                "skipped": True,
+                "reason": f"Failed to import evidence alignment function: {str(e)}"
+            }
+        
+        return result
+    except Exception as e:
+        print(f"[EVIDENCE ALIGNMENT] Error: {e}")
+        return {
+            "resume_id": request.resume_id,
+            "matches": [],
+            "skipped": True,
+            "reason": f"Error generating evidence alignment: {str(e)}"
+        }
 
 
 def _run_analyze_blocking(
@@ -478,6 +899,12 @@ def _run_analyze_blocking(
             matching_skills=detail.get("matching_skills", []),
             missing_skills=detail.get("missing_skills", []),
         )
+        restored_profile_fields = restore_candidate_profile_fields(
+            item["resume_skill_profile"],
+            jd_structured=jd_info,
+        )
+        for field, value in restored_profile_fields.items():
+            detail.setdefault(field, value)
 
         candidate_duration = time.perf_counter() - candidate_start
         print(
@@ -535,8 +962,19 @@ def _run_analyze_blocking(
         "job_description": job_description,
         "provider": provider,
         "model_name": model_name,
+        "detail_limit": detail_limit,
         "jd_info": jd_info,
         "file_cache": file_cache,
+        "result": {
+            "job_description": serialize_jd_info(jd_info),
+            "ranking": ranking,
+            "top_details": top_details,
+            "detail_limit": detail_limit,
+            "categories": categories,
+            "invalid_resumes": invalid_resumes,
+            "runtime_status": get_runtime_status(),
+            "timings_ms": timings,
+        },
     }
     persist_analysis_session(payload)
     persistence_duration = time.perf_counter() - persistence_started
@@ -755,6 +1193,374 @@ async def get_review_status(job_id: str):
     return job
 
 
+@api.post("/api/compare-candidates")
+async def compare_candidates(request: CandidateComparisonRequest):
+    """Compare multiple selected candidates using GPT-5.
+    
+    This endpoint uses the isolated GPT-5 comparison engine to compare
+    candidates against a job description using existing stored evidence.
+    """
+    # Validation: Need at least 2 candidates
+    if not request.candidate_ids or len(request.candidate_ids) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 candidate IDs are required for comparison"
+        )
+    
+    # Validation: Need job description info
+    if not request.jd_info or not isinstance(request.jd_info, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description information (jd_info) is required"
+        )
+    
+    # Load existing resume database to validate candidate IDs
+    active_resume_db = get_active_resume_db_records()
+    
+    # Validate candidate IDs and build candidate data
+    candidates_data = []
+    missing_candidate_ids = []
+    
+    for candidate_id in request.candidate_ids:
+        if candidate_id not in active_resume_db:
+            missing_candidate_ids.append(candidate_id)
+            continue
+        
+        record = active_resume_db[candidate_id]
+        resume_skill_profile = record.get("resume_skill_profile", {})
+        
+        # Build candidate data structure for comparison
+        candidate_data = {
+            "candidate_id": candidate_id,
+            "candidate_name": record.get("resume_name", "Unknown Candidate"),
+            "resume_skill_profile": resume_skill_profile,
+        }
+        
+        # Add existing analysis data if available
+        # Try to get from recent analysis session or cached data
+        # For now, we use the skill profile as the primary evidence source
+        
+        # Extract skills from profile
+        if isinstance(resume_skill_profile, dict):
+            skills = resume_skill_profile.get("skills", {})
+            if isinstance(skills, dict):
+                technical_skills = skills.get("technical_skills", [])
+                if isinstance(technical_skills, list):
+                    candidate_data["matching_skills"] = technical_skills
+        
+        candidates_data.append(candidate_data)
+    
+    # Check if any candidate IDs were not found
+    if missing_candidate_ids:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Candidate IDs not found in database: {', '.join(missing_candidate_ids)}"
+        )
+    
+    # Validation: Ensure we have enough valid candidates
+    if len(candidates_data) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 valid candidates are required for comparison"
+        )
+    
+    try:
+        # Call the isolated GPT-5 comparison function
+        comparison_result = compare_selected_candidates(
+            job_description=request.jd_info,
+            candidates_data=candidates_data
+        )
+        
+        # Check if comparison failed due to validation
+        if "error" in comparison_result:
+            error_type = comparison_result["error"]
+            if error_type == "insufficient_candidates":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Comparison requires at least 2 valid candidates"
+                )
+            elif error_type == "missing_candidate_id":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Candidate data is missing required IDs"
+                )
+            elif error_type == "invalid_candidate_data":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid candidate data format"
+                )
+        
+        return comparison_result
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as exc:
+        # Handle other errors safely
+        raise HTTPException(
+            status_code=500,
+            detail=f"Candidate comparison failed: {str(exc)}"
+        )
+
+
+@api.post("/api/compare-candidates-gpt4")
+async def compare_candidates_gpt4(request: CandidateComparisonRequest):
+    """Compare multiple selected candidates using GPT-4.
+    
+    This endpoint uses the isolated GPT-4 comparison engine to compare
+    candidates against a job description using existing stored evidence.
+    This is a separate comparison path from GPT-5, using the same input data
+    but analyzed independently by GPT-4.
+    """
+    # Validation: Need at least 2 candidates
+    if not request.candidate_ids or len(request.candidate_ids) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 candidate IDs are required for comparison"
+        )
+    
+    # Validation: Need job description info
+    if not request.jd_info or not isinstance(request.jd_info, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description information (jd_info) is required"
+        )
+    
+    # Load existing resume database to validate candidate IDs
+    active_resume_db = get_active_resume_db_records()
+    
+    # Validate candidate IDs and build candidate data
+    candidates_data = []
+    missing_candidate_ids = []
+    
+    for candidate_id in request.candidate_ids:
+        if candidate_id not in active_resume_db:
+            missing_candidate_ids.append(candidate_id)
+            continue
+        
+        record = active_resume_db[candidate_id]
+        resume_skill_profile = record.get("resume_skill_profile", {})
+        
+        # Build candidate data structure for comparison
+        candidate_data = {
+            "candidate_id": candidate_id,
+            "candidate_name": record.get("resume_name", "Unknown Candidate"),
+            "resume_skill_profile": resume_skill_profile,
+        }
+        
+        # Extract skills from profile
+        if isinstance(resume_skill_profile, dict):
+            skills = resume_skill_profile.get("skills", {})
+            if isinstance(skills, dict):
+                technical_skills = skills.get("technical_skills", [])
+                if isinstance(technical_skills, list):
+                    candidate_data["matching_skills"] = technical_skills
+        
+        candidates_data.append(candidate_data)
+    
+    # Check if any candidate IDs were not found
+    if missing_candidate_ids:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Candidate IDs not found in database: {', '.join(missing_candidate_ids)}"
+        )
+    
+    # Validation: Ensure we have enough valid candidates
+    if len(candidates_data) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 valid candidates are required for comparison"
+        )
+    
+    try:
+        # Call the isolated GPT-4 comparison function
+        comparison_result = compare_selected_candidates_gpt4(
+            job_description=request.jd_info,
+            candidates_data=candidates_data
+        )
+        
+        # Check if comparison failed due to validation
+        if "error" in comparison_result:
+            error_type = comparison_result["error"]
+            if error_type == "insufficient_candidates":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Comparison requires at least 2 valid candidates"
+                )
+            elif error_type == "missing_candidate_id":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Candidate data is missing required IDs"
+                )
+            elif error_type == "invalid_candidate_data":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid candidate data format"
+                )
+        
+        return comparison_result
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as exc:
+        # Handle other errors safely
+        raise HTTPException(
+            status_code=500,
+            detail=f"GPT-4 candidate comparison failed: {str(exc)}"
+        )
+
+
+@api.post("/api/evidence-assessment")
+async def evidence_assessment(request: CandidateComparisonRequest):
+    """Generate an evidence-based assessment comparing candidates.
+
+    This endpoint uses the evidence assessment engine to compare
+    candidates against a job description using existing stored evidence.
+    It provides a concise, evidence-based assessment with supporting points.
+    """
+    # Validation: Need at least 2 candidates
+    if not request.candidate_ids or len(request.candidate_ids) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 candidate IDs are required for evidence assessment"
+        )
+    
+    # Validation: Need job description info
+    if not request.jd_info or not isinstance(request.jd_info, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description information (jd_info) is required"
+        )
+    
+    # Load existing resume database to validate candidate IDs
+    active_resume_db = get_active_resume_db_records()
+    
+    # Validate candidate IDs and build candidate data
+    candidates_data = []
+    missing_candidate_ids = []
+    
+    for candidate_id in request.candidate_ids:
+        if candidate_id not in active_resume_db:
+            missing_candidate_ids.append(candidate_id)
+            continue
+        
+        record = active_resume_db[candidate_id]
+        resume_skill_profile = record.get("resume_skill_profile", {})
+        
+        # Build candidate data structure for assessment
+        candidate_data = {
+            "candidate_id": candidate_id,
+            "candidate_name": record.get("resume_name", "Unknown Candidate"),
+            "resume_skill_profile": resume_skill_profile,
+        }
+        
+        # Add existing analysis data if available
+        # Extract skills from profile
+        if isinstance(resume_skill_profile, dict):
+            skills = resume_skill_profile.get("skills", {})
+            if isinstance(skills, dict):
+                technical_skills = skills.get("technical_skills", [])
+                if isinstance(technical_skills, list):
+                    candidate_data["matching_skills"] = technical_skills
+        
+        candidates_data.append(candidate_data)
+    
+    # Check if any candidate IDs were not found
+    if missing_candidate_ids:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Candidate IDs not found in database: {', '.join(missing_candidate_ids)}"
+        )
+    
+    # Validation: Ensure we have enough valid candidates
+    if len(candidates_data) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 2 valid candidates are required for evidence assessment"
+        )
+    
+    try:
+        # Call the evidence assessment function
+        assessment_result = generate_evidence_assessment(
+            job_description=request.jd_info,
+            candidates_data=candidates_data
+        )
+        
+        # Check if assessment failed due to validation
+        if "error" in assessment_result:
+            error_type = assessment_result["error"]
+            if error_type == "insufficient_candidates":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Evidence assessment requires at least 2 valid candidates"
+                )
+            elif error_type == "missing_candidate_name":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Candidate data is missing required names"
+                )
+            elif error_type == "invalid_candidate_data":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid candidate data format"
+                )
+        
+        return assessment_result
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as exc:
+        # Handle other errors safely
+        raise HTTPException(
+            status_code=500,
+            detail=f"Evidence assessment failed: {str(exc)}"
+        )
+
+
+class ComparisonExportRequest(BaseModel):
+    evidence_assessment: Optional[Dict[str, Any]] = None
+    gpt4_result: Optional[Dict[str, Any]] = None
+    gpt5_result: Optional[Dict[str, Any]] = None
+    job_description: Optional[Dict[str, Any]] = None
+
+
+@api.post("/api/export-comparison")
+async def export_comparison(request: ComparisonExportRequest):
+    """Export candidate comparison report as PDF.
+
+    This endpoint generates a PDF report containing all available comparison
+    information including evidence assessment, GPT-4 assessment, and GPT-5 assessment.
+    """
+    try:
+        # Generate PDF from comparison data
+        pdf_bytes = generate_comparison_report_pdf(
+            evidence_assessment=request.evidence_assessment,
+            gpt4_result=request.gpt4_result,
+            gpt5_result=request.gpt5_result,
+            job_description=request.job_description
+        )
+        
+        # Return PDF as response
+        from fastapi.responses import Response
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=candidate_comparison_report.pdf",
+                "Content-Length": str(len(pdf_bytes))
+            }
+        )
+        
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF export failed: {str(exc)}"
+        )
+
+
 def _strip_html(text: str) -> str:
     if not isinstance(text, str):
         return ""
@@ -788,3 +1594,459 @@ def _safe_json_loads(s: str):
         except Exception:
             pass  # Intentionally silent - fallback to None
     return None
+
+
+# ==================================================
+# SHORTLIST API MODELS
+# ==================================================
+
+class CreateShortlistRequest(BaseModel):
+    job_description: Dict[str, Any]
+    user_id: str
+    created_by_role: str
+    evidence_assessment_snapshot: Optional[Dict[str, Any]] = None
+
+
+class AddCandidateRequest(BaseModel):
+    resume_id: str
+    candidate_name: str
+    match_score: float
+    match_position: str
+    evidence_snapshot: Optional[Dict[str, Any]] = None
+
+
+class UpdateStatusRequest(BaseModel):
+    status: str
+
+
+# ==================================================
+# SHORTLIST API ENDPOINTS
+# ==================================================
+
+@api.post("/api/shortlists/create")
+async def create_shortlist_endpoint(request: CreateShortlistRequest):
+    """Create a new shortlist for the authenticated user."""
+    try:
+        shortlist = create_shortlist(
+            job_description=request.job_description,
+            user_id=request.user_id,
+            created_by_role=request.created_by_role,
+            evidence_assessment_snapshot=request.evidence_assessment_snapshot
+        )
+        return {"shortlist": shortlist}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to create shortlist: {str(exc)}")
+
+
+@api.get("/api/shortlists")
+async def get_shortlists_endpoint(user_id: str = Query(...)):
+    """Get all shortlists for the authenticated user."""
+    try:
+        shortlists = get_user_shortlists(user_id)
+        return {"shortlists": shortlists}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to get shortlists: {str(exc)}")
+
+
+@api.get("/api/shortlists/{shortlist_id}")
+async def get_shortlist_endpoint(shortlist_id: str, user_id: str = Query(...)):
+    """Get a specific shortlist by ID."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        shortlist = get_shortlist(shortlist_id)
+        if not shortlist:
+            raise HTTPException(status_code=404, detail="Shortlist not found")
+        
+        return {"shortlist": shortlist}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to get shortlist: {str(exc)}")
+
+
+@api.post("/api/shortlists/{shortlist_id}/candidates")
+async def add_candidate_endpoint(shortlist_id: str, request: AddCandidateRequest, user_id: str = Query(...)):
+    """Add a candidate to an existing shortlist."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        # Verify candidate exists
+        if not verify_candidate_exists(request.resume_id):
+            raise HTTPException(status_code=404, detail=f"Candidate {request.resume_id} not found in resume database")
+        
+        shortlist = add_candidate_to_shortlist(
+            shortlist_id=shortlist_id,
+            resume_id=request.resume_id,
+            candidate_name=request.candidate_name,
+            match_score=request.match_score,
+            match_position=request.match_position,
+            evidence_snapshot=request.evidence_snapshot
+        )
+        
+        if not shortlist:
+            raise HTTPException(status_code=404, detail="Shortlist not found")
+        
+        return {"shortlist": shortlist}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to add candidate: {str(exc)}")
+
+
+@api.get("/api/shortlists/{shortlist_id}/candidates")
+async def get_shortlist_candidates_endpoint(shortlist_id: str, user_id: str = Query(...)):
+    """Get all candidates in a shortlist."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        shortlist = get_shortlist(shortlist_id)
+        if not shortlist:
+            raise HTTPException(status_code=404, detail="Shortlist not found")
+        
+        candidates = shortlist.get("shortlisted_candidates", [])
+        return {"candidates": candidates}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to get candidates: {str(exc)}")
+
+
+@api.delete("/api/shortlists/{shortlist_id}/candidates/{resume_id}")
+async def remove_candidate_endpoint(shortlist_id: str, resume_id: str, user_id: str = Query(...)):
+    """Remove a candidate from a shortlist."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        shortlist = remove_candidate_from_shortlist(shortlist_id, resume_id)
+        if not shortlist:
+            raise HTTPException(status_code=404, detail="Shortlist not found")
+        
+        return {"shortlist": shortlist}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to remove candidate: {str(exc)}")
+
+
+@api.put("/api/shortlists/{shortlist_id}/status")
+async def update_status_endpoint(shortlist_id: str, request: UpdateStatusRequest, user_id: str = Query(...)):
+    """Update shortlist status."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        shortlist = update_shortlist_status(shortlist_id, request.status)
+        if not shortlist:
+            raise HTTPException(status_code=404, detail="Shortlist not found or invalid status")
+        
+        return {"shortlist": shortlist}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to update status: {str(exc)}")
+
+
+@api.delete("/api/shortlists/{shortlist_id}")
+async def delete_shortlist_endpoint(shortlist_id: str, user_id: str = Query(...)):
+    """Delete a shortlist."""
+    try:
+        # Verify ownership
+        if not verify_shortlist_ownership(shortlist_id, user_id):
+            raise HTTPException(status_code=403, detail="You do not have access to this shortlist")
+        
+        success = delete_shortlist(shortlist_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Shortlist not found")
+        
+        return {"message": "Shortlist deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to delete shortlist: {str(exc)}")
+
+
+class GenerateQuestionsRequest(BaseModel):
+    assessment_id: str
+    candidate_id: str
+    job_role: Optional[str] = "Engineer"
+    job_description: Optional[Any] = None
+    candidate_resume: Optional[Any] = None
+
+
+@api.post("/api/assessment/generate-questions")
+async def generate_questions_endpoint(request: GenerateQuestionsRequest):
+    """Generate or retrieve candidate-specific 15-question assessment."""
+    try:
+        from backend_question_generator import generate_candidate_assessment, get_assessment_questions
+
+        # Check existing
+        existing = get_assessment_questions(request.assessment_id)
+        if existing and existing.get("questions") and len(existing.get("questions", [])) == 15:
+            return existing
+
+        # Fetch shortlist context if JD or Resume not fully supplied
+        jd_data = request.job_description
+        resume_data = request.candidate_resume
+
+        if not jd_data or not resume_data:
+            shortlists_data = get_shortlists()
+            for sl in shortlists_data:
+                candidates = sl.get("candidates") or sl.get("shortlisted_candidates") or []
+                for cand in candidates:
+                    if cand.get("resume_id") == request.candidate_id:
+                        if not jd_data:
+                            jd_data = sl.get("job_description")
+                        break
+                if jd_data:
+                    break
+
+        if not resume_data:
+            resume_db = get_active_resume_db_records()
+            if request.candidate_id in resume_db:
+                resume_data = resume_db[request.candidate_id]
+
+        payload = generate_candidate_assessment(
+            assessment_id=request.assessment_id,
+            candidate_id=request.candidate_id,
+            job_description=jd_data,
+            candidate_resume=resume_data,
+            job_role=request.job_role or "Engineer",
+        )
+        return payload
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to generate assessment questions: {str(exc)}")
+
+
+@api.get("/api/assessment/questions/{assessment_id}")
+async def get_questions_endpoint(assessment_id: str):
+    """Retrieve persisted questions for an assessment ID without regenerating."""
+    try:
+        from backend_question_generator import get_assessment_questions
+
+        existing = get_assessment_questions(assessment_id)
+        if existing and existing.get("questions"):
+            return existing
+        raise HTTPException(status_code=404, detail=f"Assessment questions for ID '{assessment_id}' not found")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve assessment questions: {str(exc)}")
+
+
+class SubmitAssessmentRequest(BaseModel):
+    assessment_id: str
+    candidate_id: str
+    resume_id: Optional[str] = None
+    role: Optional[str] = "Engineer"
+    answers: Dict[str, Any]
+    started_at: Optional[str] = None
+
+
+@api.post("/api/assessment/submit")
+async def submit_assessment_endpoint(request: SubmitAssessmentRequest):
+    """Securely submit and persist candidate assessment answers."""
+    try:
+        from backend_question_generator import (
+            get_assessment_attempt,
+            get_assessment_questions,
+            save_assessment_attempt,
+        )
+        from datetime import datetime, timezone
+
+        # 1. Check if assessment exists
+        questions_payload = get_assessment_questions(request.assessment_id)
+        if not questions_payload or not questions_payload.get("questions"):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Assessment ID '{request.assessment_id}' not found. Cannot submit answers."
+            )
+
+        # 2. Check for duplicate submission
+        existing_attempt = get_assessment_attempt(request.assessment_id)
+        if existing_attempt and existing_attempt.get("status") in ["submitted", "completed"]:
+            return {
+                "message": "Assessment has already been submitted",
+                "status": existing_attempt.get("status"),
+                "submitted_at": existing_attempt.get("submitted_at"),
+                "already_submitted": True
+            }
+
+        # 3. Security validation: Verify submitted answer keys belong ONLY to valid question IDs
+        valid_qids = {q.get("id") for q in questions_payload.get("questions", []) if q.get("id")}
+        sanitized_answers = {}
+
+        for qid, ans in request.answers.items():
+            if qid not in valid_qids:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid question ID '{qid}' submitted for this assessment."
+                )
+            # Ensure only answer string is accepted
+            if isinstance(ans, str):
+                sanitized_answers[qid] = ans.strip()
+            elif ans is None:
+                sanitized_answers[qid] = ""
+            else:
+                sanitized_answers[qid] = str(ans)
+
+        # 4. Construct persisted attempt payload (NO scoring calculations in Phase 3A)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        attempt_payload = {
+            "assessment_id": request.assessment_id,
+            "candidate_id": request.candidate_id,
+            "resume_id": request.resume_id or request.candidate_id,
+            "role": request.role or questions_payload.get("job_role", "Engineer"),
+            "started_at": request.started_at or now_iso,
+            "submitted_at": now_iso,
+            "status": "submitted",
+            "answers": sanitized_answers
+        }
+
+        # 5. Persist attempt locally
+        save_assessment_attempt(request.assessment_id, attempt_payload)
+
+        return {
+            "message": "Assessment submitted successfully",
+            "assessment_id": request.assessment_id,
+            "status": "submitted",
+            "submitted_at": now_iso,
+            "answered_count": len([v for v in sanitized_answers.values() if v])
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to submit assessment answers: {str(exc)}")
+
+
+class BehaviorEventItem(BaseModel):
+    type: str
+    timestamp: str
+    duration_seconds: Optional[float] = None
+    details: Optional[str] = None
+
+
+class PostBehaviorEventsRequest(BaseModel):
+    assessment_id: str
+    candidate_id: Optional[str] = "unknown"
+    events: List[BehaviorEventItem]
+
+
+@api.post("/api/assessment/behavior-events")
+async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
+    """Securely log observable candidate behavior events."""
+    try:
+        from backend_question_generator import (
+            append_assessment_behavior_events,
+            get_assessment_questions,
+        )
+
+        # 1. Validate assessment exists
+        questions_payload = get_assessment_questions(request.assessment_id)
+        if not questions_payload:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Assessment ID '{request.assessment_id}' not found. Cannot record behavior events."
+            )
+
+        # Allowed observable event types
+        ALLOWED_EVENT_TYPES = {
+          "tab_hidden", "tab_visible",
+          "face_present", "face_absent", "multiple_faces_detected",
+          "looking_away", "looking_forward",
+          "camera_started", "camera_stopped", "camera_error",
+          "audio_activity_detected"
+        }
+
+        sanitized_events = []
+        for item in request.events:
+            evt_type = str(item.type).strip()
+            if evt_type in ALLOWED_EVENT_TYPES:
+                evt_dict = {
+                    "type": evt_type,
+                    "timestamp": str(item.timestamp)
+                }
+                if item.duration_seconds is not None:
+                    evt_dict["duration_seconds"] = round(float(item.duration_seconds), 2)
+                if item.details:
+                    evt_dict["details"] = str(item.details)[:200]
+                sanitized_events.append(evt_dict)
+
+                # --- 1. & 3. TERMINAL LOGGING ---
+                if evt_type == "tab_hidden":
+                    print(f"\n[TAB MONITORING] TAB HIDDEN")
+                    print(f"assessment_id={request.assessment_id}")
+                    print(f"timestamp={evt_dict['timestamp']}")
+                elif evt_type == "tab_visible":
+                    print(f"\n[TAB MONITORING] TAB VISIBLE")
+                    print(f"assessment_id={request.assessment_id}")
+                    print(f"timestamp={evt_dict['timestamp']}")
+                    if "duration_seconds" in evt_dict:
+                        print(f"duration_seconds={evt_dict['duration_seconds']}")
+                elif evt_type == "face_present":
+                    print(f"\n[FACE MONITORING] FACE PRESENT")
+                    print(f"assessment_id={request.assessment_id}")
+                    print(f"timestamp={evt_dict['timestamp']}")
+                elif evt_type == "face_absent":
+                    print(f"\n[FACE MONITORING] FACE ABSENT")
+                    print(f"assessment_id={request.assessment_id}")
+                    print(f"timestamp={evt_dict['timestamp']}")
+                    if "duration_seconds" in evt_dict:
+                        print(f"absence_duration_seconds={evt_dict['duration_seconds']}")
+
+        if not sanitized_events:
+            return {"message": "No valid behavior events to record", "count": 0}
+
+        record = append_assessment_behavior_events(
+            assessment_id=request.assessment_id,
+            candidate_id=request.candidate_id or "unknown",
+            new_events=sanitized_events
+        )
+
+        return {
+            "message": "Behavior events logged successfully",
+            "assessment_id": request.assessment_id,
+            "events_added": len(sanitized_events),
+            "total_events": len(record.get("events", []))
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to record behavior events: {str(exc)}")
+
+
+@api.get("/api/assessment/behavior-events/{assessment_id}")
+async def get_behavior_events_endpoint(assessment_id: str):
+    """Retrieve logged behavior monitoring events for an assessment ID."""
+    try:
+        from backend_question_generator import get_assessment_behavior_events
+
+        record = get_assessment_behavior_events(assessment_id)
+        if record:
+            return record
+        return {"assessment_id": assessment_id, "candidate_id": "unknown", "events": []}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch behavior events: {str(exc)}")
+
+
+@api.post("/api/assessment/score/{assessment_id}")
+async def post_score_assessment_endpoint(assessment_id: str):
+    """Score a candidate's submitted assessment attempt."""
+    try:
+        from backend_question_generator import score_assessment_attempt
+        
+        result = score_assessment_attempt(assessment_id)
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to score assessment: {str(exc)}")

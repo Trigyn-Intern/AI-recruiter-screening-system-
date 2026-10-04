@@ -2,20 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-image:
-    linear-gradient(rgba(16, 24, 20, 0.7), rgba(16, 24, 20, 0.82)),
-    url("../../assets/monstera_bg.png");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  color: #f7fbf8;
+  background: #f8f8f8;
+  color: #333333;
 }
 
 .dashboard-header {
-  background: rgba(26, 33, 29, 0.78);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
   padding: 16px 24px;
   display: flex;
   align-items: center;
@@ -37,8 +30,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: #82b4a7;
-  color: #17231e;
+  background: #880E4F;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,13 +41,13 @@
 .dashboard-brand h1 {
   font-size: 18px;
   margin: 0;
-  color: #ffffff;
+  color: #333333;
 }
 
 .dashboard-brand p {
   margin: 0;
   font-size: 12px;
-  color: #b9c4be;
+  color: #666666;
 }
 
 .dashboard-user {
@@ -62,20 +55,20 @@
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #b9c4be;
+  color: #666666;
 }
 
 .dashboard-user strong {
   font-size: 14px;
-  color: #ffffff;
+  color: #333333;
 }
 
 .logout-btn {
   min-height: 36px;
   padding: 0 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f7fbf8;
+  background: #880E4F;
+  color: #ffffff;
   font-weight: 600;
   font-size: 13px;
   display: inline-flex;
@@ -86,5 +79,5 @@
 }
 
 .logout-btn:hover {
-  background: rgba(130, 180, 167, 0.22);
+  background: #9d125c;
 }

@@ -1,0 +1,365 @@
+/* ============================================================
+   System Check Page — scoped CSS
+   Extends the existing assessment.css warm-cream theme.
+   Only classes prefixed with "sc-" are defined here.
+   ============================================================ */
+
+/* ── Card tweaks for the system check layout ─────────────────── */
+.sc-card {
+  margin-bottom: 20px;
+  overflow: visible;
+}
+
+.sc-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-cream);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FCFAFA 100%);
+}
+
+.sc-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 6px 0;
+}
+
+.sc-section-hint {
+  font-size: 13px;
+  color: var(--text-medium);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Camera section ──────────────────────────────────────────── */
+.sc-camera-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 240px;
+}
+
+.sc-video-wrapper {
+  position: relative;
+  background: #1A1614;
+  border-radius: 0 0 0 14px;
+  overflow: hidden;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror for natural feel */
+}
+
+/* Overlay that sits on top when camera is not live */
+.sc-video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #1A1614;
+  color: #8A7E73;
+}
+
+.sc-video-overlay p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8A7E73;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.sc-video-overlay.sc-video-error {
+  background: #2A1412;
+}
+
+.sc-placeholder-icon {
+  color: #5C5248;
+  opacity: 0.7;
+}
+
+.sc-canvas-hidden {
+  display: none;
+}
+
+/* ── Check rows panel ────────────────────────────────────────── */
+.sc-checks-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 1px solid var(--border-cream);
+  padding: 0;
+}
+
+.sc-device-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Each check row */
+.sc-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-cream);
+  transition: background 0.15s ease;
+  background: #FFFFFF;
+}
+
+.sc-check-row:last-child {
+  border-bottom: none;
+}
+
+.sc-check-row.pass {
+  background: #FAFFF8;
+}
+
+.sc-check-row.fail {
+  background: #FFF8F7;
+}
+
+.sc-check-row.checking {
+  background: var(--accent-orange-light);
+}
+
+/* Icons */
+.sc-icon-pass {
+  color: #16A34A;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sc-icon-fail {
+  color: #DC2626;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sc-icon-checking {
+  color: var(--accent-orange);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sc-icon-idle {
+  border-radius: 50%;
+  background: var(--border-cream-dark);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* Text inside a check row */
+.sc-check-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-check-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.sc-check-msg {
+  font-size: 12.5px;
+  color: var(--text-medium);
+  line-height: 1.4;
+}
+
+.sc-check-row.pass .sc-check-msg {
+  color: #15803D;
+}
+
+.sc-check-row.fail .sc-check-msg {
+  color: #B91C1C;
+}
+
+/* Browser badge */
+.sc-browser-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-cream-subtle);
+  color: var(--accent-brown);
+  border: 1px solid var(--border-cream);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+/* Privacy note inside camera panel */
+.sc-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 12px 20px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--bg-cream);
+  border-top: 1px solid var(--border-cream);
+  margin-top: auto;
+}
+
+.sc-privacy-note svg {
+  color: var(--accent-orange);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Readiness summary bar ───────────────────────────────────── */
+.sc-readiness-bar {
+  border-radius: 12px;
+  border: 1.5px solid var(--border-cream);
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.sc-readiness-bar.ready {
+  border-color: #86EFAC;
+  background: #F0FDF4;
+}
+
+.sc-readiness-bar.not-ready {
+  border-color: #FCA5A5;
+  background: #FEF2F2;
+}
+
+.sc-readiness-bar.neutral {
+  border-color: var(--accent-orange-border);
+  background: var(--accent-orange-light);
+}
+
+.sc-readiness-icon {
+  flex-shrink: 0;
+}
+
+.sc-readiness-bar.ready .sc-readiness-icon { color: #16A34A; }
+.sc-readiness-bar.not-ready .sc-readiness-icon { color: #DC2626; }
+.sc-readiness-bar.neutral .sc-readiness-icon { color: var(--accent-orange); }
+
+.sc-readiness-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-readiness-text strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.sc-readiness-text span {
+  font-size: 13px;
+  color: var(--text-medium);
+}
+
+/* ── Action row ──────────────────────────────────────────────── */
+.sc-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sc-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sc-rerun-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-cream-subtle);
+  border: 1.5px solid var(--border-cream-dark);
+  color: var(--text-dark);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sc-rerun-btn:hover:not(:disabled) {
+  background: var(--border-cream);
+  border-color: var(--accent-brown);
+  color: var(--accent-brown-dark);
+}
+
+.sc-rerun-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .sc-camera-body {
+    grid-template-columns: 1fr;
+  }
+
+  .sc-video-wrapper {
+    border-radius: 0;
+    min-height: 200px;
+  }
+
+  .sc-checks-panel {
+    border-left: none;
+    border-top: 1px solid var(--border-cream);
+  }
+
+  .sc-action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sc-right-actions {
+    flex-direction: column;
+  }
+
+  .sc-rerun-btn,
+  .proceed-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .sc-readiness-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
