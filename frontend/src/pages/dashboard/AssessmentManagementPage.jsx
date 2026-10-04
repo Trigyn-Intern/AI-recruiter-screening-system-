@@ -21,7 +21,8 @@ import {
   BarChart2,
   AlertTriangle,
   RotateCcw,
-  Trash2
+  Trash2,
+  Activity
 } from "lucide-react";
 import "./assessmentManagement.css";
 import { findAssessmentRecord } from "../../utils/assessmentStore";
@@ -321,21 +322,36 @@ function resolveAssessmentId(cand, record) {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/assessment/score/${encodeURIComponent(assessmentId)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
+      const [scoreRes, behaviorRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/assessment/score/${encodeURIComponent(assessmentId)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        }),
+        fetch(`${API_BASE_URL}/api/assessment/behavior-events/${encodeURIComponent(assessmentId)}`)
+      ]);
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || `Failed to fetch assessment score (HTTP ${res.status}).`);
+      if (!scoreRes.ok) {
+        const errData = await scoreRes.json().catch(() => ({}));
+        throw new Error(errData.detail || `Failed to fetch assessment score (HTTP ${scoreRes.status}).`);
       }
 
-      const data = await res.json();
+      let activityData = null;
+      let activityError = null;
+      if (behaviorRes.ok) {
+        activityData = await behaviorRes.json();
+      } else {
+        const bErr = await behaviorRes.json().catch(() => ({}));
+        activityError = bErr.detail || "Could not load assessment activity.";
+      }
+
+      const data = await scoreRes.json();
+      
       setViewingResult((prev) => ({
         ...prev,
         loading: false,
-        data: data
+        data: data,
+        activityData,
+        activityError
       }));
     } catch (err) {
       setViewingResult((prev) => ({
@@ -691,7 +707,47 @@ function resolveAssessmentId(cand, record) {
 function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
   if (!viewingResult) return null;
 
-  const { candidateName, jobRole, status, loading, error, data } = viewingResult;
+  const { candidateName, jobRole, status, loading, error, data, activityData, activityError } = viewingResult;
+
+  const EVENT_LABELS = {
+    camera_started: "Camera Started",
+    camera_stopped: "Camera Stopped",
+    camera_error: "Camera Error",
+    face_present: "Face Detected",
+    face_absent: "Face Absent",
+    multiple_faces_detected: "Multiple Faces Detected",
+    looking_away: "Looking Away",
+    looking_forward: "Looking Forward",
+    audio_activity_detected: "Audio Activity",
+    tab_hidden: "Assessment Page Hidden",
+    tab_visible: "Assessment Page Visible",
+    network_offline: "Network Disconnected",
+    network_online: "Network Reconnected",
+    copy_attempt: "Copy Action",
+    paste_attempt: "Paste Action"
+  };
+
+  const calculateActivitySummary = (events) => {
+    const summary = {};
+    Object.keys(EVENT_LABELS).forEach(k => { summary[k] = 0; });
+    
+    let tabHiddenDuration = 0;
+    let networkOfflineDuration = 0;
+
+    (events || []).forEach(evt => {
+      if (summary[evt.type] !== undefined) {
+        summary[evt.type]++;
+      }
+      if (evt.type === "tab_visible" && evt.duration_seconds !== undefined) {
+        tabHiddenDuration += Number(evt.duration_seconds);
+      }
+      if (evt.type === "network_online" && evt.duration_seconds !== undefined) {
+        networkOfflineDuration += Number(evt.duration_seconds);
+      }
+    });
+
+    return { counts: summary, tabHiddenDuration, networkOfflineDuration };
+  };
 
   return (
     <div className="arm-modal-overlay" onClick={onClose}>
@@ -886,6 +942,89 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
               </div>
             </div>
           ) : null}
+
+          {/* Phase 5.7: Assessment Activity & Monitoring */}
+          {data && (
+            <div className="arm-activity-section">
+              <h4 className="arm-section-title" style={{ marginTop: '24px' }}>
+                <Activity size={16} /> Assessment Activity & Monitoring
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '16px' }}>
+                These are observable assessment activity signals and should be interpreted in context. They do not by themselves indicate misconduct.
+              </p>
+
+              {loading ? (
+                <p>Loading assessment activity...</p>
+              ) : activityError ? (
+                <div className="arm-error-state" style={{ padding: '16px', background: '#FEE2E2', borderRadius: '8px' }}>
+                  <p style={{ color: '#DC2626', margin: 0 }}>{activityError}</p>
+                </div>
+              ) : activityData && activityData.events && activityData.events.length > 0 ? (
+                <>
+                  {/* Activity Summary */}
+                  <div className="arm-activity-summary" style={{ background: '#F3F4F6', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Activity Summary</h5>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                      {(() => {
+                        const { counts, tabHiddenDuration, networkOfflineDuration } = calculateActivitySummary(activityData.events);
+                        return (
+                          <>
+                            {Object.entries(EVENT_LABELS).map(([key, label]) => (
+                              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                <span style={{ color: '#4B5563' }}>{label}</span>
+                                <span style={{ fontWeight: '600' }}>{counts[key]}</span>
+                              </div>
+                            ))}
+                            {tabHiddenDuration > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginTop: '8px', borderTop: '1px solid #D1D5DB', paddingTop: '8px' }}>
+                                <span style={{ color: '#4B5563' }}>Tab Hidden Time</span>
+                                <span style={{ fontWeight: '600' }}>{tabHiddenDuration.toFixed(1)} sec</span>
+                              </div>
+                            )}
+                            {networkOfflineDuration > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                <span style={{ color: '#4B5563' }}>Network Offline Time</span>
+                                <span style={{ fontWeight: '600' }}>{networkOfflineDuration.toFixed(1)} sec</span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Activity Timeline */}
+                  <div className="arm-activity-timeline">
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Activity Timeline</h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {[...activityData.events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map((evt, idx) => (
+                        <div key={idx} style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '0.9rem' }}>
+                          <div style={{ color: '#6B7280', fontSize: '0.8rem', marginBottom: '4px' }}>
+                            {new Date(evt.timestamp).toLocaleTimeString()}
+                          </div>
+                          <div style={{ fontWeight: '500', color: '#111827' }}>
+                            {EVENT_LABELS[evt.type] || evt.type}
+                          </div>
+                          {evt.duration_seconds !== undefined && (
+                            <div style={{ color: '#4B5563', marginTop: '4px' }}>
+                              Duration: {evt.duration_seconds} sec
+                            </div>
+                          )}
+                          {evt.details && (
+                            <div style={{ color: '#4B5563', marginTop: '4px', fontStyle: 'italic' }}>
+                              {evt.details}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p>No assessment activity recorded.</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}

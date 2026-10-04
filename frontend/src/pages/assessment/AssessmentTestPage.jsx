@@ -61,6 +61,26 @@ function loadMediaPipeCDN() {
 // Face event cooldown: minimum seconds between same-type face events
 const FACE_EVENT_COOLDOWN_MS = 10000;
 
+// ─── Audio Activity Monitoring Constants ─────────────────────────────────────────
+// Minimum RMS amplitude (0.0 to 1.0) to qualify as meaningful audio activity.
+// Normal background silence registers ~0.00 to 0.015 RMS; speech / audible sound registers >= 0.04 RMS.
+const AUDIO_ACTIVITY_THRESHOLD_RMS = 0.04;
+
+// Minimum cooldown period (in milliseconds) between emitting consecutive audio_activity_detected events.
+// Prevents duplicate event spam during continuous speech while ensuring state change / re-activation logging.
+const AUDIO_EVENT_COOLDOWN_MS = 3000;
+
+// ─── Head-Direction Monitoring Constants (Phase 5.4) ─────────────────────────────
+// Ear-tragion symmetry ratio threshold. When the ratio of (min ear-to-nose distance /
+// max ear-to-nose distance) drops below this value, it indicates a significant
+// horizontal head turn (> ~25-30°).
+// Normal forward-facing: ratio ≈ 0.7–1.0. Significant turn: ratio < 0.40.
+const HEAD_TURN_RATIO_THRESHOLD = 0.40;
+
+// Duration (ms) that the head must remain continuously turned away before emitting
+// looking_away. Prevents false positives from brief/natural head movements.
+const HEAD_TURN_AWAY_DURATION_MS = 3000;
+
 function difficultyColor(level) {
   if (!level) return "";
   const l = level.toLowerCase();
@@ -351,15 +371,28 @@ function AssessmentTestPage() {
 
         setCameraActive(true);
         logBehaviorEvents([{ type: "camera_started", timestamp: new Date().toISOString() }]);
+
+        // Camera Track Ended Detection (Phase 5.5)
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            // Do not emit if intentional cleanup has already nulled the ref or unmounted
+            if (cancelled || !cameraStreamRef.current) return;
+            logBehaviorEvents([{
+              type: "camera_stopped",
+              timestamp: new Date().toISOString(),
+              details: "track_ended_unexpected"
+            }]);
+            cleanupCamera();
+          };
+        }
       } catch (err) {
         if (cancelled) return;
-        const eventType = err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "camera_permission_denied"
-          : "camera_error";
+        const isDenied = err.name === "NotAllowedError" || err.name === "PermissionDeniedError";
         logBehaviorEvents([{
-          type: eventType,
+          type: "camera_error",
           timestamp: new Date().toISOString(),
-          detail: err.message || "Camera unavailable"
+          details: isDenied ? "permission_denied" : (err.message || "Camera unavailable")
         }]);
         return; // cannot proceed without camera
       }
@@ -376,8 +409,10 @@ function AssessmentTestPage() {
         detector.setOptions({ model: "short", minDetectionConfidence: 0.5 });
 
         let latestFaceCount = 0;
+        let latestDetections = [];
         detector.onResults((results) => {
-          latestFaceCount = (results.detections || []).length;
+          latestDetections = results.detections || [];
+          latestFaceCount = latestDetections.length;
         });
 
         faceDetectorRef.current = detector;
@@ -392,9 +427,26 @@ function AssessmentTestPage() {
           absenceStartTime: null
         };
 
-        const evaluateFaceState = (isDetected, sourceName) => {
+        // Head-direction state machine (Phase 5.4)
+        // States: "forward" | "pending_away" | "away"
+        const headDirRef = {
+          state: "forward",
+          turnStartTime: null
+        };
+
+        const evaluateFaceState = (faceCount, sourceName) => {
           const now = Date.now();
-          if (isDetected) {
+          if (faceCount >= 2) {
+            stateRef.absenceStartTime = null; // reset timer immediately
+            if (stateRef.current !== "multiple_faces_detected") {
+              stateRef.current = "multiple_faces_detected";
+              logBehaviorEvents([{
+                type: "multiple_faces_detected",
+                timestamp: new Date(now).toISOString(),
+                details: `${sourceName}_count_${faceCount}`
+              }]);
+            }
+          } else if (faceCount === 1) {
             stateRef.absenceStartTime = null; // reset timer immediately
             if (stateRef.current !== "face_present") {
               stateRef.current = "face_present";
@@ -421,6 +473,82 @@ function AssessmentTestPage() {
           }
         };
 
+        // Evaluate head direction using ear-tragion symmetry ratio (Phase 5.4)
+        // Only runs when exactly 1 face is detected. Uses landmarks:
+        //   [2] = nose tip, [4] = right ear tragion, [5] = left ear tragion
+        const evaluateHeadDirection = (detections) => {
+          // Only evaluate for exactly one face
+          if (detections.length !== 1) {
+            // Reset head-direction state when face count is not exactly 1.
+            // Do not emit looking_forward here — face_absent or multiple_faces_detected
+            // events already capture those situations independently.
+            headDirRef.state = "forward";
+            headDirRef.turnStartTime = null;
+            return;
+          }
+
+          const detection = detections[0];
+          const lm = detection.landmarks;
+
+          // Validate landmarks array exists and has the required 6 points
+          if (!lm || lm.length < 6) return;
+
+          const noseTip = lm[2];
+          const rightEarTragion = lm[4];
+          const leftEarTragion = lm[5];
+
+          // Validate individual landmarks have numeric x coordinates
+          if (!noseTip || !rightEarTragion || !leftEarTragion) return;
+          if (typeof noseTip.x !== "number" || typeof rightEarTragion.x !== "number" || typeof leftEarTragion.x !== "number") return;
+
+          const noseX = noseTip.x;
+          const distLeft = Math.abs(noseX - leftEarTragion.x);
+          const distRight = Math.abs(noseX - rightEarTragion.x);
+          const maxDist = Math.max(distLeft, distRight);
+
+          // Guard against division by zero
+          if (maxDist < 0.001) return;
+
+          const ratio = Math.min(distLeft, distRight) / maxDist;
+          const isTurnedAway = ratio < HEAD_TURN_RATIO_THRESHOLD;
+          const now = Date.now();
+
+          if (isTurnedAway) {
+            if (headDirRef.state === "forward") {
+              // FORWARD → PENDING_AWAY: start the continuous-turn timer
+              headDirRef.state = "pending_away";
+              headDirRef.turnStartTime = now;
+            } else if (headDirRef.state === "pending_away") {
+              // Still pending — check if turned away long enough
+              if (headDirRef.turnStartTime && (now - headDirRef.turnStartTime >= HEAD_TURN_AWAY_DURATION_MS)) {
+                // PENDING_AWAY → AWAY: emit looking_away once
+                headDirRef.state = "away";
+                logBehaviorEvents([{
+                  type: "looking_away",
+                  timestamp: new Date(now).toISOString()
+                }]);
+              }
+            }
+            // If already "away", do nothing (no repeated events)
+          } else {
+            // Head is forward-facing
+            if (headDirRef.state === "away") {
+              // AWAY → FORWARD: emit looking_forward
+              headDirRef.state = "forward";
+              headDirRef.turnStartTime = null;
+              logBehaviorEvents([{
+                type: "looking_forward",
+                timestamp: new Date(now).toISOString()
+              }]);
+            } else if (headDirRef.state === "pending_away") {
+              // Brief turn, returned quickly — cancel pending without emitting
+              headDirRef.state = "forward";
+              headDirRef.turnStartTime = null;
+            }
+            // If already "forward", do nothing
+          }
+        };
+
         // Step 3: run detection loop every 1 second
         faceIntervalRef.current = setInterval(async () => {
           if (!cameraVideoRef.current || !cameraStreamRef.current) return;
@@ -428,7 +556,8 @@ function AssessmentTestPage() {
 
           try {
             await detector.send({ image: cameraVideoRef.current });
-            evaluateFaceState(latestFaceCount > 0, "mediapipe");
+            evaluateFaceState(latestFaceCount, "mediapipe");
+            evaluateHeadDirection(latestDetections);
           } catch (_) {
             // Transient frame error, retry next tick
           }
@@ -505,6 +634,119 @@ function AssessmentTestPage() {
     }
   }, [submitted, cleanupCamera, logBehaviorEvents]);
 
+  // ─── Continuous Microphone Activity Monitoring (Phase 5.3) ─────────────────
+  const micStreamRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioIntervalRef = useRef(null);
+  const lastAudioEventTimeRef = useRef(0);
+  const isAudioActiveRef = useRef(false);
+
+  const cleanupMicrophone = useCallback(() => {
+    if (audioIntervalRef.current) {
+      clearInterval(audioIntervalRef.current);
+      audioIntervalRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        if (audioContextRef.current.state !== "closed") {
+          audioContextRef.current.close();
+        }
+      } catch (_) { }
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
+    isAudioActiveRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (submitted || loading || error || total === 0) return;
+
+    let cancelled = false;
+
+    async function initMicrophoneMonitoring() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        micStreamRef.current = stream;
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+          console.warn("Web Audio API not supported in this browser");
+          return;
+        }
+
+        const audioCtx = new AudioCtx();
+        audioContextRef.current = audioCtx;
+
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.fftSize);
+
+        audioIntervalRef.current = setInterval(() => {
+          if (!analyserRef.current || audioCtx.state === "closed") return;
+
+          analyserRef.current.getByteTimeDomainData(dataArray);
+
+          let sumSquares = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            const norm = (dataArray[i] - 128) / 128;
+            sumSquares += norm * norm;
+          }
+          const rms = Math.sqrt(sumSquares / dataArray.length);
+
+          const now = Date.now();
+          const isMeaningfulActivity = rms >= AUDIO_ACTIVITY_THRESHOLD_RMS;
+
+          if (isMeaningfulActivity) {
+            if (!isAudioActiveRef.current || (now - lastAudioEventTimeRef.current >= AUDIO_EVENT_COOLDOWN_MS)) {
+              isAudioActiveRef.current = true;
+              lastAudioEventTimeRef.current = now;
+              logBehaviorEvents([
+                {
+                  type: "audio_activity_detected",
+                  timestamp: new Date(now).toISOString()
+                }
+              ]);
+            }
+          } else {
+            isAudioActiveRef.current = false;
+          }
+        }, 250);
+      } catch (err) {
+        if (cancelled) return;
+        // Handle permission denial or missing microphone non-destructively
+        console.warn("Microphone activity monitoring could not be initialized:", err.message);
+      }
+    }
+
+    initMicrophoneMonitoring();
+
+    return () => {
+      cancelled = true;
+      cleanupMicrophone();
+    };
+  }, [submitted, loading, error, total, logBehaviorEvents, cleanupMicrophone]);
+
+  // Stop microphone when assessment is submitted
+  useEffect(() => {
+    if (submitted) {
+      cleanupMicrophone();
+    }
+  }, [submitted, cleanupMicrophone]);
+
   // Page Visibility API Monitoring (tab_hidden / tab_visible)
   const tabHiddenTimeRef = useRef(null);
   useEffect(() => {
@@ -534,6 +776,72 @@ function AssessmentTestPage() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [submitted, loading, error, total, logBehaviorEvents]);
+
+  // Network Offline/Online Monitoring (Phase 5.5)
+  const networkOfflineTimeRef = useRef(null);
+  useEffect(() => {
+    if (submitted || loading || error || total === 0) return;
+
+    function handleOffline() {
+      // Prevent duplicate offline events
+      if (networkOfflineTimeRef.current) return;
+      
+      networkOfflineTimeRef.current = Date.now();
+      logBehaviorEvents([{ 
+        type: "network_offline", 
+        timestamp: new Date().toISOString() 
+      }]);
+    }
+
+    function handleOnline() {
+      // Prevent duplicate online events if no offline transition was recorded
+      if (!networkOfflineTimeRef.current) return;
+      
+      const duration = (Date.now() - networkOfflineTimeRef.current) / 1000;
+      networkOfflineTimeRef.current = null;
+      
+      logBehaviorEvents([{ 
+        type: "network_online", 
+        timestamp: new Date().toISOString(),
+        duration_seconds: duration
+      }]);
+    }
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [submitted, loading, error, total, logBehaviorEvents]);
+
+  // Interaction Monitoring: Copy/Paste (Phase 5.6)
+  useEffect(() => {
+    if (submitted || loading || error || total === 0) return;
+
+    function handleCopy() {
+      logBehaviorEvents([{
+        type: "copy_attempt",
+        timestamp: new Date().toISOString()
+      }]);
+    }
+
+    function handlePaste() {
+      logBehaviorEvents([{
+        type: "paste_attempt",
+        timestamp: new Date().toISOString()
+      }]);
+    }
+
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
     };
   }, [submitted, loading, error, total, logBehaviorEvents]);
 

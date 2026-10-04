@@ -1964,7 +1964,8 @@ async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
           "face_present", "face_absent", "multiple_faces_detected",
           "looking_away", "looking_forward",
           "camera_started", "camera_stopped", "camera_error",
-          "audio_activity_detected"
+          "audio_activity_detected", "network_offline", "network_online",
+          "copy_attempt", "paste_attempt"
         }
 
         sanitized_events = []
