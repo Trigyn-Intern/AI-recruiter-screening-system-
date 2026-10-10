@@ -3777,13 +3777,31 @@ def normalize_section_heading(heading):
     if normalized in section_mappings:
         return section_mappings[normalized]
 
-    # Try partial match
-    for key, value in section_mappings.items():
-        if key in normalized or normalized in key:
-            return value
+    return None
 
-    # If no match, return capitalized original (without special chars)
-    return heading.strip().title()
+
+RESUME_SUBSECTION_LABELS = {
+    'project duration',
+    'project description',
+    'project name',
+    'project',
+    'responsibilities',
+    'environment',
+    'technologies',
+    'team size',
+    'role',
+    'client',
+    'location',
+}
+
+
+def _is_resume_subsection_label(heading):
+    """Return whether a heading candidate is a known project subsection label."""
+    label = heading.split(':', 1)[0]
+    label = re.sub(r'^\s*\d+\s*[.)-]\s*', '', label)
+    label = re.sub(r'[^a-zA-Z\s]', ' ', label.lower())
+    label = re.sub(r'\s+', ' ', label).strip()
+    return label in RESUME_SUBSECTION_LABELS
 
 
 def detect_resume_sections(text_items):
@@ -3802,45 +3820,23 @@ def detect_resume_sections(text_items):
         }
     """
     sections = []
-    common_headings = [
-        'SKILLS', 'TECHNICAL SKILLS', 'EXPERIENCE', 'WORK EXPERIENCE',
-        'PROFESSIONAL EXPERIENCE', 'PROJECTS', 'CERTIFICATIONS',
-        'EDUCATION', 'ACHIEVEMENTS', 'PUBLICATIONS', 'RESEARCH',
-        'SUMMARY', 'PROFILE', 'INTERNSHIPS', 'EMPLOYMENT'
-    ]
 
     for idx, item in enumerate(text_items):
         text = item['text'].strip()
         if not text:
             continue
 
-        # Check if this line looks like a heading
-        # Heuristics: short, uppercase or title case, common heading words
-        is_heading = False
+        if _is_resume_subsection_label(text):
+            continue
 
-        # Check exact matches with common headings
-        if text.upper() in common_headings:
-            is_heading = True
-        # Check if it's a short line (headings are usually short)
-        elif len(text) < 50 and len(text.split()) <= 5:
-            # Check if it's mostly uppercase or title case
-            if text.isupper() or text.istitle():
-                # Check if it contains section-like words
-                section_words = ['skill', 'experience', 'project', 'education',
-                              'certification', 'achievement', 'publication',
-                              'research', 'summary', 'profile', 'internship']
-                if any(word in text.lower() for word in section_words):
-                    is_heading = True
-
-        if is_heading:
-            normalized_section = normalize_section_heading(text)
-            if normalized_section:
-                sections.append({
-                    'section': normalized_section,
-                    'heading': text,
-                    'start_index': idx,
-                    'page': item.get('page')
-                })
+        normalized_section = normalize_section_heading(text)
+        if normalized_section:
+            sections.append({
+                'section': normalized_section,
+                'heading': text,
+                'start_index': idx,
+                'page': item.get('page')
+            })
 
     return sections
 
