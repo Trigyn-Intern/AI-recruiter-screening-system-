@@ -4,8 +4,10 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "type": "module",
   "dependencies": {
     "@mediapipe/face_detection": "^0.4.1646425229",
+    "@mediapipe/tasks-vision": "0.10.21",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
     "react": "latest",

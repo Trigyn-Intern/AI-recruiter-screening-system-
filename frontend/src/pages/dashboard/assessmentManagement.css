@@ -51,8 +51,8 @@
 .assessment-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
+  gap: 16px;
+  margin-bottom: 24px;
   width: 100%;
 }
 
@@ -60,7 +60,7 @@
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 12px;
-  padding: 20px 22px;
+  padding: 18px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
@@ -131,8 +131,8 @@
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -211,7 +211,7 @@
 .candidate-assessments-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: 18px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -223,13 +223,13 @@
 .candidate-mgmt-card {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 20px 22px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   height: 100%;
   width: 100%;
   max-width: 100%;
@@ -308,6 +308,7 @@
   margin: 0;
   letter-spacing: -0.01em;
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .cand-id-row {
@@ -359,16 +360,14 @@
   border-radius: 8px;
   width: fit-content;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
-/* Section 3: Assessment Details — stack vertically inside compact card */
+/* Section 3: Assessment Details */
 .details-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   font-size: 12.5px;
   color: #374151;
   font-weight: 600;
@@ -378,14 +377,16 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  line-height: 1.35;
 }
 
-/* Section 4: Assessment Status & Inline Action — stack in card */
+/* Section 4: Assessment Status & Inline Action */
 .status-action-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .status-badge-large {
@@ -438,7 +439,8 @@
   transition: all 0.15s ease;
   box-shadow: 0 2px 8px rgba(139, 10, 80, 0.25);
   white-space: nowrap;
-  width: 100%;
+  flex: 1 1 180px;
+  min-width: 0;
   justify-content: center;
 }
 
@@ -458,6 +460,7 @@
   color: #374151;
   outline: none;
   cursor: pointer;
+  max-width: 100%;
 }
 
 /* Section 5: Candidate Assessment Link Box — compact inside card */
@@ -465,7 +468,7 @@
   background-color: #FDF2F8;
   border: 1px solid #FBCFE8;
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -509,10 +512,12 @@
 .link-action-btns {
   display: flex;
   gap: 8px;
+  min-width: 0;
 }
 
 .btn-copy-link {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   background: #8B0A50;
   color: #FFFFFF;
   border: none;
@@ -539,7 +544,8 @@
 }
 
 .btn-preview-link {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   background: #FFFFFF;
   color: #374151;
   border: 1px solid #CBD5E1;
@@ -609,6 +615,14 @@
   .candidate-assessments-list {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .details-row {
+    grid-template-columns: 1fr;
+  }
+
+  .search-input-group {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -618,6 +632,21 @@
 
   .assessment-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .assessment-controls-bar,
+  .filter-select-group {
+    align-items: stretch;
+  }
+
+  .filter-select-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filter-select-group select,
+  .refresh-btn {
+    flex: 1 1 140px;
   }
 }
 
@@ -906,6 +935,48 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.arm-collapse-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.arm-collapse-btn:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+.arm-score-components {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.arm-score-components > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+}
+
+.arm-score-components strong {
+  color: #0F172A;
+  font-size: 20px;
 }
 
 .arm-skills-section {

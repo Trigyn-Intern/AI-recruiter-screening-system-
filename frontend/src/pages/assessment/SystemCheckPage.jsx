@@ -18,6 +18,12 @@ import {
 } from "lucide-react";
 import "./assessment.css";
 import "./systemCheck.css";
+import {
+  getScreenEvidenceStream,
+  releaseScreenEvidence,
+  requestScreenEvidence,
+  subscribeToScreenEvidence
+} from "./screenEvidenceSession";
 
 // Status constants
 const STATUS = {
@@ -105,7 +111,42 @@ function SystemCheckPage() {
   const candidateId = searchParams.get("candidateId") || "";
   const role = searchParams.get("role") || "";
 
+  const [screenEvidenceStatus, setScreenEvidenceStatus] = useState(
+    getScreenEvidenceStream() ? STATUS.PASS : STATUS.IDLE
+  );
+  const [screenEvidenceMessage, setScreenEvidenceMessage] = useState(
+    "Enable screen sharing before starting the assessment."
+  );
+  const startingAssessmentRef = useRef(false);
+
+  useEffect(() => {
+    return subscribeToScreenEvidence((stream) => {
+      if (stream) {
+        setScreenEvidenceStatus(STATUS.PASS);
+        setScreenEvidenceMessage("Screen Evidence is ready for this assessment.");
+      } else if (!startingAssessmentRef.current) {
+        setScreenEvidenceStatus(STATUS.IDLE);
+        setScreenEvidenceMessage("Enable screen sharing before starting the assessment.");
+      }
+    });
+  }, []);
+
+  const handleEnableScreenEvidence = async () => {
+    setScreenEvidenceStatus(STATUS.CHECKING);
+    setScreenEvidenceMessage("Waiting for screen-sharing permission...");
+    try {
+      await requestScreenEvidence();
+      setScreenEvidenceStatus(STATUS.PASS);
+      setScreenEvidenceMessage("Screen Evidence is ready for this assessment.");
+    } catch (err) {
+      setScreenEvidenceStatus(STATUS.FAIL);
+      setScreenEvidenceMessage(err.message || "Screen sharing could not be enabled. Try again.");
+    }
+  };
+
   const handleStartAssessment = () => {
+    if (screenEvidenceStatus !== STATUS.PASS || !getScreenEvidenceStream()) return;
+    startingAssessmentRef.current = true;
     transitionAssessmentStatus({ assessmentId, candidateId, role }, "In Progress");
     const q = new URLSearchParams({
       ...(assessmentId ? { assessmentId } : {}),
@@ -140,6 +181,7 @@ function SystemCheckPage() {
     return () => {
       stopMediaStreams();
       if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
+      if (!startingAssessmentRef.current) releaseScreenEvidence();
     };
   }, []);
 
@@ -349,7 +391,9 @@ function SystemCheckPage() {
     camStatus === STATUS.PASS &&
     micStatus === STATUS.PASS &&
     netStatus === STATUS.PASS &&
-    browserStatus === STATUS.PASS;
+    browserStatus === STATUS.PASS &&
+    screenEvidenceStatus === STATUS.PASS &&
+    Boolean(getScreenEvidenceStream());
 
   const isRunning =
     camStatus === STATUS.CHECKING ||
@@ -542,6 +586,34 @@ function SystemCheckPage() {
           </div>
         </div>
 
+        {/* Screen evidence prerequisite */}
+        <div className="assessment-card sc-card">
+          <div className="assessment-card-header sc-card-header">
+            <div className="sc-section-title">
+              <Monitor size={18} />
+              <span>Screen Evidence</span>
+            </div>
+            <p className="sc-section-hint">
+              Screen sharing is required to capture short evidence clips for qualifying assessment activity.
+            </p>
+          </div>
+          <div className={rowClass(screenEvidenceStatus)}>
+            <StatusIcon status={screenEvidenceStatus} />
+            <div className="sc-check-info">
+              <span className="sc-check-label"><Monitor size={14} /> Screen Sharing</span>
+              <span className="sc-check-msg">{screenEvidenceMessage}</span>
+            </div>
+            <button
+              type="button"
+              className="sc-rerun-btn"
+              onClick={handleEnableScreenEvidence}
+              disabled={screenEvidenceStatus === STATUS.CHECKING || screenEvidenceStatus === STATUS.PASS}
+            >
+              {screenEvidenceStatus === STATUS.CHECKING ? "Waiting..." : screenEvidenceStatus === STATUS.PASS ? "Enabled" : "Enable Screen Evidence"}
+            </button>
+          </div>
+        </div>
+
         {/* Readiness Summary */}
         <div className={`sc-readiness-bar ${requiredPassed ? "ready" : allChecksRan ? "not-ready" : "neutral"}`}>
           {requiredPassed ? (
@@ -617,6 +689,11 @@ function SystemCheckPage() {
         {checksStarted && !requiredPassed && allChecksRan && (
           <p className="btn-disabled-hint" style={{ textAlign: "center" }}>
             Resolve the failed checks above, then click "Re-run Checks" before continuing.
+          </p>
+        )}
+        {screenEvidenceStatus !== STATUS.PASS && (
+          <p className="btn-disabled-hint" style={{ textAlign: "center" }}>
+            Enable Screen Evidence before starting the assessment.
           </p>
         )}
       </main>

@@ -1,14 +1,18 @@
+import json
 import os
+import backend_question_generator as assessment_module
 import pytest
 from unittest.mock import patch
 from backend_question_generator import (
+    calculate_behavior_score,
     score_assessment_attempt,
     save_assessment_result,
     save_assessment_attempt,
     save_assessment_questions,
     ASSESSMENT_RESULTS_PATH,
     ASSESSMENT_ATTEMPTS_PATH,
-    ASSESSMENT_QUESTIONS_PATH
+    ASSESSMENT_QUESTIONS_PATH,
+    ASSESSMENT_BEHAVIOR_EVENTS_PATH
 )
 
 TEST_ASSESSMENT_ID = "test_score_id"
@@ -19,10 +23,107 @@ def isolate_test_stores(tmp_path, monkeypatch):
     q_file = tmp_path / "assessment_questions.json"
     att_file = tmp_path / "assessment_attempts.json"
     res_file = tmp_path / "assessment_results.json"
+    behavior_file = tmp_path / "assessment_behavior_events.json"
 
     monkeypatch.setattr("backend_question_generator.ASSESSMENT_QUESTIONS_PATH", q_file)
     monkeypatch.setattr("backend_question_generator.ASSESSMENT_ATTEMPTS_PATH", att_file)
     monkeypatch.setattr("backend_question_generator.ASSESSMENT_RESULTS_PATH", res_file)
+    monkeypatch.setattr("backend_question_generator.ASSESSMENT_BEHAVIOR_EVENTS_PATH", behavior_file)
+
+
+def test_behavior_score_is_deterministic_and_bounded():
+    result = calculate_behavior_score([
+        {"type": "tab_hidden", "timestamp": "t1"},
+        {"type": "tab_hidden", "timestamp": "t1"},
+        {"type": "tab_visible", "timestamp": "t2", "duration_seconds": 12.0},
+        {"type": "face_absent", "timestamp": "t3"},
+        {"type": "multiple_faces_detected", "timestamp": "t4"},
+        {"type": "camera_error", "timestamp": "t5"},
+        {"type": "camera_permission_denied", "timestamp": "t6"},
+    ])
+
+    assert result["behavior_score"] == 85
+    assert result["behavior_summary"] == {
+        "tab_switches": 1,
+        "total_tab_away_seconds": 12.0,
+        "face_absent_events": 1,
+        "multiple_faces_events": 1,
+        "camera_errors": 1,
+        "permission_denied": 1,
+    }
+
+
+def test_behavior_score_is_100_without_events():
+    result = calculate_behavior_score([])
+
+    assert result["behavior_score"] == 100
+    assert all(value == 0 for value in result["behavior_summary"].values())
+
+
+def test_weighted_result_keeps_technical_score_separate():
+    questions = {
+        "questions": [
+            {"id": f"q{i}", "type": "mcq", "skill": "Python", "correct_answer": "A"}
+            for i in range(15)
+        ]
+    }
+    attempt = {"answers": {f"q{i}": "A" if i < 12 else "B" for i in range(15)}}
+    save_assessment_questions(TEST_ASSESSMENT_ID, questions)
+    save_assessment_attempt(TEST_ASSESSMENT_ID, attempt)
+    assessment_module.ASSESSMENT_BEHAVIOR_EVENTS_PATH.write_text(json.dumps({
+        TEST_ASSESSMENT_ID: {
+            "assessment_id": TEST_ASSESSMENT_ID,
+            "events": [
+                {"type": "tab_hidden", "timestamp": "t1"},
+                {"type": "tab_hidden", "timestamp": "t2"},
+            ],
+        }
+    }))
+
+    result = score_assessment_attempt(TEST_ASSESSMENT_ID)
+
+    assert result["technical_score"] == 12.0
+    assert result["technical_percentage"] == 80.0
+    assert result["behavior_score"] == 96
+    assert result["overall_percentage"] == 83.2
+
+
+def test_behavior_score_skips_malformed_durations():
+    result = calculate_behavior_score([
+        {"type": "tab_visible", "duration_seconds": -1},
+        {"type": "tab_visible", "duration_seconds": "not-a-number"},
+        {"type": "tab_visible", "duration_seconds": float("inf")},
+        {"type": "tab_visible", "duration_seconds": 20000},
+        {"type": "tab_hidden", "timestamp": {"unexpected": "object"}},
+    ])
+
+    assert result["behavior_score"] == 98
+    assert result["behavior_summary"]["total_tab_away_seconds"] == 0.0
+
+
+def test_rescoring_ignores_malformed_persisted_events():
+    questions = {
+        "questions": [
+            {"id": "q1", "type": "mcq", "skill": "Python", "correct_answer": "A"}
+        ]
+    }
+    save_assessment_questions(TEST_ASSESSMENT_ID, questions)
+    save_assessment_attempt(TEST_ASSESSMENT_ID, {"answers": {"q1": "A"}})
+    assessment_module.ASSESSMENT_BEHAVIOR_EVENTS_PATH.write_text(json.dumps({
+        TEST_ASSESSMENT_ID: {
+            "assessment_id": TEST_ASSESSMENT_ID,
+            "events": [
+                {"type": "tab_visible", "duration_seconds": "bad"},
+                {"type": "tab_visible", "duration_seconds": -4},
+            ],
+        }
+    }))
+
+    first = score_assessment_attempt(TEST_ASSESSMENT_ID)
+    second = score_assessment_attempt(TEST_ASSESSMENT_ID)
+
+    assert first["overall_percentage"] == 100.0
+    assert second["overall_percentage"] == first["overall_percentage"]
 
 def test_mcq_scoring():
     questions = {

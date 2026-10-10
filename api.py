@@ -3,6 +3,7 @@ import hashlib
 import html
 import io
 import json
+import math
 import os
 import re
 import threading
@@ -11,10 +12,12 @@ import urllib.error
 import urllib.request
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, Query
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 try:
@@ -82,6 +85,108 @@ from backend import (
 from backend import (
     analyze_job_description_cached as analyze_job_description,
 )
+from assessment_auth import issue_assessment_token, require_assessment_access, require_recruiter, validate_identifier
+
+ASSESSMENT_EVIDENCE_DIR = pathlib.Path(__file__).resolve().parent / "assessment_evidence"
+ASSESSMENT_EVIDENCE_METADATA_PATH = ASSESSMENT_EVIDENCE_DIR / "metadata.json"
+EVIDENCE_EVENT_TYPES = {
+    "tab_hidden",
+    "looking_away",
+    "multiple_faces_detected",
+    "copy_attempt",
+    "paste_attempt",
+}
+MAX_EVIDENCE_BYTES = 8 * 1024 * 1024
+MAX_EVENTS_PER_MINUTE = 120
+_evidence_lock = threading.Lock()
+_event_rate_state = {}
+
+
+def _read_evidence_metadata():
+    if not ASSESSMENT_EVIDENCE_METADATA_PATH.exists():
+        return {}
+    try:
+        with ASSESSMENT_EVIDENCE_METADATA_PATH.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_evidence_metadata(metadata):
+    ASSESSMENT_EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    temp_path = ASSESSMENT_EVIDENCE_METADATA_PATH.with_suffix(".tmp")
+    with temp_path.open("w", encoding="utf-8") as handle:
+        json.dump(metadata, handle, indent=2)
+    temp_path.replace(ASSESSMENT_EVIDENCE_METADATA_PATH)
+
+
+def _assessment_record_for(assessment_id):
+    from backend_question_generator import get_assessment_questions
+
+    return get_assessment_questions(assessment_id)
+
+
+def _user_owns_assessment(user_id, assessment_id):
+    record = _assessment_record_for(assessment_id)
+    candidate_id = record.get("candidate_id") if record else None
+    if not candidate_id:
+        return False
+
+    for shortlist in get_shortlists():
+        if str(shortlist.get("user_id")) != str(user_id):
+            continue
+        candidates = shortlist.get("candidates") or shortlist.get("shortlisted_candidates") or []
+        if any(str(candidate.get("resume_id")) == str(candidate_id) for candidate in candidates):
+            return True
+    return False
+
+
+def _validate_event_timestamp(timestamp):
+    try:
+        parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid event timestamp.") from exc
+    if parsed.tzinfo is None:
+        raise HTTPException(status_code=400, detail="Event timestamp must include a timezone.")
+    age_seconds = (datetime.now(parsed.tzinfo) - parsed).total_seconds()
+    if age_seconds < -300 or age_seconds > 86400:
+        raise HTTPException(status_code=400, detail="Event timestamp is outside the allowed window.")
+    return parsed.isoformat()
+
+
+def _validate_duration(duration_seconds, maximum=14400):
+    if duration_seconds is None or not math.isfinite(duration_seconds) or not 0 <= duration_seconds <= maximum:
+        raise HTTPException(status_code=400, detail="Invalid event duration.")
+    return round(duration_seconds, 2)
+
+
+def _validate_evidence_bytes(evidence_type, content_type, clip_bytes):
+    expected_type = "image/png" if evidence_type == "screen_screenshot" else "video/webm"
+    if content_type.split(";", 1)[0].strip().lower() != expected_type:
+        raise HTTPException(status_code=400, detail="Evidence content type is not allowed.")
+    if evidence_type == "screen_screenshot" and not clip_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(status_code=400, detail="Evidence is not a valid PNG image.")
+    if evidence_type == "screen_video" and not clip_bytes.startswith(b"\x1a\x45\xdf\xa3"):
+        raise HTTPException(status_code=400, detail="Evidence is not a valid WebM video.")
+
+
+def _enforce_event_rate(rate_key, event_count):
+    now = time.monotonic()
+    with _evidence_lock:
+        recent = [timestamp for timestamp in _event_rate_state.get(rate_key, []) if now - timestamp < 60]
+        if len(recent) + event_count > MAX_EVENTS_PER_MINUTE:
+            raise HTTPException(status_code=429, detail="Behavior event rate limit exceeded.")
+        recent.extend([now] * event_count)
+        _event_rate_state[rate_key] = recent
+
+
+def _assert_evidence_path(assessment_id, evidence_id, extension):
+    root = ASSESSMENT_EVIDENCE_DIR.resolve()
+    path = (root / assessment_id / f"{evidence_id}.{extension}").resolve()
+    if root not in path.parents:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    return path
 
 # Helper function for PDF generation (local to avoid backend dependency)
 def _pdf_display_value(value):
@@ -633,6 +738,23 @@ async def get_evidence_alignment(request: EvidenceAlignmentRequest):
         }
 
 
+def _build_persistable_file_cache(file_cache):
+    """Remove transient embedding arrays before analysis-session persistence."""
+    persistable_cache = []
+    for item in file_cache:
+        persistable_item = dict(item)
+        persistable_item.pop("resume_embedding", None)
+        chunk_data = persistable_item.get("chunk_data")
+        if isinstance(chunk_data, dict):
+            persistable_item["chunk_data"] = {
+                key: value
+                for key, value in chunk_data.items()
+                if key != "embeddings"
+            }
+        persistable_cache.append(persistable_item)
+    return persistable_cache
+
+
 def _run_analyze_blocking(
     job_description: str,
     provider: str,
@@ -958,13 +1080,14 @@ def _run_analyze_blocking(
 
     print("[ANALYZE] Session persistence START")
     persistence_started = time.perf_counter()
+    persistable_file_cache = _build_persistable_file_cache(file_cache)
     payload = {
         "job_description": job_description,
         "provider": provider,
         "model_name": model_name,
         "detail_limit": detail_limit,
         "jd_info": jd_info,
-        "file_cache": file_cache,
+        "file_cache": persistable_file_cache,
         "result": {
             "job_description": serialize_jd_info(jd_info),
             "ranking": ranking,
@@ -1941,8 +2064,30 @@ class PostBehaviorEventsRequest(BaseModel):
     events: List[BehaviorEventItem]
 
 
+class AssessmentAccessTokenRequest(BaseModel):
+    assessment_id: str
+    candidate_id: str
+
+
+@api.post("/api/assessment/access-token")
+async def issue_assessment_access_token(request: Request, payload: AssessmentAccessTokenRequest):
+    recruiter = require_recruiter(request)
+    assessment_id = validate_identifier(payload.assessment_id, "assessment ID")
+    candidate_id = validate_identifier(payload.candidate_id, "candidate ID")
+    record = _assessment_record_for(assessment_id)
+    if not record or str(record.get("candidate_id")) != candidate_id:
+        raise HTTPException(status_code=404, detail="Assessment not found.")
+    if not _user_owns_assessment(recruiter["sub"], assessment_id):
+        raise HTTPException(status_code=403, detail="Assessment access denied.")
+    return {
+        "assessment_id": assessment_id,
+        "candidate_id": candidate_id,
+        "token": issue_assessment_token(recruiter["sub"], assessment_id, candidate_id),
+    }
+
+
 @api.post("/api/assessment/behavior-events")
-async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
+async def post_behavior_events_endpoint(request: Request, payload: PostBehaviorEventsRequest):
     """Securely log observable candidate behavior events."""
     try:
         from backend_question_generator import (
@@ -1951,33 +2096,45 @@ async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
         )
 
         # 1. Validate assessment exists
-        questions_payload = get_assessment_questions(request.assessment_id)
+        assessment_id = validate_identifier(payload.assessment_id, "assessment ID")
+        candidate_id = validate_identifier(payload.candidate_id, "candidate ID")
+        require_assessment_access(request, assessment_id, candidate_id)
+        questions_payload = get_assessment_questions(assessment_id)
         if not questions_payload:
             raise HTTPException(
                 status_code=404,
-                detail=f"Assessment ID '{request.assessment_id}' not found. Cannot record behavior events."
+                detail=f"Assessment ID '{assessment_id}' not found. Cannot record behavior events."
             )
+        if str(questions_payload.get("candidate_id")) != candidate_id:
+            raise HTTPException(status_code=403, detail="Candidate access denied.")
 
         # Allowed observable event types
         ALLOWED_EVENT_TYPES = {
           "tab_hidden", "tab_visible",
           "face_present", "face_absent", "multiple_faces_detected",
           "looking_away", "looking_forward",
+          "eye_looking_left", "eye_looking_right", "eye_looking_up",
+          "eye_looking_down", "eye_looking_forward",
           "camera_started", "camera_stopped", "camera_error",
+          "camera_permission_denied",
           "audio_activity_detected", "network_offline", "network_online",
           "copy_attempt", "paste_attempt"
         }
 
+        if len(payload.events) > 100:
+            raise HTTPException(status_code=400, detail="Too many behavior events in one request.")
+        _enforce_event_rate(f"{assessment_id}:{candidate_id}", len(payload.events))
+
         sanitized_events = []
-        for item in request.events:
+        for item in payload.events:
             evt_type = str(item.type).strip()
             if evt_type in ALLOWED_EVENT_TYPES:
                 evt_dict = {
                     "type": evt_type,
-                    "timestamp": str(item.timestamp)
+                    "timestamp": _validate_event_timestamp(item.timestamp)
                 }
                 if item.duration_seconds is not None:
-                    evt_dict["duration_seconds"] = round(float(item.duration_seconds), 2)
+                    evt_dict["duration_seconds"] = _validate_duration(item.duration_seconds)
                 if item.details:
                     evt_dict["details"] = str(item.details)[:200]
                 sanitized_events.append(evt_dict)
@@ -1985,21 +2142,21 @@ async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
                 # --- 1. & 3. TERMINAL LOGGING ---
                 if evt_type == "tab_hidden":
                     print(f"\n[TAB MONITORING] TAB HIDDEN")
-                    print(f"assessment_id={request.assessment_id}")
+                    print(f"assessment_id={assessment_id}")
                     print(f"timestamp={evt_dict['timestamp']}")
                 elif evt_type == "tab_visible":
                     print(f"\n[TAB MONITORING] TAB VISIBLE")
-                    print(f"assessment_id={request.assessment_id}")
+                    print(f"assessment_id={assessment_id}")
                     print(f"timestamp={evt_dict['timestamp']}")
                     if "duration_seconds" in evt_dict:
                         print(f"duration_seconds={evt_dict['duration_seconds']}")
                 elif evt_type == "face_present":
                     print(f"\n[FACE MONITORING] FACE PRESENT")
-                    print(f"assessment_id={request.assessment_id}")
+                    print(f"assessment_id={assessment_id}")
                     print(f"timestamp={evt_dict['timestamp']}")
                 elif evt_type == "face_absent":
                     print(f"\n[FACE MONITORING] FACE ABSENT")
-                    print(f"assessment_id={request.assessment_id}")
+                    print(f"assessment_id={assessment_id}")
                     print(f"timestamp={evt_dict['timestamp']}")
                     if "duration_seconds" in evt_dict:
                         print(f"absence_duration_seconds={evt_dict['duration_seconds']}")
@@ -2008,14 +2165,14 @@ async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
             return {"message": "No valid behavior events to record", "count": 0}
 
         record = append_assessment_behavior_events(
-            assessment_id=request.assessment_id,
-            candidate_id=request.candidate_id or "unknown",
+            assessment_id=assessment_id,
+            candidate_id=candidate_id,
             new_events=sanitized_events
         )
 
         return {
             "message": "Behavior events logged successfully",
-            "assessment_id": request.assessment_id,
+            "assessment_id": assessment_id,
             "events_added": len(sanitized_events),
             "total_events": len(record.get("events", []))
         }
@@ -2026,17 +2183,126 @@ async def post_behavior_events_endpoint(request: PostBehaviorEventsRequest):
 
 
 @api.get("/api/assessment/behavior-events/{assessment_id}")
-async def get_behavior_events_endpoint(assessment_id: str):
+async def get_behavior_events_endpoint(request: Request, assessment_id: str):
     """Retrieve logged behavior monitoring events for an assessment ID."""
     try:
         from backend_question_generator import get_assessment_behavior_events
+
+        assessment_id = validate_identifier(assessment_id, "assessment ID")
+        recruiter = require_recruiter(request)
+        if not _user_owns_assessment(recruiter["sub"], assessment_id):
+            raise HTTPException(status_code=403, detail="Assessment access denied.")
 
         record = get_assessment_behavior_events(assessment_id)
         if record:
             return record
         return {"assessment_id": assessment_id, "candidate_id": "unknown", "events": []}
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to fetch behavior events: {str(exc)}")
+
+
+@api.post("/api/assessment/evidence")
+async def post_assessment_evidence_endpoint(
+    request: Request,
+    assessment_id: str = Form(...),
+    candidate_id: str = Form("unknown"),
+    event_type: str = Form(...),
+    timestamp: str = Form(...),
+    duration_seconds: float = Form(...),
+    evidence_type: str = Form(...),
+    clip: UploadFile = File(...),
+):
+    """Store one short, allowlisted assessment evidence clip."""
+    assessment_id = validate_identifier(assessment_id, "assessment ID")
+    candidate_id = validate_identifier(candidate_id, "candidate ID")
+    require_assessment_access(request, assessment_id, candidate_id)
+    if event_type not in EVIDENCE_EVENT_TYPES:
+        raise HTTPException(status_code=400, detail="Evidence event type is not allowed.")
+    if duration_seconds <= 0 or duration_seconds > 5:
+        raise HTTPException(status_code=400, detail="Evidence duration must be between 0 and 5 seconds.")
+    if evidence_type not in {"screen_video", "screen_screenshot"}:
+        raise HTTPException(status_code=400, detail="Evidence type must be screen_video or screen_screenshot.")
+
+    from backend_question_generator import get_assessment_questions
+
+    questions_payload = get_assessment_questions(assessment_id)
+    if not questions_payload:
+        raise HTTPException(status_code=404, detail=f"Assessment ID '{assessment_id}' not found.")
+    if str(questions_payload.get("candidate_id")) != candidate_id:
+        raise HTTPException(status_code=403, detail="Candidate access denied.")
+
+    content_type = clip.content_type or ""
+
+    clip_bytes = await clip.read(MAX_EVIDENCE_BYTES + 1)
+    if not clip_bytes or len(clip_bytes) > MAX_EVIDENCE_BYTES:
+        raise HTTPException(status_code=400, detail="Evidence clip is empty or too large.")
+    _validate_event_timestamp(timestamp)
+    _validate_duration(duration_seconds, maximum=5)
+    _validate_evidence_bytes(evidence_type, content_type, clip_bytes)
+
+    evidence_id = uuid.uuid4().hex
+    assessment_dir = ASSESSMENT_EVIDENCE_DIR / assessment_id
+    assessment_dir.mkdir(parents=True, exist_ok=True)
+    extension = "png" if evidence_type == "screen_screenshot" else "webm"
+    clip_path = _assert_evidence_path(assessment_id, evidence_id, extension)
+    clip_path.write_bytes(clip_bytes)
+
+    evidence_item = {
+        "evidence_id": evidence_id,
+        "assessment_id": assessment_id,
+        "candidate_id": candidate_id or "unknown",
+        "event_type": event_type,
+        "evidence_type": evidence_type,
+        "timestamp": timestamp,
+        "duration_seconds": round(float(duration_seconds), 2),
+        "storage_reference": f"/api/assessment/evidence/{assessment_id}/{evidence_id}",
+    }
+    with _evidence_lock:
+        metadata = _read_evidence_metadata()
+        metadata.setdefault(assessment_id, []).append(evidence_item)
+        _write_evidence_metadata(metadata)
+
+    return evidence_item
+
+
+@api.get("/api/assessment/evidence/{assessment_id}")
+async def get_assessment_evidence_endpoint(request: Request, assessment_id: str):
+    """Return evidence metadata for only the requested assessment."""
+    assessment_id = validate_identifier(assessment_id, "assessment ID")
+    recruiter = require_recruiter(request)
+    if not _user_owns_assessment(recruiter["sub"], assessment_id):
+        raise HTTPException(status_code=403, detail="Assessment access denied.")
+    with _evidence_lock:
+        metadata = _read_evidence_metadata()
+        evidence = metadata.get(assessment_id, [])
+    return {"assessment_id": assessment_id, "evidence": evidence}
+
+
+@api.get("/api/assessment/evidence/{assessment_id}/{evidence_id}")
+async def get_assessment_evidence_clip_endpoint(request: Request, assessment_id: str, evidence_id: str):
+    """Stream one stored evidence clip after verifying its assessment ownership."""
+    assessment_id = validate_identifier(assessment_id, "assessment ID")
+    evidence_id = validate_identifier(evidence_id, "evidence ID")
+    recruiter = require_recruiter(request)
+    if not _user_owns_assessment(recruiter["sub"], assessment_id):
+        raise HTTPException(status_code=403, detail="Assessment access denied.")
+    with _evidence_lock:
+        evidence = next(
+            (item for item in _read_evidence_metadata().get(assessment_id, [])
+             if item.get("evidence_id") == evidence_id),
+            None,
+        )
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence clip not found.")
+
+    extension = "png" if evidence.get("evidence_type") == "screen_screenshot" else "webm"
+    clip_path = _assert_evidence_path(assessment_id, evidence_id, extension)
+    if not clip_path.is_file():
+        raise HTTPException(status_code=404, detail="Evidence clip file not found.")
+    media_type = "image/png" if evidence.get("evidence_type") == "screen_screenshot" else "video/webm"
+    return FileResponse(clip_path, media_type=media_type)
 
 
 @api.post("/api/assessment/score/{assessment_id}")

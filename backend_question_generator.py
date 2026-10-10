@@ -9,6 +9,7 @@ This module is responsible for:
 
 import hashlib
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -296,6 +297,78 @@ def save_assessment_result(assessment_id: str, payload: Dict[str, Any]) -> None:
     write_json_file(ASSESSMENT_RESULTS_PATH, store)
 
 
+def calculate_behavior_score(events: Optional[List[Dict[str, Any]]]) -> Dict[str, Any]:
+    """Calculate a bounded score from persisted behavior metadata.
+
+    Scored signals are tab switches, tab-away duration, face absence, multiple
+    faces, camera errors, and camera permission denial. Gaze, looking-away,
+    audio, network, and copy/paste events remain informational only.
+    """
+    unique_events = []
+    seen_events = set()
+    for event in events or []:
+        if not isinstance(event, dict) or not event.get("type"):
+            continue
+        event_type = str(event.get("type"))
+        event_key = (
+            event_type,
+            repr(event.get("timestamp")),
+            repr(event.get("duration_seconds")),
+            repr(event.get("details")),
+        )
+        if event_key in seen_events:
+            continue
+        seen_events.add(event_key)
+        unique_events.append({**event, "type": event_type})
+
+    def valid_duration(event):
+        value = event.get("duration_seconds", 0) or 0
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        return value if math.isfinite(value) and 0 <= value <= 14400 else 0.0
+
+    tab_switches = sum(event.get("type") == "tab_hidden" for event in unique_events)
+    total_tab_away_seconds = sum(
+        valid_duration(event)
+        for event in unique_events
+        if event.get("type") == "tab_visible"
+    )
+    face_absent_events = sum(event.get("type") == "face_absent" for event in unique_events)
+    multiple_faces_events = sum(
+        event.get("type") == "multiple_faces_detected" for event in unique_events
+    )
+    camera_errors = sum(event.get("type") == "camera_error" for event in unique_events)
+    permission_denied = sum(
+        event.get("type") == "camera_permission_denied" for event in unique_events
+    )
+
+    deductions = tab_switches * 2
+    if total_tab_away_seconds > 60:
+        deductions += 8
+    elif total_tab_away_seconds > 30:
+        deductions += 5
+    elif total_tab_away_seconds > 10:
+        deductions += 2
+    deductions += face_absent_events * 3
+    deductions += multiple_faces_events * 5
+    deductions += camera_errors
+    deductions += min(permission_denied, 1) * 2
+
+    return {
+        "behavior_score": max(0, min(100, 100 - deductions)),
+        "behavior_summary": {
+            "tab_switches": tab_switches,
+            "total_tab_away_seconds": round(total_tab_away_seconds, 2),
+            "face_absent_events": face_absent_events,
+            "multiple_faces_events": multiple_faces_events,
+            "camera_errors": camera_errors,
+            "permission_denied": permission_denied,
+        },
+    }
+
+
 def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
     """Score the assessment attempt for the given assessment ID.
     
@@ -306,7 +379,34 @@ def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
     # 1. Check if already scored
     existing = get_assessment_result(assessment_id)
     if existing:
-        return existing
+        behavior_result = calculate_behavior_score(
+            (get_assessment_behavior_events(assessment_id) or {}).get("events", [])
+        )
+        technical_score = float(existing.get("technical_score", existing.get("total_score", 0)))
+        technical_max_score = float(existing.get("technical_max_score", existing.get("max_score", 0)))
+        technical_percentage = float(
+            existing.get(
+                "technical_percentage",
+                existing.get("percentage", (technical_score / technical_max_score) * 100
+                if technical_max_score else 0),
+            )
+        )
+        updated = dict(existing)
+        updated.update({
+            "technical_score": technical_score,
+            "technical_max_score": technical_max_score,
+            "technical_percentage": technical_percentage,
+            "behavior_score": behavior_result["behavior_score"],
+            "behavior_weight": 20,
+            "technical_weight": 80,
+            "overall_percentage": round(
+                (technical_percentage * 0.80) + (behavior_result["behavior_score"] * 0.20), 2
+            ),
+            "behavior_summary": behavior_result["behavior_summary"],
+        })
+        if updated != existing:
+            save_assessment_result(assessment_id, updated)
+        return updated
         
     # 2. Get questions and attempt
     questions_data = get_assessment_questions(assessment_id)
@@ -411,12 +511,24 @@ Return JSON matching the provided schema.
         s_info["percentage"] = round((s_info["score"] / s_info["max_score"]) * 100, 2) if s_info["max_score"] > 0 else 0.0
         
     percentage = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
+    behavior_result = calculate_behavior_score(
+        (get_assessment_behavior_events(assessment_id) or {}).get("events", [])
+    )
+    overall_percentage = round((percentage * 0.80) + (behavior_result["behavior_score"] * 0.20), 2)
     
     result_payload = {
         "assessment_id": assessment_id,
         "total_score": total_score,
         "max_score": max_score,
         "percentage": percentage,
+        "technical_score": total_score,
+        "technical_max_score": max_score,
+        "technical_percentage": percentage,
+        "behavior_score": behavior_result["behavior_score"],
+        "behavior_weight": 20,
+        "technical_weight": 80,
+        "overall_percentage": overall_percentage,
+        "behavior_summary": behavior_result["behavior_summary"],
         "skill_scores": [{"skill": k, **v} for k, v in skill_scores.items()],
         "question_results": question_results
     }

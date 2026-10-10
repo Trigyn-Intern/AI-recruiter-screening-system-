@@ -58,8 +58,8 @@ function Login() {
   return (
     <div className="auth-page">
       <div className="glass-card">
-        <h1>Welcome back</h1>
-        <p className="subtitle">Log in to continue your journey</p>
+        <h1>Welcome Back</h1>
+        <p className="subtitle">Log in to continue your journey.</p>
 
         <form onSubmit={handleLogin}>
           <div className="form-group">

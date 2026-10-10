@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import "./assessmentManagement.css";
 import { findAssessmentRecord } from "../../utils/assessmentStore";
+import { getStoredToken } from "../../api/client";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 const STORAGE_KEY = "recruiter.assessment_records";
@@ -254,29 +255,52 @@ function resolveAssessmentId(cand, record) {
 }
 
   // Handle Link Generation for Assessment
-  const handleGenerateLink = (candKey, cand) => {
+  const handleGenerateLink = async (candKey, cand) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const assessmentId = resolveAssessmentId(cand, records[candKey]);
-    const generatedUrl = `${origin}/assessment/start?assessmentId=${encodeURIComponent(assessmentId)}&candidateId=${encodeURIComponent(cand.resume_id)}&role=${encodeURIComponent(cand.job_role)}`;
+    const token = getStoredToken();
+    if (!token) {
+      setActionNotice("Your recruiter session has expired. Please sign in again.");
+      return;
+    }
 
-    const nextRecords = {
-      ...records,
-      [candKey]: {
-        ...(records[candKey] || {}),
-        assessmentId,
-        candidateId: cand.resume_id,
-        candidateName: cand.candidate_name,
-        jobRole: cand.job_role,
-        shortlistId: cand.shortlist_id,
-        status: "Ready to Share",
-        generatedLink: generatedUrl,
-        duration: "45 Mins",
-        questionCount: "15 Questions",
-        createdAt: records[candKey]?.createdAt || new Date().toISOString(),
-        linkGeneratedAt: new Date().toISOString()
+    try {
+      const tokenResponse = await fetch(`${API_BASE_URL}/api/assessment/access-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ assessment_id: assessmentId, candidate_id: cand.resume_id })
+      });
+      const tokenData = await tokenResponse.json().catch(() => ({}));
+      if (!tokenResponse.ok || !tokenData.token) {
+        throw new Error(tokenData.detail || "Could not create a secure assessment link.");
       }
-    };
-    updateRecords(nextRecords);
+
+      const generatedUrl = `${origin}/assessment/start?assessmentId=${encodeURIComponent(assessmentId)}&candidateId=${encodeURIComponent(cand.resume_id)}&role=${encodeURIComponent(cand.job_role)}&accessToken=${encodeURIComponent(tokenData.token)}`;
+
+      const nextRecords = {
+        ...records,
+        [candKey]: {
+          ...(records[candKey] || {}),
+          assessmentId,
+          candidateId: cand.resume_id,
+          candidateName: cand.candidate_name,
+          jobRole: cand.job_role,
+          shortlistId: cand.shortlist_id,
+          status: "Ready to Share",
+          generatedLink: generatedUrl,
+          duration: "45 Mins",
+          questionCount: "15 Questions",
+          createdAt: records[candKey]?.createdAt || new Date().toISOString(),
+          linkGeneratedAt: new Date().toISOString()
+        }
+      };
+      updateRecords(nextRecords);
+    } catch (error) {
+      setActionNotice(error.message || "Could not create a secure assessment link.");
+    }
   };
 
   // Handle Copy Link
@@ -322,12 +346,17 @@ function resolveAssessmentId(cand, record) {
     });
 
     try {
-      const [scoreRes, behaviorRes] = await Promise.all([
+      const [scoreRes, behaviorRes, evidenceRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/assessment/score/${encodeURIComponent(assessmentId)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" }
         }),
-        fetch(`${API_BASE_URL}/api/assessment/behavior-events/${encodeURIComponent(assessmentId)}`)
+        fetch(`${API_BASE_URL}/api/assessment/behavior-events/${encodeURIComponent(assessmentId)}`, {
+          headers: { Authorization: `Bearer ${getStoredToken() || ""}` }
+        }),
+        fetch(`${API_BASE_URL}/api/assessment/evidence/${encodeURIComponent(assessmentId)}`, {
+          headers: { Authorization: `Bearer ${getStoredToken() || ""}` }
+        })
       ]);
 
       if (!scoreRes.ok) {
@@ -344,6 +373,15 @@ function resolveAssessmentId(cand, record) {
         activityError = bErr.detail || "Could not load assessment activity.";
       }
 
+      let evidenceData = { assessment_id: assessmentId, evidence: [] };
+      let evidenceError = null;
+      if (evidenceRes.ok) {
+        evidenceData = await evidenceRes.json();
+      } else {
+        const eErr = await evidenceRes.json().catch(() => ({}));
+        evidenceError = eErr.detail || "Could not load assessment evidence.";
+      }
+
       const data = await scoreRes.json();
       
       setViewingResult((prev) => ({
@@ -351,7 +389,9 @@ function resolveAssessmentId(cand, record) {
         loading: false,
         data: data,
         activityData,
-        activityError
+        activityError,
+        evidenceData,
+        evidenceError
       }));
     } catch (err) {
       setViewingResult((prev) => ({
@@ -705,19 +745,28 @@ function resolveAssessmentId(cand, record) {
 
 // ─── ASSESSMENT RESULT MODAL COMPONENT (PHASE 2 SIMPLE SUMMARY) ───────────────
 function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
+  const [showQuestions, setShowQuestions] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
   if (!viewingResult) return null;
 
-  const { candidateName, jobRole, status, loading, error, data, activityData, activityError } = viewingResult;
+  const { candidateName, jobRole, status, loading, error, data, activityData, activityError, evidenceData, evidenceError } = viewingResult;
 
   const EVENT_LABELS = {
     camera_started: "Camera Started",
     camera_stopped: "Camera Stopped",
     camera_error: "Camera Error",
+    camera_permission_denied: "Camera Permission Denied",
     face_present: "Face Detected",
     face_absent: "Face Absent",
     multiple_faces_detected: "Multiple Faces Detected",
     looking_away: "Looking Away",
     looking_forward: "Looking Forward",
+    eye_looking_left: "Eye Looking Left",
+    eye_looking_right: "Eye Looking Right",
+    eye_looking_up: "Eye Looking Up",
+    eye_looking_down: "Eye Looking Down",
+    eye_looking_forward: "Eyes Forward",
     audio_activity_detected: "Audio Activity",
     tab_hidden: "Assessment Page Hidden",
     tab_visible: "Assessment Page Visible",
@@ -748,6 +797,49 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
 
     return { counts: summary, tabHiddenDuration, networkOfflineDuration };
   };
+
+  const behaviorSummary = data?.behavior_summary || calculateActivitySummary(activityData?.events || []);
+  const summary = behaviorSummary.counts ? {
+    tab_switches: behaviorSummary.counts.tab_hidden || 0,
+    total_tab_away_seconds: behaviorSummary.tabHiddenDuration || 0,
+    face_absent_events: behaviorSummary.counts.face_absent || 0,
+    multiple_faces_events: behaviorSummary.counts.multiple_faces_detected || 0,
+    camera_errors: behaviorSummary.counts.camera_error || 0
+  } : behaviorSummary;
+
+  const evidenceItems = Array.isArray(evidenceData?.evidence) ? evidenceData.evidence : [];
+  const screenEvidenceItems = evidenceItems.filter((item) =>
+    item.evidence_type === "screen_video" || item.evidence_type === "screen_screenshot"
+  );
+  const legacyEvidenceCount = evidenceItems.length - screenEvidenceItems.length;
+  const evidenceEligibleEvents = new Set([
+    "tab_hidden",
+    "looking_away",
+    "multiple_faces_detected",
+    "copy_attempt",
+    "paste_attempt"
+  ]);
+  const hasEvidenceEligibleActivity = (activityData?.events || []).some((event) =>
+    evidenceEligibleEvents.has(event.type)
+  );
+  const findEvidenceForEvent = (event) => {
+    const matching = screenEvidenceItems.filter((item) => item.event_type === event.type);
+    if (!matching.length) return null;
+    const eventTime = new Date(event.timestamp).getTime();
+    return matching.reduce((closest, item) => {
+      const distance = Math.abs(new Date(item.timestamp).getTime() - eventTime);
+      const closestDistance = Math.abs(new Date(closest.timestamp).getTime() - eventTime);
+      return distance < closestDistance ? item : closest;
+    });
+  };
+
+  const activityTimeline = [...(activityData?.events || []), ...screenEvidenceItems.map((item) => ({
+    ...item,
+    type: item.event_type
+  }))].filter((event, index, events) => {
+    const eventKey = `${event.type}|${event.timestamp}`;
+    return events.findIndex((candidate) => `${candidate.type}|${candidate.timestamp}` === eventKey) === index;
+  });
 
   return (
     <div className="arm-modal-overlay" onClick={onClose}>
@@ -806,14 +898,25 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
 
               <div className="arm-score-banner">
                 <div className="arm-score-main">
-                  <span className="arm-score-lbl">Total Score</span>
+                  <span className="arm-score-lbl">Technical Assessment</span>
                   <span className="arm-score-num">
-                    {data.total_score} <span className="arm-score-max">/ {data.max_score}</span>
+                    {data.technical_score ?? data.total_score} <span className="arm-score-max">/ {data.technical_max_score ?? data.max_score}</span>
                   </span>
                 </div>
                 <div className="arm-score-pct-badge">
-                  <span className="pct-num">{data.percentage}%</span>
-                  <span className="pct-lbl">Overall Percentage</span>
+                  <span className="pct-num">{data.technical_percentage ?? data.percentage}%</span>
+                  <span className="pct-lbl">Technical Percentage</span>
+                </div>
+              </div>
+
+              <div className="arm-score-components">
+                <div>
+                  <span className="arm-score-lbl">Behavior Assessment</span>
+                  <strong>{data.behavior_score ?? 100} / 100</strong>
+                </div>
+                <div>
+                  <span className="arm-score-lbl">Overall Score</span>
+                  <strong>{data.overall_percentage ?? data.percentage}%</strong>
                 </div>
               </div>
 
@@ -852,10 +955,10 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
 
               {/* Phase 4: Question-wise Results */}
               <div className="arm-question-section">
-                <h4 className="arm-section-title">
-                  <FileText size={16} /> Question-wise Results
-                </h4>
-                {data.question_results && data.question_results.length > 0 ? (
+                <button type="button" className="arm-collapse-btn" onClick={() => setShowQuestions((visible) => !visible)}>
+                  <FileText size={16} /> {showQuestions ? "Hide Question-wise Results" : "View Question-wise Results"}
+                </button>
+                {showQuestions && data.question_results && data.question_results.length > 0 ? (
                   <div className="arm-question-list">
                     {data.question_results.map((q, idx) => {
                       const qNum = q.question_number || idx + 1;
@@ -945,13 +1048,17 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
 
           {/* Phase 5.7: Assessment Activity & Monitoring */}
           {data && (
-            <div className="arm-activity-section">
-              <h4 className="arm-section-title" style={{ marginTop: '24px' }}>
-                <Activity size={16} /> Assessment Activity & Monitoring
-              </h4>
-              <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '16px' }}>
-                These are observable assessment activity signals and should be interpreted in context. They do not by themselves indicate misconduct.
-              </p>
+            <>
+              <button type="button" className="arm-collapse-btn" onClick={() => setShowActivity((visible) => !visible)}>
+                <Activity size={16} /> {showActivity ? "Hide Behavior Activity" : "View Behavior Activity"}
+              </button>
+              {showActivity && <div className="arm-activity-section">
+                <h4 className="arm-section-title" style={{ marginTop: '24px' }}>
+                  <Activity size={16} /> Observed Behavior
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '16px' }}>
+                  These observable activity signals should be interpreted in context and may need review.
+                </p>
 
               {loading ? (
                 <p>Loading assessment activity...</p>
@@ -959,37 +1066,18 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
                 <div className="arm-error-state" style={{ padding: '16px', background: '#FEE2E2', borderRadius: '8px' }}>
                   <p style={{ color: '#DC2626', margin: 0 }}>{activityError}</p>
                 </div>
-              ) : activityData && activityData.events && activityData.events.length > 0 ? (
+              ) : activityTimeline.length > 0 ? (
                 <>
                   {/* Activity Summary */}
                   <div className="arm-activity-summary" style={{ background: '#F3F4F6', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-                    <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Activity Summary</h5>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Behavior Summary</h5>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
-                      {(() => {
-                        const { counts, tabHiddenDuration, networkOfflineDuration } = calculateActivitySummary(activityData.events);
-                        return (
-                          <>
-                            {Object.entries(EVENT_LABELS).map(([key, label]) => (
-                              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                <span style={{ color: '#4B5563' }}>{label}</span>
-                                <span style={{ fontWeight: '600' }}>{counts[key]}</span>
-                              </div>
-                            ))}
-                            {tabHiddenDuration > 0 && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginTop: '8px', borderTop: '1px solid #D1D5DB', paddingTop: '8px' }}>
-                                <span style={{ color: '#4B5563' }}>Tab Hidden Time</span>
-                                <span style={{ fontWeight: '600' }}>{tabHiddenDuration.toFixed(1)} sec</span>
-                              </div>
-                            )}
-                            {networkOfflineDuration > 0 && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                <span style={{ color: '#4B5563' }}>Network Offline Time</span>
-                                <span style={{ fontWeight: '600' }}>{networkOfflineDuration.toFixed(1)} sec</span>
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
+                      <div><span>Tab switches: </span><strong>{summary.tab_switches}</strong></div>
+                      <div><span>Total tab-away time: </span><strong>{Number(summary.total_tab_away_seconds || 0).toFixed(1)} sec</strong></div>
+                      <div><span>Face absent events: </span><strong>{summary.face_absent_events}</strong></div>
+                      <div><span>Multiple-face events: </span><strong>{summary.multiple_faces_events}</strong></div>
+                      <div><span>Camera errors: </span><strong>{summary.camera_errors}</strong></div>
+                      <div><span>Permission denied events: </span><strong>{summary.permission_denied || 0}</strong></div>
                     </div>
                   </div>
 
@@ -997,7 +1085,7 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
                   <div className="arm-activity-timeline">
                     <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Activity Timeline</h5>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {[...activityData.events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map((evt, idx) => (
+                      {[...activityTimeline].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map((evt, idx) => (
                         <div key={idx} style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '0.9rem' }}>
                           <div style={{ color: '#6B7280', fontSize: '0.8rem', marginBottom: '4px' }}>
                             {new Date(evt.timestamp).toLocaleTimeString()}
@@ -1005,6 +1093,15 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
                           <div style={{ fontWeight: '500', color: '#111827' }}>
                             {EVENT_LABELS[evt.type] || evt.type}
                           </div>
+                          {findEvidenceForEvent(evt) && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedEvidence(findEvidenceForEvent(evt))}
+                              style={{ marginTop: 8, border: 0, padding: 0, background: "transparent", color: "#2563EB", cursor: "pointer", fontSize: "0.85rem" }}
+                            >
+                              View Screen Evidence
+                            </button>
+                          )}
                           {evt.duration_seconds !== undefined && (
                             <div style={{ color: '#4B5563', marginTop: '4px' }}>
                               Duration: {evt.duration_seconds} sec
@@ -1021,11 +1118,78 @@ function AssessmentResultModal({ viewingResult, onClose, onRetry }) {
                   </div>
                 </>
               ) : (
-                <p>No assessment activity recorded.</p>
+                <p>No notable behavior events recorded.</p>
               )}
-            </div>
+
+              <div className="arm-activity-section" style={{ marginTop: 24 }}>
+                <h4 className="arm-section-title">Proctoring Evidence</h4>
+                {evidenceError ? (
+                  <p style={{ color: '#6B7280' }}>{evidenceError}</p>
+                ) : screenEvidenceItems.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {screenEvidenceItems.map((item) => (
+                      <div key={item.evidence_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 12, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6 }}>
+                        <div>
+                          <div style={{ fontWeight: 500, color: '#111827' }}>{EVENT_LABELS[item.event_type] || item.event_type}</div>
+                          <div style={{ color: '#6B7280', fontSize: '0.8rem', marginTop: 4 }}>{new Date(item.timestamp).toLocaleTimeString()}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEvidence(item)}
+                          style={{ border: '1px solid #D1D5DB', borderRadius: 6, padding: '7px 10px', background: '#FFFFFF', color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >
+                          View Screen Evidence
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>
+                    {legacyEvidenceCount > 0
+                      ? "Screen evidence unavailable for older camera evidence."
+                      : hasEvidenceEligibleActivity
+                        ? "Screen evidence unavailable for the recorded activity."
+                        : "No recorded evidence for this assessment."}
+                  </p>
+                )}
+              </div>
+
+              </div>}
+            </>
           )}
         </div>
+
+        {selectedEvidence && (
+          <div className="arm-modal-overlay" onClick={() => setSelectedEvidence(null)} style={{ zIndex: 20 }}>
+            <div className="arm-modal-card" onClick={(event) => event.stopPropagation()} style={{ maxWidth: 720 }}>
+              <div className="arm-modal-header">
+                <div className="arm-modal-header-text">
+                  <h3>{selectedEvidence.evidence_type === "screen_screenshot" ? "Screen Screenshot" : "Screen Recording"}</h3>
+                  <p>{new Date(selectedEvidence.timestamp).toLocaleTimeString()}</p>
+                </div>
+                <button className="arm-modal-close-btn" onClick={() => setSelectedEvidence(null)} aria-label="Close evidence viewer">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="arm-modal-body">
+                {selectedEvidence.evidence_type === "screen_screenshot" ? (
+                  <img
+                    alt="Screen evidence"
+                    style={{ width: '100%', maxHeight: 420, objectFit: 'contain', background: '#111827', borderRadius: 6 }}
+                    src={`${API_BASE_URL}${selectedEvidence.storage_reference}`}
+                  />
+                ) : (
+                  <video
+                    controls
+                    preload="metadata"
+                    style={{ width: '100%', maxHeight: 420, background: '#111827', borderRadius: 6 }}
+                    src={`${API_BASE_URL}${selectedEvidence.storage_reference}`}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal Footer */}
         <div className="arm-modal-footer">

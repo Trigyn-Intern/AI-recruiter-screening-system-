@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import {
   Brain,
   Clock,
@@ -18,14 +19,51 @@ import {
   Camera
 } from "lucide-react";
 import "./assessmentTest.css";
+import {
+  GAZE_DIRECTIONS,
+  classifyGaze,
+  createGazeState,
+  getGazePosition,
+  resetGazeTracking,
+  updateGazeBaseline,
+  updateGazeState
+} from "./gaze-monitoring";
 
 import { findAssessmentRecord, transitionAssessmentStatus } from "../../utils/assessmentStore";
+import {
+  getScreenEvidenceStream,
+  requestScreenEvidence,
+  releaseScreenEvidence,
+  uploadScreenEvidence
+} from "./screenEvidenceSession";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 const TOTAL_SECONDS = 45 * 60; // 45 minutes
 
 // ─── Lazy-load MediaPipe face detection via CDN (shared with SystemCheckPage) ──
 let mediapipeLoadPromise = null;
+let faceLandmarkerLoadPromise = null;
+
+const FACE_LANDMARKER_VERSION = "0.10.21";
+const FACE_LANDMARKER_WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${FACE_LANDMARKER_VERSION}/wasm`;
+const FACE_LANDMARKER_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const GAZE_EVENT_TYPES = {
+  [GAZE_DIRECTIONS.LEFT]: "eye_looking_left",
+  [GAZE_DIRECTIONS.RIGHT]: "eye_looking_right",
+  [GAZE_DIRECTIONS.UP]: "eye_looking_up",
+  [GAZE_DIRECTIONS.DOWN]: "eye_looking_down",
+  [GAZE_DIRECTIONS.FORWARD]: "eye_looking_forward"
+};
+
+function loadFaceLandmarker() {
+  if (faceLandmarkerLoadPromise) return faceLandmarkerLoadPromise;
+
+  faceLandmarkerLoadPromise = FilesetResolver.forVisionTasks(FACE_LANDMARKER_WASM_URL);
+  faceLandmarkerLoadPromise.catch(() => {
+    faceLandmarkerLoadPromise = null;
+  });
+  return faceLandmarkerLoadPromise;
+}
 
 function loadMediaPipeCDN() {
   if (mediapipeLoadPromise) return mediapipeLoadPromise;
@@ -80,6 +118,19 @@ const HEAD_TURN_RATIO_THRESHOLD = 0.40;
 // Duration (ms) that the head must remain continuously turned away before emitting
 // looking_away. Prevents false positives from brief/natural head movements.
 const HEAD_TURN_AWAY_DURATION_MS = 3000;
+
+// Duration (ms) that a candidate must remain forward-facing before ending an
+// established away state. Prevents one unstable frame from emitting a return event.
+const HEAD_TURN_FORWARD_DURATION_MS = 1500;
+
+const EVIDENCE_DURATION_MS = 2500;
+const EVIDENCE_EVENT_TYPES = new Set([
+  "tab_hidden",
+  "looking_away",
+  "multiple_faces_detected",
+  "copy_attempt",
+  "paste_attempt"
+]);
 
 function difficultyColor(level) {
   if (!level) return "";
@@ -175,6 +226,7 @@ function AssessmentTestPage() {
   const assessmentId = searchParams.get("assessmentId") || "";
   const candidateId = searchParams.get("candidateId") || "";
   const queryRole = searchParams.get("role") || "";
+  const accessToken = searchParams.get("accessToken") || "";
 
   const { record } = findAssessmentRecord({ assessmentId, candidateId, role: queryRole });
   const [assessmentData, setAssessmentData] = useState(null);
@@ -188,6 +240,7 @@ function AssessmentTestPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showQuestionPanel, setShowQuestionPanel] = useState(false);
+  const [evidenceStatus, setEvidenceStatus] = useState("pending");
   const timerRef = useRef(null);
 
   // Load questions from backend endpoint
@@ -196,6 +249,10 @@ function AssessmentTestPage() {
       setLoading(true);
       setError(null);
       try {
+        if (!accessToken) {
+          setError("This assessment link is missing its secure access token.");
+          return;
+        }
         let targetId = assessmentId;
         if (!targetId && candidateId) {
           targetId = candidateId;
@@ -207,7 +264,9 @@ function AssessmentTestPage() {
           return;
         }
 
-        const res = await fetch(`${API_BASE_URL}/api/assessment/questions/${encodeURIComponent(targetId)}`);
+        const res = await fetch(`${API_BASE_URL}/api/assessment/questions/${encodeURIComponent(targetId)}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data && data.questions && data.questions.length > 0) {
@@ -219,7 +278,7 @@ function AssessmentTestPage() {
           // If direct GET fails, try generating/retrieving endpoint as fallback
           const genRes = await fetch(`${API_BASE_URL}/api/assessment/generate-questions`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
             body: JSON.stringify({
               assessment_id: targetId,
               candidate_id: candidateId || targetId,
@@ -246,7 +305,7 @@ function AssessmentTestPage() {
     }
 
     fetchQuestions();
-  }, [assessmentId, candidateId, queryRole, record?.jobRole]);
+  }, [accessToken, assessmentId, candidateId, queryRole, record?.jobRole]);
 
   const role = assessmentData?.job_role || record?.jobRole || queryRole || "Candidate";
   const questions = assessmentData?.questions || [];
@@ -297,23 +356,167 @@ function AssessmentTestPage() {
     try {
       await fetch(`${API_BASE_URL}/api/assessment/behavior-events`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
           assessment_id: assessmentId || candidateId,
           candidate_id: candidateId || assessmentId,
           events: eventsList
         })
       });
-    } catch (_) {
-      // Non-blocking background log
+    } catch (error) {
+      console.warn("Behavior event delivery failed:", error.message);
     }
-  }, [assessmentId, candidateId]);
+  }, [accessToken, assessmentId, candidateId]);
+
+  const evidenceRecorderRef = useRef(null);
+  const evidenceTimerRef = useRef(null);
+
+  const uploadEvidenceClip = useCallback(async (blob, eventType, timestamp, durationMs, evidenceType) => {
+    if (!blob || (!assessmentId && !candidateId) || !accessToken) return;
+    const formData = new FormData();
+    formData.append("assessment_id", assessmentId || candidateId);
+    formData.append("candidate_id", candidateId || assessmentId);
+    formData.append("event_type", eventType);
+    formData.append("timestamp", timestamp);
+    formData.append("duration_seconds", String(Math.min(5, durationMs / 1000)));
+    formData.append("evidence_type", evidenceType);
+    const extension = evidenceType === "screen_screenshot" ? "png" : "webm";
+    formData.append("clip", blob, `${eventType}-${Date.now()}.${extension}`);
+
+    try {
+      await uploadScreenEvidence({
+        url: `${API_BASE_URL}/api/assessment/evidence`,
+        token: accessToken,
+        formData,
+      });
+      setEvidenceStatus("ready");
+    } catch (error) {
+      setEvidenceStatus("upload_failed");
+      console.warn("Screen evidence upload failed:", error.message);
+    }
+  }, [accessToken, assessmentId, candidateId]);
+
+  const captureScreenScreenshot = useCallback(async (stream) => {
+    const track = stream?.getVideoTracks?.()[0];
+    if (!track || track.readyState !== "live") return null;
+
+    try {
+      if (window.ImageCapture) {
+        const frame = await new ImageCapture(track).grabFrame();
+        const canvas = document.createElement("canvas");
+        canvas.width = frame.width;
+        canvas.height = frame.height;
+        canvas.getContext("2d").drawImage(frame, 0, 0);
+        return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      }
+    } catch (_) {
+      // Fall through to a video-element capture when ImageCapture is unavailable.
+    }
+
+    try {
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.srcObject = stream;
+      await video.play();
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      video.pause();
+      video.srcObject = null;
+      return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    } catch (_) {
+      return null;
+    }
+  }, []);
+
+  const recordEvidenceClip = useCallback((eventType) => {
+    if (!EVIDENCE_EVENT_TYPES.has(eventType) || evidenceRecorderRef.current) return;
+    const stream = getScreenEvidenceStream();
+    if (!stream) {
+      setEvidenceStatus("unavailable");
+      console.warn("Screen evidence is unavailable for this assessment event.");
+      return;
+    }
+
+    const mimeType = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]
+      .find((type) => window.MediaRecorder?.isTypeSupported(type));
+
+    const startedAt = Date.now();
+    const timestamp = new Date(startedAt).toISOString();
+    if (!window.MediaRecorder || !mimeType) {
+      captureScreenScreenshot(stream).then((blob) => {
+        uploadEvidenceClip(blob, eventType, timestamp, Date.now() - startedAt, "screen_screenshot");
+      });
+      return;
+    }
+
+    const chunks = [];
+    let recorder;
+    try {
+      recorder = new MediaRecorder(stream, { mimeType });
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onstop = () => {
+        evidenceRecorderRef.current = null;
+        if (evidenceTimerRef.current) {
+          clearTimeout(evidenceTimerRef.current);
+          evidenceTimerRef.current = null;
+        }
+        const blob = new Blob(chunks, { type: mimeType });
+        if (blob.size > 0) {
+          uploadEvidenceClip(blob, eventType, timestamp, Date.now() - startedAt, "screen_video");
+        } else {
+          captureScreenScreenshot(stream).then((fallbackBlob) => {
+            uploadEvidenceClip(fallbackBlob, eventType, timestamp, Date.now() - startedAt, "screen_screenshot");
+          });
+        }
+      };
+      recorder.start();
+      evidenceRecorderRef.current = recorder;
+      evidenceTimerRef.current = setTimeout(() => {
+        if (evidenceRecorderRef.current === recorder && recorder.state !== "inactive") {
+          recorder.stop();
+        }
+      }, EVIDENCE_DURATION_MS);
+    } catch (_) {
+      evidenceRecorderRef.current = null;
+    }
+  }, [captureScreenScreenshot, uploadEvidenceClip]);
+
+  useEffect(() => {
+    if (submitted || loading || error || total === 0 || !accessToken) return;
+    let cancelled = false;
+    const existingStream = getScreenEvidenceStream();
+    if (existingStream) {
+      setEvidenceStatus("ready");
+      return undefined;
+    }
+
+    requestScreenEvidence()
+      .then(() => {
+        if (!cancelled) setEvidenceStatus("ready");
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setEvidenceStatus("unavailable");
+          console.warn("Screen evidence stream unavailable:", requestError.message);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, error, loading, submitted, total]);
 
   // ─── Camera & Face Detection Monitoring ──────────────────────────────────────
   const cameraVideoRef = useRef(null);
   const cameraCanvasRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const faceDetectorRef = useRef(null);
+  const faceLandmarkerRef = useRef(null);
   const faceIntervalRef = useRef(null);
   const lastFaceEventRef = useRef({ type: null, timestamp: 0 }); // cooldown tracker
   const [cameraActive, setCameraActive] = useState(false);
@@ -327,6 +530,21 @@ function AssessmentTestPage() {
       try { faceDetectorRef.current.close(); } catch (_) { }
       faceDetectorRef.current = null;
     }
+    if (faceLandmarkerRef.current) {
+      try { faceLandmarkerRef.current.close(); } catch (_) { }
+      faceLandmarkerRef.current = null;
+    }
+    if (evidenceTimerRef.current) {
+      clearTimeout(evidenceTimerRef.current);
+      evidenceTimerRef.current = null;
+    }
+    if (evidenceRecorderRef.current) {
+      try {
+        if (evidenceRecorderRef.current.state !== "inactive") evidenceRecorderRef.current.stop();
+      } catch (_) { }
+      evidenceRecorderRef.current = null;
+    }
+    releaseScreenEvidence();
     if (cameraStreamRef.current) {
       cameraStreamRef.current.getTracks().forEach((t) => t.stop());
       cameraStreamRef.current = null;
@@ -417,6 +635,28 @@ function AssessmentTestPage() {
 
         faceDetectorRef.current = detector;
 
+        const gazeState = createGazeState();
+        loadFaceLandmarker()
+          .then((vision) => {
+            return FaceLandmarker.createFromOptions(vision, {
+              baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_URL },
+              runningMode: "VIDEO",
+              numFaces: 2
+            });
+          })
+          .then((landmarker) => {
+            if (cancelled) {
+              landmarker.close();
+              return;
+            }
+            faceLandmarkerRef.current = landmarker;
+          })
+          .catch((landmarkerError) => {
+            if (!cancelled) {
+              console.warn("Eye movement monitoring unavailable:", landmarkerError.message);
+            }
+          });
+
         // Wait for video to stabilize
         await new Promise((res) => setTimeout(res, 800));
         if (cancelled) return;
@@ -428,10 +668,18 @@ function AssessmentTestPage() {
         };
 
         // Head-direction state machine (Phase 5.4)
-        // States: "forward" | "pending_away" | "away"
+        // States: "forward" | "pending_away" | "away" | "pending_forward"
         const headDirRef = {
           state: "forward",
-          turnStartTime: null
+          turnStartTime: null,
+          forwardStartTime: null
+        };
+
+        const resetPendingHeadTransition = () => {
+          if (headDirRef.state === "pending_away") headDirRef.state = "forward";
+          if (headDirRef.state === "pending_forward") headDirRef.state = "away";
+          headDirRef.turnStartTime = null;
+          headDirRef.forwardStartTime = null;
         };
 
         const evaluateFaceState = (faceCount, sourceName) => {
@@ -445,6 +693,7 @@ function AssessmentTestPage() {
                 timestamp: new Date(now).toISOString(),
                 details: `${sourceName}_count_${faceCount}`
               }]);
+              recordEvidenceClip("multiple_faces_detected");
             }
           } else if (faceCount === 1) {
             stateRef.absenceStartTime = null; // reset timer immediately
@@ -479,11 +728,9 @@ function AssessmentTestPage() {
         const evaluateHeadDirection = (detections) => {
           // Only evaluate for exactly one face
           if (detections.length !== 1) {
-            // Reset head-direction state when face count is not exactly 1.
-            // Do not emit looking_forward here — face_absent or multiple_faces_detected
-            // events already capture those situations independently.
-            headDirRef.state = "forward";
-            headDirRef.turnStartTime = null;
+            // Invalid face counts are not evidence of a forward-facing return.
+            // Cancel only an unconfirmed transition and retain the stable state.
+            resetPendingHeadTransition();
             return;
           }
 
@@ -491,15 +738,24 @@ function AssessmentTestPage() {
           const lm = detection.landmarks;
 
           // Validate landmarks array exists and has the required 6 points
-          if (!lm || lm.length < 6) return;
+          if (!lm || lm.length < 6) {
+            resetPendingHeadTransition();
+            return;
+          }
 
           const noseTip = lm[2];
           const rightEarTragion = lm[4];
           const leftEarTragion = lm[5];
 
           // Validate individual landmarks have numeric x coordinates
-          if (!noseTip || !rightEarTragion || !leftEarTragion) return;
-          if (typeof noseTip.x !== "number" || typeof rightEarTragion.x !== "number" || typeof leftEarTragion.x !== "number") return;
+          if (!noseTip || !rightEarTragion || !leftEarTragion) {
+            resetPendingHeadTransition();
+            return;
+          }
+          if (typeof noseTip.x !== "number" || typeof rightEarTragion.x !== "number" || typeof leftEarTragion.x !== "number") {
+            resetPendingHeadTransition();
+            return;
+          }
 
           const noseX = noseTip.x;
           const distLeft = Math.abs(noseX - leftEarTragion.x);
@@ -507,14 +763,20 @@ function AssessmentTestPage() {
           const maxDist = Math.max(distLeft, distRight);
 
           // Guard against division by zero
-          if (maxDist < 0.001) return;
+          if (maxDist < 0.001) {
+            resetPendingHeadTransition();
+            return;
+          }
 
           const ratio = Math.min(distLeft, distRight) / maxDist;
           const isTurnedAway = ratio < HEAD_TURN_RATIO_THRESHOLD;
           const now = Date.now();
 
           if (isTurnedAway) {
-            if (headDirRef.state === "forward") {
+            if (headDirRef.state === "pending_forward") {
+              headDirRef.state = "away";
+              headDirRef.forwardStartTime = null;
+            } else if (headDirRef.state === "forward") {
               // FORWARD → PENDING_AWAY: start the continuous-turn timer
               headDirRef.state = "pending_away";
               headDirRef.turnStartTime = now;
@@ -527,19 +789,24 @@ function AssessmentTestPage() {
                   type: "looking_away",
                   timestamp: new Date(now).toISOString()
                 }]);
+                recordEvidenceClip("looking_away");
               }
             }
             // If already "away", do nothing (no repeated events)
           } else {
-            // Head is forward-facing
+            // Head is forward-facing. Require a stable return before emitting.
             if (headDirRef.state === "away") {
-              // AWAY → FORWARD: emit looking_forward
-              headDirRef.state = "forward";
-              headDirRef.turnStartTime = null;
-              logBehaviorEvents([{
-                type: "looking_forward",
-                timestamp: new Date(now).toISOString()
-              }]);
+              headDirRef.state = "pending_forward";
+              headDirRef.forwardStartTime = now;
+            } else if (headDirRef.state === "pending_forward") {
+              if (headDirRef.forwardStartTime && (now - headDirRef.forwardStartTime >= HEAD_TURN_FORWARD_DURATION_MS)) {
+                headDirRef.state = "forward";
+                headDirRef.forwardStartTime = null;
+                logBehaviorEvents([{
+                  type: "looking_forward",
+                  timestamp: new Date(now).toISOString()
+                }]);
+              }
             } else if (headDirRef.state === "pending_away") {
               // Brief turn, returned quickly — cancel pending without emitting
               headDirRef.state = "forward";
@@ -558,6 +825,39 @@ function AssessmentTestPage() {
             await detector.send({ image: cameraVideoRef.current });
             evaluateFaceState(latestFaceCount, "mediapipe");
             evaluateHeadDirection(latestDetections);
+
+            if (faceLandmarkerRef.current) {
+              try {
+                const landmarkerResults = faceLandmarkerRef.current.detectForVideo(
+                  cameraVideoRef.current,
+                  Date.now()
+                );
+                const landmarkFaces = landmarkerResults.faceLandmarks || [];
+
+                if (latestFaceCount !== 1 || landmarkFaces.length !== 1) {
+                  resetGazeTracking(gazeState);
+                } else {
+                  const gazePosition = getGazePosition(landmarkFaces[0]);
+                  const baseline = updateGazeBaseline(gazeState, gazePosition);
+                  const gazeDirection = classifyGaze(
+                    gazePosition,
+                    baseline,
+                    gazeState.stableDirection || GAZE_DIRECTIONS.FORWARD
+                  );
+                  const stableDirection = updateGazeState(gazeState, gazeDirection);
+
+                  if (stableDirection) {
+                    logBehaviorEvents([{
+                      type: GAZE_EVENT_TYPES[stableDirection],
+                      timestamp: new Date().toISOString(),
+                      details: "face_landmarker"
+                    }]);
+                  }
+                }
+              } catch (_) {
+                resetGazeTracking(gazeState);
+              }
+            }
           } catch (_) {
             // Transient frame error, retry next tick
           }
@@ -624,7 +924,7 @@ function AssessmentTestPage() {
       cancelled = true;
       cleanupCamera();
     };
-  }, [submitted, loading, error, total, logBehaviorEvents, cleanupCamera]);
+  }, [submitted, loading, error, total, logBehaviorEvents, cleanupCamera, recordEvidenceClip]);
 
   // Stop camera when assessment is submitted
   useEffect(() => {
@@ -757,6 +1057,7 @@ function AssessmentTestPage() {
       if (document.hidden) {
         tabHiddenTimeRef.current = Date.now();
         logBehaviorEvents([{ type: "tab_hidden", timestamp: nowIso }]);
+        recordEvidenceClip("tab_hidden");
       } else {
         let duration = undefined;
         if (tabHiddenTimeRef.current) {
@@ -777,7 +1078,7 @@ function AssessmentTestPage() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [submitted, loading, error, total, logBehaviorEvents]);
+  }, [submitted, loading, error, total, logBehaviorEvents, recordEvidenceClip]);
 
   // Network Offline/Online Monitoring (Phase 5.5)
   const networkOfflineTimeRef = useRef(null);
@@ -827,6 +1128,7 @@ function AssessmentTestPage() {
         type: "copy_attempt",
         timestamp: new Date().toISOString()
       }]);
+      recordEvidenceClip("copy_attempt");
     }
 
     function handlePaste() {
@@ -834,6 +1136,7 @@ function AssessmentTestPage() {
         type: "paste_attempt",
         timestamp: new Date().toISOString()
       }]);
+      recordEvidenceClip("paste_attempt");
     }
 
     document.addEventListener("copy", handleCopy);
@@ -843,7 +1146,7 @@ function AssessmentTestPage() {
       document.removeEventListener("copy", handleCopy);
       document.removeEventListener("paste", handlePaste);
     };
-  }, [submitted, loading, error, total, logBehaviorEvents]);
+  }, [submitted, loading, error, total, logBehaviorEvents, recordEvidenceClip]);
 
   // Timer countdown
   useEffect(() => {
@@ -986,6 +1289,12 @@ function AssessmentTestPage() {
             <ShieldCheck size={14} color="#16A34A" />
             <span>Assessment Monitoring Active</span>
           </div>
+
+          {evidenceStatus !== "ready" && evidenceStatus !== "pending" && (
+            <span style={{ color: "#92400E", fontSize: 11, fontWeight: 600 }}>
+              {evidenceStatus === "upload_failed" ? "Evidence upload unavailable" : "Screen evidence unavailable"}
+            </span>
+          )}
 
           <div className={`at-timer${timerWarning ? " warning" : ""}${timerCritical ? " critical" : ""}`}>
             <Clock size={15} />
