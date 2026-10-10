@@ -6,11 +6,13 @@ A recruiter-friendly web app that reads multiple resumes, understands a JD, scor
 
 License: MIT  Python  FastAPI  React  Vite  Sentence Transformers  FAISS  Ollama  Llama 3.2  Google Gemini  Playwright
 
-Built by Team Trigyn  ·  Internal prototype  ·  FastAPI + React + local LLMs
+Personal internship project  ·  FastAPI + React + local LLMs
 
 ---
 
 ## Table of Contents
+
+...
 
 - Overview
 - The Problem
@@ -362,7 +364,7 @@ Several parts of this codebase are generic enough to be lifted directly into oth
 | **Deterministic fallback grader** | `backend.py` → `grade_candidate_local()` | Scores a candidate purely from skill overlap when the LLM is unavailable; requires no external API call | Pull into any ranking system that needs a rule-based fallback for when the AI provider is down |
 | **LLM JSON output validator** | `backend.py` → `validate_llm_output()` | Wraps `jsonschema.validate` and logs schema violations; returns a safe default on failure | Use to harden any endpoint that parses LLM-generated JSON |
 | **Pluggable provider router** | `backend.py` → `call_llm()` | Dispatches to Ollama or Gemini based on a runtime config flag; easy to extend with a third provider | Adopt the same `if provider == "ollama"` / `elif provider == "gemini"` pattern for any multi-provider LLM integration |
-| **Prompt template manager** | `vector_store/prompt_config.json` + `backend.py` | Loads prompt templates from a JSON file at startup; falls back to `default_prompts.py` if the file is missing | Copy the load / fallback pattern to make any LLM prompt editable at runtime without a redeployment |
+| **Prompt template manager** | `vector_store/prompt_config.json` + `backend.py` | Loads prompt templates from a JSON file at startup; falls back to the built-in defaults defined in `backend.py` if the file is missing | Copy the load / fallback pattern to make any LLM prompt editable at runtime without a redeployment |
 
 #### Auth API (Node.js)
 
@@ -624,11 +626,11 @@ This project runs entirely on your laptop. Pick the platform section that matche
 ### Clone and install
 
 ```bash
-git clone https://github.com/Trigyn-Intern/AI-recruiter-screening-system-.git
+git clone https://github.com/sapnarathore0810/AI-recruiter-screening-system-.git
 cd AI-recruiter-screening-system-
 ```
 
-The repository ships with sensible defaults in `backend/.env`, `frontend/.env`, and `frontend-test/.env`. Override them only if you need to.
+No secret-bearing `.env` files, candidate data, vector indexes, or runtime stores are committed. On a fresh Windows clone, open PowerShell at the repository root and run `.\start-app.ps1` (shown below). The launcher creates the local environment files and runtime directories. On first run, enter your own manager email and a manager password when prompted; password input is hidden. It generates a random JWT secret locally and saves the auth settings in the ignored `backend/.env`. Never commit that file.
 
 ---
 
@@ -640,6 +642,8 @@ The fastest way for a brand-new user. Open PowerShell **as yourself** (admin not
 .\start-app.ps1
 ```
 
+On first run, the launcher prompts for a manager email and password. Enter an email you control and a unique password of at least 12 characters; password characters are not echoed. The launcher generates the JWT secret automatically and stores it with the manager credentials in `backend/.env`. Those values are not printed. Later launches reuse the local settings. Keep `backend/.env` private and untracked.
+
 What it does, in order:
 
 1. Creates `backend/data/users.json` if it is missing.
@@ -648,7 +652,7 @@ What it does, in order:
 4. Creates the Python venv on first run and (re)installs `requirements.txt` only when the file changes.
 5. Installs Node dependencies for the auth API, the recruiter app, and the testing dashboard (idempotent).
 6. Launches the FastAPI analyzer on `http://127.0.0.1:8000` (4 workers, 90 s analyze timeout).
-7. Launches the Node auth API on `http://localhost:4000` (auto-seeds the manager account from `backend/.env`).
+7. Launches the Node auth API on `http://localhost:4000` (auto-seeds the manager account from your local `backend/.env`).
 8. Launches the React recruiter app on `http://localhost:5173`.
 9. Launches the React testing dashboard on `http://localhost:5174`.
 
@@ -723,7 +727,7 @@ cd frontend-test; npm run dev
 | Account   | Email                    | Password      | Where it is set                                  |
 | --------- | ------------------------ | ------------- | ------------------------------------------------ |
 | Recruiter | any (sign up on screen)  | your choice   | n/a - sign up at http://localhost:5173/signup    |
-| Manager   | `SEED_MANAGER_EMAIL`     | `SEED_MANAGER_PASSWORD` | `backend/.env`  |
+| Manager   | Your local `SEED_MANAGER_EMAIL` | Your local `SEED_MANAGER_PASSWORD` | `backend/.env` |
 
 The seeded manager account is created or rotated on every backend restart using `backend/seeders/seedManager.js`, so editing the env and restarting the auth API is the supported way to change the manager password.
 
@@ -804,7 +808,6 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 .
 |-- api.py                    # FastAPI entrypoint for the analyzer
 |-- backend.py                # Core analysis logic (LLM, FAISS, grading)
-|-- default_prompts.py        # Default prompt templates (Python mirror of UI)
 |-- requirements.txt          # Pinned Python dependencies
 |-- start-app.ps1             # One-click stack launcher (Windows)
 |-- backend/                  # Node + Express auth API
@@ -833,7 +836,7 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 |   `-- src/
 |       |-- App.jsx
 |       `-- pages/TestingDashboard.jsx
-|-- vector_store/             # FAISS index, resume metadata, prompt config, session log
+|-- vector_store/             # Local runtime store; create/populate locally, never commit contents
 |-- tests/                    # pytest + Playwright scenario matrix
 `-- skills/                   # Internal skill and security-review notes
 ```
@@ -847,12 +850,12 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 | Variable                 | Purpose                                                              | Default               |
 | ------------------------ | -------------------------------------------------------------------- | --------------------- |
 | `PORT`                   | Port the auth API listens on.                                        | `4000`                |
-| `JWT_SECRET`             | Signing key for issued JWTs.                                         | random ephemeral      |
+| `JWT_SECRET`             | Signing key for issued JWTs; generated randomly on first launcher run. | generated locally     |
 | `JWT_EXPIRES_IN`         | Token lifetime.                                                      | `7d`                  |
 | `CLIENT_ORIGIN`          | CORS allow-list for the React apps.                                  | `http://localhost:5173` |
 | `MONGO_URI`              | Reserved for a future MongoDB swap.                                 | unused with JSON store |
-| `SEED_MANAGER_EMAIL`     | Email used by `seedManager.js` to create the manager account.        |  |
-| `SEED_MANAGER_PASSWORD`  | Password for the seeded manager account. Edit + restart to rotate.   |          |
+| `SEED_MANAGER_EMAIL`     | Local email used by `seedManager.js` to create the manager account.  | entered on first run  |
+| `SEED_MANAGER_PASSWORD`  | Local manager password; edit + restart to rotate.                   | entered on first run  |
 | `SEED_MANAGER_NAME`      | Display name for the seeded manager.                                | `Test Manager`        |
 
 ### Frontend environment (`frontend/.env`)
@@ -894,7 +897,7 @@ The repo is shaped to run locally today, but the components map cleanly to commo
 | Analyzer         | Render, Fly, or a VM     | Needs the FAISS volume and the embedding model cached.             |
 | LLM              | Local Ollama or a host   | Swap to Gemini for a fully serverless deployment.                  |
 
-For a quick serverless deploy, switch the AI provider to Gemini, build the recruiter UI with `npm run build` in `frontend/`, and serve the analyzer with `uvicorn api:api --host 0.0.0.0 --port $PORT`. The FAISS index can be rebuilt on first run from the resumes in `tests/data/resumes/`.
+For a quick serverless deploy, switch the AI provider to Gemini, build the recruiter UI with `npm run build` in `frontend/`, and serve the analyzer with `uvicorn api:api --host 0.0.0.0 --port $PORT`. A fresh clone must use synthetic or locally supplied resumes and create its own runtime vector store; no production candidate index is included.
 
 ---
 

@@ -16,7 +16,6 @@ import {
   ArrowLeft,
   Trash2,
   Briefcase,
-  Award,
   ClipboardList,
   Sparkles,
 } from "lucide-react";
@@ -591,20 +590,6 @@ function App() {
           </nav>
         </div>
 
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">CANDIDATE PORTAL</div>
-          <nav className="sidebar-nav">
-            <a
-              className="sidebar-nav-item"
-              href="/assessment/start"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span className="sidebar-nav-icon"><Award size={18} /></span>
-              <span className="sidebar-nav-label">Online Assessment</span>
-            </a>
-          </nav>
-        </div>
 
         <div className="sidebar-section">
           <div className="sidebar-section-title">SECURITY</div>

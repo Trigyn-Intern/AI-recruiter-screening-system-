@@ -1,4 +1,5 @@
 from jsonschema import validate
+import pytest
 
 from backend import (
     CANDIDATE_DETAIL_SCHEMA,
@@ -143,6 +144,11 @@ def test_candidate_detail_schema_requires_display_fields():
         "matching_skills",
         "missing_skills",
         "justification",
+        "decision",
+        "why",
+        "key_matches",
+        "key_gaps",
+        "final_reason",
     ]
 
 
@@ -165,6 +171,11 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
             "matching_skills": ["Python", "SQL"],
             "missing_skills": ["AWS"],
             "justification": "Strong Python and SQL match. AWS is missing.",
+            "decision": "Not Selected",
+            "why": "Python and SQL are evidenced, but AWS is not found.",
+            "key_matches": ["Python -> Python SQL resume"],
+            "key_gaps": ["AWS -> Not found in the resume evidence"],
+            "final_reason": "AWS is not found in the resume evidence.",
         },
     )
     # Mock grading to avoid additional safe_ai_json call
@@ -188,7 +199,90 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
     assert result["matching_skills"] == ["Python", "SQL"]
     assert result["missing_skills"] == ["AWS"]
     assert "Strong Python" in result["justification"]
+    assert result["decision"] == "Not Selected"
+    assert result["key_gaps"] == ["AWS -> Not found in the resume evidence"]
     mock_ai.assert_called_once()
+
+
+def test_analyze_candidate_detail_prompt_preserves_selected_decision(mocker):
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mock_ai = mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "matching_skills": ["Python"],
+            "missing_skills": [],
+            "justification": "Python is evidenced.",
+            "decision": "Not Selected",
+            "why": "Python is evidenced in the resume.",
+            "key_matches": ["Python -> Built Python APIs."],
+            "key_gaps": [],
+            "final_reason": "The ranking selected the candidate based on the evidence.",
+        },
+    )
+
+    result = analyze_candidate_detail(
+        "Built Python APIs.",
+        "Need Python.",
+        90,
+        provider="Ollama",
+        decision="Selected",
+    )
+
+    assert result["decision"] == "Selected"
+    prompt = mock_ai.call_args_list[0].args[0]
+    assert "EXISTING DECISION:\nSelected" in prompt
+    assert "Built Python APIs." in prompt
+
+
+@pytest.mark.parametrize(
+    ("resume_name", "skill", "evidence"),
+    [
+        ("resume-1.pdf", "JavaScript", "JQuery, JavaScript, HTML, CSS, XML, and CAML"),
+        ("resume-5.pdf", "SQL", "Using MS SQL, queried, evaluated, and mapped information"),
+    ],
+)
+def test_candidate_detail_grounds_matches_and_gaps_for_stored_resume_shapes(
+    mocker,
+    resume_name,
+    skill,
+    evidence,
+):
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "matching_skills": [skill],
+            "missing_skills": ["AWS"],
+            "justification": "Evidence-based explanation.",
+            "decision": "Selected",
+            "why": "The required skill is present in the evidence.",
+            "key_matches": ["Not found in the resume evidence"],
+            "key_gaps": ["Not found in the resume evidence"],
+            "final_reason": "The candidate meets the selected requirement.",
+        },
+    )
+    mocker.patch(
+        "backend.analyze_candidate_grading",
+        return_value={"grade": "B", "summary": "Reviewed", "strengths": [], "concerns": []},
+    )
+
+    result = analyze_candidate_detail(
+        "",
+        "Need " + skill + " and AWS.",
+        80,
+        provider="Ollama",
+        resume_skill_profile={
+            "resume_id": resume_name,
+            "technical_skills": [skill],
+            "skill_evidence": [{"skill": skill, "evidence": evidence, "source": "Resume text"}],
+        },
+        job_skill_requirements={"primary_skills": skill + ", AWS"},
+        decision="Selected",
+    )
+
+    assert result["decision"] == "Selected"
+    assert result["key_matches"] == [f"{skill} -> {evidence} (Resume text)"]
+    assert result["key_gaps"] == ["AWS -> Not found in the resume evidence"]
 
 
 def test_analyze_candidate_detail_uses_cache(mocker):
@@ -196,6 +290,12 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "matching_skills": ["Python"],
         "missing_skills": [],
         "justification": "Cached justification.",
+        "decision": "Not Selected",
+        "why": "Cached explanation.",
+        "key_matches": ["Python -> cached evidence"],
+        "key_gaps": [],
+        "final_reason": "Cached reason.",
+        "cache_version": "evidence_chunks_v3",
         "candidate_grading": {
             "grade": "A",
             "summary": "Strong match",
@@ -209,7 +309,8 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "backend.get_ai_cache",
         return_value={
             (
-                "candidate_detail_with_grading_v1|Gemini|gemini-2.5-flash|90|"
+                "candidate_detail_with_grading_v2|Gemini|gemini-2.5-flash|90|"
+                "Not Selected|"
                 f"resume text|job text|{DEFAULT_CANDIDATE_DETAIL_PROMPT_TEMPLATE}"
             ): cached_result,
         },
