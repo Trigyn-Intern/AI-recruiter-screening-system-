@@ -1,4 +1,5 @@
 """Fresh benchmark for parallel candidate analysis with Ollama."""
+
 import sys
 import time
 
@@ -6,10 +7,11 @@ import requests
 
 API_BASE_URL = "http://127.0.0.1:8000"
 
+sys.path.insert(0, ".")
+import backend  # noqa: E402
+
 # Clear caches before benchmark
 print("Clearing caches for fresh benchmark...")
-sys.path.insert(0, '.')
-import backend
 
 backend._JD_ANALYSIS_CACHE.clear()
 backend.RUNTIME_STATE["ai_analysis_cache"] = {}
@@ -64,41 +66,41 @@ try:
             "model_name": "llama3.2",
             "detail_limit": 2,
         },
-        timeout=600
+        timeout=600,
     )
-    
+
     http_elapsed = time.time() - http_start
     total_elapsed = time.perf_counter() - start_time
-    
+
     if response.status_code == 200:
         data = response.json()
-        
+
         print("✓ Analysis completed successfully")
         print("\n=== Timing Results ===")
         print(f"HTTP response time: {http_elapsed:.2f}s")
         print(f"Total elapsed time: {total_elapsed:.2f}s")
         print(f"API reported pipeline time: {data.get('_elapsed_ms', 0) / 1000:.2f}s")
-        
+
         timings = data.get("timings_ms", {})
         print("\n=== Breakdown ===")
         print(f"JD analysis: {timings.get('jd_analysis_ms', 0) / 1000:.2f}s")
         print(f"FAISS search: {timings.get('faiss_search_ms', 0) / 1000:.2f}s")
         print(f"Total pipeline: {timings.get('total_pipeline_ms', 0) / 1000:.2f}s")
-        
+
         ranking = data.get("ranking", [])
         top_details = data.get("top_details", [])
-        
+
         print("\n=== Results ===")
         print(f"Total candidates in ranking: {len(ranking)}")
         print(f"Top details returned: {len(top_details)}")
-        
+
         # Check for LLM errors
         runtime_status = data.get("runtime_status", {})
         if runtime_status.get("last_ai_error"):
             print(f"⚠ LLM error: {runtime_status['last_ai_error']}")
         else:
             print("✓ No LLM errors")
-        
+
         # Check grading checkpoints to see LLM calls
         grading_checkpoints = runtime_status.get("grading_checkpoints", [])
         if grading_checkpoints:
@@ -108,55 +110,71 @@ try:
                 print(f"   Source: {checkpoint.get('source', 'unknown')}")
                 print(f"   Cache: {checkpoint.get('cache', 'unknown')}")
                 print(f"   Grade: {checkpoint.get('final_grade', 'N/A')}")
-                if checkpoint.get('gemini_error'):
+                if checkpoint.get("gemini_error"):
                     print(f"   Error: {checkpoint['gemini_error']}")
-        
+
         # Verify structure
-        required_keys = ["job_description", "ranking", "top_details", "detail_limit", "categories"]
+        required_keys = [
+            "job_description",
+            "ranking",
+            "top_details",
+            "detail_limit",
+            "categories",
+        ]
         missing_keys = [k for k in required_keys if k not in data]
         if missing_keys:
             print(f"\n⚠ Missing response keys: {missing_keys}")
         else:
             print("\n✓ Response structure intact")
-        
+
         # Check FAISS
         if runtime_status.get("last_vector_store_error"):
             print(f"⚠ FAISS error: {runtime_status['last_vector_store_error']}")
         else:
             print("✓ No FAISS errors")
-        
+
         print("\n=== Comparison with Baseline ===")
         baseline_time = 137.0  # Sequential baseline from FINAL_OPTIMIZATION_REPORT.md
         print(f"Sequential baseline (5 candidates): {baseline_time:.2f}s")
         print(f"Parallel execution (5 candidates): {total_elapsed:.2f}s")
-        
+
         if total_elapsed > 0:
             speedup = baseline_time / total_elapsed
             improvement = ((baseline_time - total_elapsed) / baseline_time) * 100
             print(f"Speedup: {speedup:.2f}x")
             print(f"Improvement: {improvement:.1f}%")
-        
+
         # Estimate LLM time
-        estimated_llm_time = total_elapsed - (timings.get('jd_analysis_ms', 0) / 1000) - (timings.get('faiss_search_ms', 0) / 1000)
+        estimated_llm_time = (
+            total_elapsed
+            - (timings.get("jd_analysis_ms", 0) / 1000)
+            - (timings.get("faiss_search_ms", 0) / 1000)
+        )
         print(f"\nEstimated LLM analysis time: {estimated_llm_time:.2f}s")
-        
+
         # Check if grading calls were concurrent
         if grading_checkpoints:
-            cache_hits = sum(1 for cp in grading_checkpoints if cp.get('cache') == 'hit')
-            cache_misses = sum(1 for cp in grading_checkpoints if cp.get('cache') == 'miss')
+            cache_hits = sum(
+                1 for cp in grading_checkpoints if cp.get("cache") == "hit"
+            )
+            cache_misses = sum(
+                1 for cp in grading_checkpoints if cp.get("cache") == "miss"
+            )
             print("\n=== Cache Analysis ===")
             print(f"Grading cache hits: {cache_hits}")
             print(f"Grading cache misses: {cache_misses}")
-            
+
             if cache_misses > 1:
                 print("✓ Multiple fresh LLM grading calls detected")
-                print("  These should have run concurrently with parallel implementation")
-        
+                print(
+                    "  These should have run concurrently with parallel implementation"
+                )
+
     else:
         print(f"✗ Analysis failed: {response.status_code}")
         print(f"Error: {response.text}")
-        
+
 except Exception as e:
-    total_elapsed = time.perf_counter() - start_time  
+    total_elapsed = time.perf_counter() - start_time
     print(f"✗ Request failed: {e}")
     print(f"Elapsed time: {total_elapsed:.2f}s")
