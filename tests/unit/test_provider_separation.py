@@ -8,33 +8,28 @@ This test verifies that:
 """
 
 import pytest
+
 from backend import (
-    get_or_create_resume_embedding,
+    CHUNKING_PROVIDER_OPTIONS,
     DEFAULT_CHUNKING_PROVIDER,
     OPENAI_CHUNK_PROVIDER,
-    CHUNKING_PROVIDER_OPTIONS,
+    get_or_create_resume_embedding,
 )
 
 
 def test_chunking_uses_configured_provider():
     """Test that chunking uses the configured provider, not the analysis provider."""
-    # Mock data for testing
-    resume_id = "test_resume_id"
-    resume_name = "test_resume.pdf"
-    resume_text_items = [
-        {"page": 1, "text": "Test resume content"},
-    ]
-
     # When chunking_provider is not specified, it should use the configured provider
     # This is tested by checking the function signature and default behavior
     import inspect
+
     sig = inspect.signature(get_or_create_resume_embedding)
 
     # Verify that chunking_provider has a default value (None)
     # When None, it should fall back to the configured provider
     params = sig.parameters
-    assert 'chunking_provider' in params
-    assert params['chunking_provider'].default is None
+    assert "chunking_provider" in params
+    assert params["chunking_provider"].default is None
 
     # Verify the configured chunking provider is OpenAI
     assert DEFAULT_CHUNKING_PROVIDER == "openai"

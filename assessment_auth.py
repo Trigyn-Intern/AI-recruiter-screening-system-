@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import jwt
 from fastapi import HTTPException, Request
-
 
 JWT_ALGORITHM = "HS256"
 ASSESSMENT_TOKEN_TYPE = "assessment"
@@ -48,9 +47,15 @@ def decode_access_token(request: Request) -> Dict[str, Any]:
             options={"require": ["exp", "sub"]},
         )
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail="Invalid or expired session.") from exc
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired session."
+        ) from exc
 
-    if not isinstance(payload, dict) or not isinstance(payload.get("sub"), str) or not payload["sub"].strip():
+    if (
+        not isinstance(payload, dict)
+        or not isinstance(payload.get("sub"), str)
+        or not payload["sub"].strip()
+    ):
         raise HTTPException(status_code=401, detail="Invalid session.")
     return payload
 

@@ -1,16 +1,10 @@
 """Unit tests for Assessment Lifecycle & Storage Utility."""
 
-import json
-import pytest
-from backend_question_generator import (
-    get_all_assessment_questions,
-)
-
 
 def test_assessment_status_lifecycle_rules():
     """Verify standard status transition values allowed by recruiter assessment page."""
     valid_statuses = {"Not Created", "Ready to Share", "In Progress", "Completed"}
-    
+
     status_flow = ["Not Created", "Ready to Share", "In Progress", "Completed"]
     for status in status_flow:
         assert status in valid_statuses

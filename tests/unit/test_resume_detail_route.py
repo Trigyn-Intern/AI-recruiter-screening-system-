@@ -2,7 +2,6 @@
 
 from api import api
 
-
 client = TestClient(api)
 SAPNA_RESUME_ID = "0f2a320d90b526a6f90600387101322597a9ebd81c95174f40beb4ffb25718b6"
 

@@ -1,7 +1,8 @@
 """Clear AI analysis caches for fresh benchmark testing."""
+
 import sys
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 # Clear the JD analysis cache
 import backend

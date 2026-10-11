@@ -26,23 +26,23 @@ if resume_path.exists():
             },
             files={"resumes": (resume_path.name, f, "application/pdf")},
         )
-    
+
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
         timings = data.get("timings_ms", {})
-        
+
         print("\nTimings:")
         for k, v in sorted(timings.items()):
             if not k.endswith("_ms"):
                 continue
             print(f"  {k}: {v} ms")
-        
+
         if "faiss_search_ms" in timings:
             print("\n✓ FAISS search optimization is active!")
         else:
             print("\n⚠ FAISS search not in timings (may not be triggered)")
-        
+
         print(f"\nRanking: {len(data.get('ranking', []))} candidates")
         print(f"Top details: {len(data.get('top_details', []))} analyzed")
     else:

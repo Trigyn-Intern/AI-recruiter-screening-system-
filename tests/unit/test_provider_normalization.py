@@ -6,7 +6,8 @@ to prevent "Unknown chunking provider" errors when UI sends capitalized names.
 """
 
 import pytest
-from backend import chunk_resume, CHUNKING_PROVIDER_OPTIONS
+
+from backend import CHUNKING_PROVIDER_OPTIONS
 
 
 def test_provider_normalization_gemini_to_lowercase():
