@@ -498,6 +498,32 @@ def test_evidence_path_traversal_attempts_create_no_directories(monkeypatch, tmp
         api_module._assert_evidence_path("valid_id", "evidence1", "exe")
     assert getattr(excinfo.value, "status_code", None) == 400
 
+    # Additional boundary and separator tests
+    for bad_id in [
+        "/absolute/path",
+        "C:\\windows\\system32",
+        "..",
+        ".",
+        "sub/folder",
+        "sub\\folder",
+        "null\0byte",
+    ]:
+        with pytest.raises(Exception) as excinfo:
+            api_module._assert_evidence_path(bad_id, "evidence1", "png")
+        assert getattr(excinfo.value, "status_code", None) == 400
+
+        with pytest.raises(Exception) as excinfo:
+            api_module._assert_evidence_path("valid_id", bad_id, "png")
+        assert getattr(excinfo.value, "status_code", None) == 400
+
+    # Valid identifier check produces expected path inside evidence_root
+    valid_path = api_module._assert_evidence_path(
+        "assessment-123_abc", "evidence_456-def", "png"
+    )
+    assert valid_path.is_relative_to(evidence_root)
+    assert valid_path.name == "evidence_456-def.png"
+    assert valid_path.parent.name == "assessment-123_abc"
+
     # 2. HTTP POST with traversal in assessment_id must fail and NOT create outside directories
     traversal_id = "../outside_dir"
     token = _token(monkeypatch, traversal_id, "candidate-1")
@@ -518,6 +544,29 @@ def test_evidence_path_traversal_attempts_create_no_directories(monkeypatch, tmp
     assert (
         not outside_dir.exists()
     ), "Directory outside evidence root must not be created!"
+
+    # 3. Valid upload succeeds end-to-end and writes strictly within evidence_root
+    valid_id = "assessment-clean-123"
+    valid_token = _token(monkeypatch, valid_id, "candidate-1")
+    upload_resp = client.post(
+        "/api/assessment/evidence",
+        headers={"Authorization": f"Bearer {valid_token}"},
+        data={
+            "assessment_id": valid_id,
+            "candidate_id": "candidate-1",
+            "event_type": "copy_attempt",
+            "timestamp": _now(),
+            "duration_seconds": "1.0",
+            "evidence_type": "screen_screenshot",
+        },
+        files={"clip": ("clip.png", PNG_BYTES, "image/png")},
+    )
+    assert upload_resp.status_code == 200
+    ev_data = upload_resp.json()
+    assert ev_data["assessment_id"] == valid_id
+    created_clip = evidence_root / valid_id / f"{ev_data['evidence_id']}.png"
+    assert created_clip.exists()
+    assert created_clip.read_bytes() == PNG_BYTES
 
 
 def test_evidence_alignment_masks_import_error_and_exception(monkeypatch):

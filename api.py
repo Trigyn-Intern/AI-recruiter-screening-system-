@@ -234,13 +234,36 @@ def _assert_evidence_path(assessment_id, evidence_id, extension):
     if extension not in {"png", "webm"}:
         raise HTTPException(status_code=400, detail="Invalid evidence file extension.")
 
-    root = ASSESSMENT_EVIDENCE_DIR.resolve()
-    target_dir = (root / assessment_id).resolve()
-    if not target_dir.is_relative_to(root) or target_dir == root:
+    # Strict basename defense-in-depth: filenames and directories must not have path separators or parent traversal
+    clean_assessment_dir = os.path.basename(assessment_id.strip())
+    clean_evidence_name = os.path.basename(evidence_id.strip())
+    if clean_assessment_dir != assessment_id or clean_evidence_name != evidence_id:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    if not clean_assessment_dir or clean_assessment_dir in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    clean_filename = f"{clean_evidence_name}.{extension}"
+    if not clean_filename or clean_filename.startswith("."):
         raise HTTPException(status_code=400, detail="Invalid evidence path.")
 
-    path = (target_dir / f"{evidence_id}.{extension}").resolve()
-    if not path.is_relative_to(target_dir):
+    # Canonical base directory check
+    root_str = os.path.realpath(str(ASSESSMENT_EVIDENCE_DIR.resolve()))
+    target_dir_str = os.path.realpath(os.path.join(root_str, clean_assessment_dir))
+    if not target_dir_str.startswith(root_str + os.sep) or target_dir_str == root_str:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    if os.path.commonpath([root_str, target_dir_str]) != root_str:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+
+    file_path_str = os.path.realpath(os.path.join(target_dir_str, clean_filename))
+    if not file_path_str.startswith(target_dir_str + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    if os.path.commonpath([target_dir_str, file_path_str]) != target_dir_str:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+
+    # Return validated Path object contained strictly inside target_dir
+    path = pathlib.Path(file_path_str)
+    root = pathlib.Path(root_str)
+    target_dir = pathlib.Path(target_dir_str)
+    if not path.is_relative_to(target_dir) or not path.is_relative_to(root):
         raise HTTPException(status_code=400, detail="Invalid evidence path.")
     return path
 
@@ -2499,8 +2522,16 @@ async def post_assessment_evidence_endpoint(
     evidence_id = uuid.uuid4().hex
     extension = "png" if evidence_type == "screen_screenshot" else "webm"
     clip_path = _assert_evidence_path(assessment_id, evidence_id, extension)
-    clip_path.parent.mkdir(parents=True, exist_ok=True)
-    clip_path.write_bytes(clip_bytes)
+    root = ASSESSMENT_EVIDENCE_DIR.resolve()
+    resolved_clip_str = os.path.realpath(str(clip_path))
+    root_str = os.path.realpath(str(root))
+    if not resolved_clip_str.startswith(
+        root_str + os.sep
+    ) or not clip_path.is_relative_to(root):
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    clip_target_path = pathlib.Path(resolved_clip_str)
+    clip_target_path.parent.mkdir(parents=True, exist_ok=True)
+    clip_target_path.write_bytes(clip_bytes)
 
     evidence_item = {
         "evidence_id": evidence_id,
@@ -2559,14 +2590,21 @@ async def get_assessment_evidence_clip_endpoint(
         "png" if evidence.get("evidence_type") == "screen_screenshot" else "webm"
     )
     clip_path = _assert_evidence_path(assessment_id, evidence_id, extension)
-    if not clip_path.is_file():
+    root = ASSESSMENT_EVIDENCE_DIR.resolve()
+    resolved_clip_str = os.path.realpath(str(clip_path))
+    root_str = os.path.realpath(str(root))
+    if not resolved_clip_str.startswith(
+        root_str + os.sep
+    ) or not clip_path.is_relative_to(root):
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+    if not os.path.isfile(resolved_clip_str):
         raise HTTPException(status_code=404, detail="Evidence clip file not found.")
     media_type = (
         "image/png"
         if evidence.get("evidence_type") == "screen_screenshot"
         else "video/webm"
     )
-    return FileResponse(clip_path, media_type=media_type)
+    return FileResponse(resolved_clip_str, media_type=media_type)
 
 
 @api.post("/api/assessment/score/{assessment_id}")
