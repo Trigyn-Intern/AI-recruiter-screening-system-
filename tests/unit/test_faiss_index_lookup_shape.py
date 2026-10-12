@@ -19,6 +19,15 @@ def test_faiss_index_lookup_returns_2d_array(mocker):
         }
     ]
 
+    # Mock path existence checks so the function doesn't short-circuit
+    # before reaching load_resume_vector_store (mirrors test_scoring.py pattern)
+    fake_index_path = mocker.Mock()
+    fake_index_path.exists.return_value = True
+    fake_metadata_path = mocker.Mock()
+    fake_metadata_path.exists.return_value = True
+    mocker.patch("backend.FAISS_INDEX_PATH", fake_index_path)
+    mocker.patch("backend.FAISS_METADATA_PATH", fake_metadata_path)
+
     mocker.patch(
         "backend.load_resume_vector_store",
         return_value=(index, metadata),
