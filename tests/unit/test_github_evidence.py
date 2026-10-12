@@ -1,19 +1,21 @@
-﻿"""
+"""
 Unit tests for GitHub public evidence fetching and caching.
 
 Tests use mocked GitHub API responses to avoid dependency on live GitHub availability.
 """
 
 import json
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from backend import (
-    normalize_github_url,
+    GITHUB_EVIDENCE_CACHE_VERSION,
     extract_github_username,
     fetch_github_public_data,
     get_github_cache_key,
     get_github_evidence,
-    GITHUB_EVIDENCE_CACHE_VERSION,
+    normalize_github_url,
 )
 
 
@@ -29,19 +31,26 @@ def test_normalize_github_url_basic():
 
     for input_url, expected in test_cases:
         result = normalize_github_url(input_url)
-        assert result == expected, f"Failed for {input_url}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_url}: got {result}, expected {expected}"
 
 
 def test_normalize_github_url_with_repo():
     """Test GitHub URL normalization with repository."""
     test_cases = [
         ("github.com/johndoe/myproject", "https://github.com/johndoe/myproject"),
-        ("https://github.com/johndoe/myproject", "https://github.com/johndoe/myproject"),
+        (
+            "https://github.com/johndoe/myproject",
+            "https://github.com/johndoe/myproject",
+        ),
     ]
 
     for input_url, expected in test_cases:
         result = normalize_github_url(input_url)
-        assert result == expected, f"Failed for {input_url}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_url}: got {result}, expected {expected}"
 
 
 def test_normalize_github_url_invalid():
@@ -70,7 +79,9 @@ def test_extract_github_username():
 
     for input_url, expected in test_cases:
         result = extract_github_username(input_url)
-        assert result == expected, f"Failed for {input_url}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_url}: got {result}, expected {expected}"
 
 
 def test_extract_github_username_invalid():
@@ -87,25 +98,27 @@ def test_extract_github_username_invalid():
         assert result is None, f"Expected None for {input_url}, got {result}"
 
 
-@patch('backend.urllib.request.urlopen')
+@patch("backend.urllib.request.urlopen")
 def test_fetch_github_public_data_success(mock_urlopen):
     """Test successful GitHub profile fetch with minimal mocking."""
     # Mock GitHub API response for profile
     mock_response = Mock()
     mock_response.status = 200
-    mock_response.read.return_value = json.dumps({
-        "login": "johndoe",
-        "name": "John Doe",
-        "bio": "Software Engineer",
-        "location": "San Francisco",
-        "public_repos": 10,
-        "followers": 100,
-        "following": 50,
-        "created_at": "2020-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
-        "avatar_url": "https://example.com/avatar.png",
-        "html_url": "https://github.com/johndoe",
-    }).encode("utf-8")
+    mock_response.read.return_value = json.dumps(
+        {
+            "login": "johndoe",
+            "name": "John Doe",
+            "bio": "Software Engineer",
+            "location": "San Francisco",
+            "public_repos": 10,
+            "followers": 100,
+            "following": 50,
+            "created_at": "2020-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "avatar_url": "https://example.com/avatar.png",
+            "html_url": "https://github.com/johndoe",
+        }
+    ).encode("utf-8")
     mock_urlopen.return_value.__enter__.return_value = mock_response
 
     result = fetch_github_public_data("https://github.com/johndoe")
@@ -118,7 +131,7 @@ def test_fetch_github_public_data_success(mock_urlopen):
     assert "repositories" in result
 
 
-@patch('backend.urllib.request.urlopen')
+@patch("backend.urllib.request.urlopen")
 def test_fetch_github_public_data_404(mock_urlopen):
     """Test GitHub 404 (profile not found)."""
     mock_response = Mock()
@@ -132,7 +145,7 @@ def test_fetch_github_public_data_404(mock_urlopen):
     assert "404" in result["error"]
 
 
-@patch('backend.urllib.request.urlopen')
+@patch("backend.urllib.request.urlopen")
 def test_fetch_github_public_data_403(mock_urlopen):
     """Test GitHub 403 (private profile)."""
     mock_response = Mock()
@@ -146,7 +159,7 @@ def test_fetch_github_public_data_403(mock_urlopen):
     assert "403" in result["error"]
 
 
-@patch('backend.urllib.request.urlopen')
+@patch("backend.urllib.request.urlopen")
 def test_fetch_github_public_data_429(mock_urlopen):
     """Test GitHub 429 (rate limit)."""
     mock_response = Mock()
@@ -160,10 +173,11 @@ def test_fetch_github_public_data_429(mock_urlopen):
     assert "429" in result["error"]
 
 
-@patch('backend.urllib.request.urlopen')
+@patch("backend.urllib.request.urlopen")
 def test_fetch_github_public_data_network_error(mock_urlopen):
     """Test network error handling."""
     import urllib.error
+
     mock_urlopen.side_effect = urllib.error.URLError("Network error")
 
     result = fetch_github_public_data("https://github.com/johndoe")
@@ -191,9 +205,9 @@ def test_get_github_cache_key():
     assert get_github_cache_key(None) is None
 
 
-@patch('backend.get_github_cache_key')
-@patch('backend.write_json_file')
-@patch('backend.read_json_file')
+@patch("backend.get_github_cache_key")
+@patch("backend.write_json_file")
+@patch("backend.read_json_file")
 def test_get_github_evidence_cache_hit(mock_read_json, mock_write_json, mock_cache_key):
     """Test cache hit scenario."""
     cache_key = "test_cache_key"
@@ -224,13 +238,11 @@ def test_get_github_evidence_cache_hit(mock_read_json, mock_write_json, mock_cac
     mock_write_json.assert_not_called()
 
 
-@patch('backend.write_json_file')
-@patch('backend.read_json_file')
-@patch('backend.fetch_github_public_data')
+@patch("backend.write_json_file")
+@patch("backend.read_json_file")
+@patch("backend.fetch_github_public_data")
 def test_get_github_evidence_cache_miss(mock_fetch, mock_read_json, mock_write_json):
     """Test cache miss and data fetch."""
-    cache_key = "test_cache_key_2"
-
     # Mock empty cache
     mock_read_json.return_value = {}
 
@@ -255,8 +267,8 @@ def test_get_github_evidence_cache_miss(mock_fetch, mock_read_json, mock_write_j
     mock_write_json.assert_called_once()
 
 
-@patch('backend.write_json_file')
-@patch('backend.read_json_file')
+@patch("backend.write_json_file")
+@patch("backend.read_json_file")
 def test_get_github_evidence_stale_cache(mock_read_json, mock_write_json):
     """Test stale cache (version mismatch)."""
     cache_key = "test_cache_key_3"
@@ -272,7 +284,7 @@ def test_get_github_evidence_stale_cache(mock_read_json, mock_write_json):
         }
     }
 
-    with patch('backend.fetch_github_public_data') as mock_fetch:
+    with patch("backend.fetch_github_public_data") as mock_fetch:
         mock_fetch.return_value = {
             "source": "github",
             "status": "available",
@@ -287,8 +299,8 @@ def test_get_github_evidence_stale_cache(mock_read_json, mock_write_json):
         assert result["cache_version"] == GITHUB_EVIDENCE_CACHE_VERSION
 
 
-@patch('backend.write_json_file')
-@patch('backend.read_json_file')
+@patch("backend.write_json_file")
+@patch("backend.read_json_file")
 def test_get_github_evidence_force_refresh(mock_read_json, mock_write_json):
     """Test force refresh bypasses cache."""
     cache_key = "test_cache_key_4"
@@ -304,7 +316,7 @@ def test_get_github_evidence_force_refresh(mock_read_json, mock_write_json):
         }
     }
 
-    with patch('backend.fetch_github_public_data') as mock_fetch:
+    with patch("backend.fetch_github_public_data") as mock_fetch:
         mock_fetch.return_value = {
             "source": "github",
             "status": "available",
@@ -319,8 +331,8 @@ def test_get_github_evidence_force_refresh(mock_read_json, mock_write_json):
         assert result["cache_version"] == GITHUB_EVIDENCE_CACHE_VERSION
 
 
-@patch('backend.write_json_file')
-@patch('backend.read_json_file')
+@patch("backend.write_json_file")
+@patch("backend.read_json_file")
 def test_get_github_evidence_invalid_url(mock_read_json, mock_write_json):
     """Test with invalid GitHub URL."""
     mock_read_json.return_value = {}

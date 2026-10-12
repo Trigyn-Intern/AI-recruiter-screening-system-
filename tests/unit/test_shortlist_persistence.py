@@ -1,32 +1,28 @@
-﻿"""Unit tests for shortlist persistence functionality."""
+"""Unit tests for shortlist persistence functionality."""
 
-import json
 import os
-import tempfile
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 # Import backend functions
 import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend import (
+    add_candidate_to_shortlist,
     create_shortlist,
+    delete_shortlist,
+    get_shortlist,
     get_shortlists,
     get_user_shortlists,
-    get_shortlist,
-    add_candidate_to_shortlist,
     remove_candidate_from_shortlist,
     update_shortlist_status,
-    delete_shortlist,
-    verify_shortlist_ownership,
     verify_candidate_exists,
-    get_active_resume_db_records,
-    read_json_file,
-    write_json_file,
-    PROJECT_ROOT,
-    VECTOR_STORE_DIR,
+    verify_shortlist_ownership,
 )
 
 
@@ -36,20 +32,20 @@ class TestShortlistPersistence:
     @pytest.fixture
     def temp_shortlists_file(self):
         """Create a temporary shortlists.json file for testing."""
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
-        temp_file.write('[]')
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
+        temp_file.write("[]")
         temp_file.close()
         yield temp_file.name
         # Cleanup
         try:
             os.unlink(temp_file.name)
-        except:
+        except OSError:
             pass
 
     @pytest.fixture
     def mock_shortlists_path(self, temp_shortlists_file):
         """Mock the SHORTLISTS_PATH to use temporary file."""
-        with patch('backend.SHORTLISTS_PATH', Path(temp_shortlists_file)):
+        with patch("backend.SHORTLISTS_PATH", Path(temp_shortlists_file)):
             yield
 
     @pytest.fixture
@@ -59,7 +55,7 @@ class TestShortlistPersistence:
             "experience": "5+ years",
             "primary_skills": "Python, FastAPI",
             "secondary_skills": "SQL, Docker",
-            "education": "Bachelor's in CS"
+            "education": "Bachelor's in CS",
         }
 
     @pytest.fixture
@@ -68,7 +64,7 @@ class TestShortlistPersistence:
         return {
             "strongest_candidate": "Candidate A",
             "assessment_summary": "Strong candidate with relevant experience",
-            "supporting_points": ["Point 1", "Point 2"]
+            "supporting_points": ["Point 1", "Point 2"],
         }
 
     @pytest.fixture
@@ -78,16 +74,18 @@ class TestShortlistPersistence:
             "strengths": ["Python", "FastAPI"],
             "gaps": ["Docker"],
             "jd_coverage": ["Primary skills covered"],
-            "evidence": ["Built API with Python"]
+            "evidence": ["Built API with Python"],
         }
 
-    def test_create_shortlist(self, mock_shortlists_path, sample_job_description, sample_evidence_snapshot):
+    def test_create_shortlist(
+        self, mock_shortlists_path, sample_job_description, sample_evidence_snapshot
+    ):
         """Test creating a new shortlist."""
         shortlist = create_shortlist(
             job_description=sample_job_description,
             created_by="test_user",
             created_by_role="recruiter",
-            evidence_assessment_snapshot=sample_evidence_snapshot
+            evidence_assessment_snapshot=sample_evidence_snapshot,
         )
 
         assert shortlist is not None
@@ -129,7 +127,9 @@ class TestShortlistPersistence:
         non_existent = get_shortlist("non_existent_id")
         assert non_existent is None
 
-    def test_add_candidate_to_shortlist(self, mock_shortlists_path, sample_job_description, sample_candidate_evidence):
+    def test_add_candidate_to_shortlist(
+        self, mock_shortlists_path, sample_job_description, sample_candidate_evidence
+    ):
         """Test adding a candidate to a shortlist."""
         shortlist = create_shortlist(sample_job_description, "test_user", "recruiter")
         shortlist_id = shortlist["shortlist_id"]
@@ -140,7 +140,7 @@ class TestShortlistPersistence:
             candidate_name="Test Candidate",
             match_score=85.5,
             match_position="Top Match",
-            evidence_snapshot=sample_candidate_evidence
+            evidence_snapshot=sample_candidate_evidence,
         )
 
         assert updated is not None
@@ -153,32 +153,60 @@ class TestShortlistPersistence:
         assert candidate["evidence_snapshot"] == sample_candidate_evidence
         assert "shortlisted_at" in candidate
 
-    def test_prevent_duplicate_candidate(self, mock_shortlists_path, sample_job_description, sample_candidate_evidence):
+    def test_prevent_duplicate_candidate(
+        self, mock_shortlists_path, sample_job_description, sample_candidate_evidence
+    ):
         """Test that duplicate candidates are not added."""
         shortlist = create_shortlist(sample_job_description, "test_user", "recruiter")
         shortlist_id = shortlist["shortlist_id"]
 
         # Add candidate first time
         add_candidate_to_shortlist(
-            shortlist_id, "test_resume_id", "Test Candidate", 85.5, "Top Match", sample_candidate_evidence
+            shortlist_id,
+            "test_resume_id",
+            "Test Candidate",
+            85.5,
+            "Top Match",
+            sample_candidate_evidence,
         )
 
         # Try to add same candidate again
         updated = add_candidate_to_shortlist(
-            shortlist_id, "test_resume_id", "Test Candidate", 85.5, "Top Match", sample_candidate_evidence
+            shortlist_id,
+            "test_resume_id",
+            "Test Candidate",
+            85.5,
+            "Top Match",
+            sample_candidate_evidence,
         )
 
         # Should still have only one candidate
         assert len(updated["shortlisted_candidates"]) == 1
 
-    def test_remove_candidate_from_shortlist(self, mock_shortlists_path, sample_job_description, sample_candidate_evidence):
+    def test_remove_candidate_from_shortlist(
+        self, mock_shortlists_path, sample_job_description, sample_candidate_evidence
+    ):
         """Test removing a candidate from a shortlist."""
         shortlist = create_shortlist(sample_job_description, "test_user", "recruiter")
         shortlist_id = shortlist["shortlist_id"]
 
         # Add two candidates
-        add_candidate_to_shortlist(shortlist_id, "resume1", "Candidate 1", 85.5, "Top Match", sample_candidate_evidence)
-        add_candidate_to_shortlist(shortlist_id, "resume2", "Candidate 2", 75.0, "Match #2", sample_candidate_evidence)
+        add_candidate_to_shortlist(
+            shortlist_id,
+            "resume1",
+            "Candidate 1",
+            85.5,
+            "Top Match",
+            sample_candidate_evidence,
+        )
+        add_candidate_to_shortlist(
+            shortlist_id,
+            "resume2",
+            "Candidate 2",
+            75.0,
+            "Match #2",
+            sample_candidate_evidence,
+        )
 
         # Remove first candidate
         updated = remove_candidate_from_shortlist(shortlist_id, "resume1")
@@ -187,7 +215,9 @@ class TestShortlistPersistence:
         assert len(updated["shortlisted_candidates"]) == 1
         assert updated["shortlisted_candidates"][0]["resume_id"] == "resume2"
 
-    def test_update_shortlist_status(self, mock_shortlists_path, sample_job_description):
+    def test_update_shortlist_status(
+        self, mock_shortlists_path, sample_job_description
+    ):
         """Test updating shortlist status."""
         shortlist = create_shortlist(sample_job_description, "test_user", "recruiter")
         shortlist_id = shortlist["shortlist_id"]
@@ -222,7 +252,9 @@ class TestShortlistPersistence:
         success = delete_shortlist("non_existent_id")
         assert success is False
 
-    def test_verify_shortlist_ownership(self, mock_shortlists_path, sample_job_description):
+    def test_verify_shortlist_ownership(
+        self, mock_shortlists_path, sample_job_description
+    ):
         """Test shortlist ownership verification."""
         shortlist = create_shortlist(sample_job_description, "owner_user", "recruiter")
         shortlist_id = shortlist["shortlist_id"]
@@ -239,27 +271,36 @@ class TestShortlistPersistence:
     def test_malformed_json_handling(self, monkeypatch):
         """Test handling of malformed JSON in shortlists file."""
         # Create a temporary file with malformed JSON
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
         temp_file.write('{"invalid": json}')
         temp_file.close()
 
         try:
             # Mock the path to use the malformed file
-            with patch('backend.SHORTLISTS_PATH', Path(temp_file.name)):
+            with patch("backend.SHORTLISTS_PATH", Path(temp_file.name)):
                 # Should handle gracefully and return empty list
                 shortlists = get_shortlists()
                 assert shortlists == []
         finally:
             os.unlink(temp_file.name)
 
-    def test_persistence_across_operations(self, mock_shortlists_path, sample_job_description, sample_candidate_evidence):
+    def test_persistence_across_operations(
+        self, mock_shortlists_path, sample_job_description, sample_candidate_evidence
+    ):
         """Test that data persists across multiple operations."""
         # Create shortlist
         shortlist1 = create_shortlist(sample_job_description, "test_user", "recruiter")
         shortlist_id = shortlist1["shortlist_id"]
 
         # Add candidate
-        add_candidate_to_shortlist(shortlist_id, "resume1", "Candidate 1", 85.5, "Top Match", sample_candidate_evidence)
+        add_candidate_to_shortlist(
+            shortlist_id,
+            "resume1",
+            "Candidate 1",
+            85.5,
+            "Top Match",
+            sample_candidate_evidence,
+        )
 
         # Retrieve and verify
         retrieved = get_shortlist(shortlist_id)
@@ -282,22 +323,22 @@ class TestShortlistValidation:
         # Mock the resume database
         mock_db = {
             "existing_resume": {"resume_name": "Existing Resume"},
-            "another_resume": {"resume_name": "Another Resume"}
+            "another_resume": {"resume_name": "Another Resume"},
         }
 
-        with patch('backend.get_active_resume_db_records', return_value=mock_db):
+        with patch("backend.get_active_resume_db_records", return_value=mock_db):
             assert verify_candidate_exists("existing_resume") is True
             assert verify_candidate_exists("another_resume") is True
             assert verify_candidate_exists("non_existent_resume") is False
 
     def test_empty_shortlists_file(self, monkeypatch):
         """Test handling of empty shortlists file."""
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
-        temp_file.write('[]')
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
+        temp_file.write("[]")
         temp_file.close()
 
         try:
-            with patch('backend.SHORTLISTS_PATH', Path(temp_file.name)):
+            with patch("backend.SHORTLISTS_PATH", Path(temp_file.name)):
                 shortlists = get_shortlists()
                 assert shortlists == []
         finally:
@@ -308,9 +349,9 @@ class TestShortlistValidation:
         # Use a non-existent file path
         non_existent_path = Path(tempfile.gettempdir()) / "non_existent_shortlists.json"
 
-        with patch('backend.SHORTLISTS_PATH', non_existent_path):
-            with patch('backend.initialize_project_storage_files'):
-                with patch('backend.read_json_file', return_value=[]):
+        with patch("backend.SHORTLISTS_PATH", non_existent_path):
+            with patch("backend.initialize_project_storage_files"):
+                with patch("backend.read_json_file", return_value=[]):
                     shortlists = get_shortlists()
                     assert shortlists == []
 

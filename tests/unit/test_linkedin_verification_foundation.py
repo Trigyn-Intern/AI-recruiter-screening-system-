@@ -1,33 +1,38 @@
-﻿"""Focused tests for LinkedIn verification foundation (Phase 1A).
+"""Focused tests for LinkedIn verification foundation (Phase 1A).
 
 Tests only the backend foundation without API integration.
 """
+
+from unittest.mock import patch
+
 import pytest
+
 from backend import (
     DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT,
     DEFAULT_LINKEDIN_VERIFICATION_USER_PROMPT_TEMPLATE,
-    LINKEDIN_VERIFICATION_SCHEMA,
     LINKEDIN_VERIFICATION_FALLBACK,
-    RESUME_SKILL_SCHEMA,
+    LINKEDIN_VERIFICATION_SCHEMA,
     RESUME_SKILL_FALLBACK,
-    normalize_linkedin_url,
-    normalize_linkedin_profile_url,
+    RESUME_SKILL_SCHEMA,
+    extract_contact_info,
     normalize_captapi_response,
+    normalize_linkedin_profile_url,
+    normalize_linkedin_url,
+    normalize_phone_number,
     safe_ai_json,
     safe_gemini_json,
     safe_ollama_json,
-    extract_contact_info,
-    normalize_phone_number,
     verify_linkedin_evidence_against_resume,
 )
-from unittest.mock import patch, MagicMock
 
 
 def test_linkedin_system_prompt_exists():
     """Test that LinkedIn verification system prompt constant exists."""
     assert DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT is not None
     assert len(DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT) > 100
-    assert "Evidence Verification Assistant" in DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT
+    assert (
+        "Evidence Verification Assistant" in DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT
+    )
     assert "identity_confirmed" in DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT
 
 
@@ -76,7 +81,7 @@ def test_linkedin_fallback_contains_identity_confirmed():
     assert "overall_status" in LINKEDIN_VERIFICATION_FALLBACK
     assert "summary" in LINKEDIN_VERIFICATION_FALLBACK
     assert "findings" in LINKEDIN_VERIFICATION_FALLBACK
-    assert LINKEDIN_VERIFICATION_FALLBACK["identity_confirmed"] == False
+    assert LINKEDIN_VERIFICATION_FALLBACK["identity_confirmed"] is False
     assert LINKEDIN_VERIFICATION_FALLBACK["overall_status"] == "UNVERIFIABLE"
 
 
@@ -94,7 +99,9 @@ def test_normalize_linkedin_url():
 
     for input_url, expected in test_cases:
         result = normalize_linkedin_url(input_url)
-        assert result == expected, f"Failed for {input_url}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_url}: got {result}, expected {expected}"
 
 
 def test_normalize_linkedin_profile_url():
@@ -109,7 +116,9 @@ def test_normalize_linkedin_profile_url():
 
     for input_url, expected in test_cases:
         result = normalize_linkedin_profile_url(input_url)
-        assert result == expected, f"Failed for {input_url}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_url}: got {result}, expected {expected}"
 
 
 def test_normalize_captapi_response():
@@ -164,6 +173,7 @@ def test_safe_ai_json_accepts_system_prompt():
     """Test that safe_ai_json accepts system_prompt parameter."""
     # This is a signature test - we just verify the function accepts the parameter
     import inspect
+
     sig = inspect.signature(safe_ai_json)
     assert "system_prompt" in sig.parameters
 
@@ -171,6 +181,7 @@ def test_safe_ai_json_accepts_system_prompt():
 def test_safe_gemini_json_accepts_system_prompt():
     """Test that safe_gemini_json accepts system_prompt parameter."""
     import inspect
+
     sig = inspect.signature(safe_gemini_json)
     assert "system_prompt" in sig.parameters
 
@@ -178,11 +189,12 @@ def test_safe_gemini_json_accepts_system_prompt():
 def test_safe_ollama_json_accepts_system_prompt():
     """Test that safe_ollama_json accepts system_prompt parameter."""
     import inspect
+
     sig = inspect.signature(safe_ollama_json)
     assert "system_prompt" in sig.parameters
 
 
-@patch('backend.safe_gemini_json')
+@patch("backend.safe_gemini_json")
 def test_safe_ai_json_forwards_system_prompt_to_gemini(mock_gemini):
     """Test that safe_ai_json forwards system_prompt to safe_gemini_json."""
     mock_gemini.return_value = {"result": "test"}
@@ -192,7 +204,7 @@ def test_safe_ai_json_forwards_system_prompt_to_gemini(mock_gemini):
         {"type": "object"},
         {"fallback": True},
         provider="Gemini",
-        system_prompt="test system prompt"
+        system_prompt="test system prompt",
     )
 
     mock_gemini.assert_called_once()
@@ -200,7 +212,7 @@ def test_safe_ai_json_forwards_system_prompt_to_gemini(mock_gemini):
     assert call_kwargs["system_prompt"] == "test system prompt"
 
 
-@patch('backend.safe_ollama_json')
+@patch("backend.safe_ollama_json")
 def test_safe_ai_json_forwards_system_prompt_to_ollama(mock_ollama):
     """Test that safe_ai_json forwards system_prompt to safe_ollama_json."""
     mock_ollama.return_value = {"result": "test"}
@@ -210,7 +222,7 @@ def test_safe_ai_json_forwards_system_prompt_to_ollama(mock_ollama):
         {"type": "object"},
         {"fallback": True},
         provider="Ollama",
-        system_prompt="test system prompt"
+        system_prompt="test system prompt",
     )
 
     mock_ollama.assert_called_once()
@@ -218,7 +230,7 @@ def test_safe_ai_json_forwards_system_prompt_to_ollama(mock_ollama):
     assert call_kwargs["system_prompt"] == "test system prompt"
 
 
-@patch('backend.ollama')
+@patch("backend.ollama")
 def test_safe_ollama_json_uses_system_prompt_in_messages(mock_ollama):
     """Test that safe_ollama_json uses system_prompt in messages."""
     mock_ollama.chat.return_value = {"message": {"content": '{"result": "test"}'}}
@@ -227,7 +239,7 @@ def test_safe_ollama_json_uses_system_prompt_in_messages(mock_ollama):
         "test prompt",
         {"type": "object"},
         {"fallback": True},
-        system_prompt="custom system instruction"
+        system_prompt="custom system instruction",
     )
 
     mock_ollama.chat.assert_called_once()
@@ -240,16 +252,13 @@ def test_safe_ollama_json_uses_system_prompt_in_messages(mock_ollama):
     assert messages[1]["content"] == "test prompt"
 
 
-@patch('backend.ollama')
+@patch("backend.ollama")
 def test_safe_ollama_json_default_system_prompt(mock_ollama):
     """Test that safe_ollama_json uses default system prompt when none provided."""
     mock_ollama.chat.return_value = {"message": {"content": '{"result": "test"}'}}
 
     safe_ollama_json(
-        "test prompt",
-        {"type": "object"},
-        {"fallback": True},
-        system_prompt=None
+        "test prompt", {"type": "object"}, {"fallback": True}, system_prompt=None
     )
 
     mock_ollama.chat.assert_called_once()
@@ -264,69 +273,69 @@ def test_verify_linkedin_evidence_against_resume_callable():
     assert callable(verify_linkedin_evidence_against_resume)
 
 
-@patch('backend.safe_ai_json')
+@patch("backend.safe_ai_json")
 def test_verify_linkedin_evidence_against_resume_uses_system_prompt(mock_ai):
     """Test that verify_linkedin_evidence_against_resume passes system_prompt to safe_ai_json."""
     mock_ai.return_value = {
         "identity_confirmed": True,
         "overall_status": "CORROBORATED",
         "summary": "Test summary",
-        "findings": []
+        "findings": [],
     }
 
-    resume_profile = {
-        "skills": {
-            "contact_info": {
-                "linkedin": "linkedin.com/in/test"
-            }
-        }
-    }
+    resume_profile = {"skills": {"contact_info": {"linkedin": "linkedin.com/in/test"}}}
     linkedin_profile = {"name": "Test User"}
     jd_structured = {"experience": "Test"}
 
-    verify_linkedin_evidence_against_resume(resume_profile, linkedin_profile, jd_structured)
+    verify_linkedin_evidence_against_resume(
+        resume_profile, linkedin_profile, jd_structured
+    )
 
     mock_ai.assert_called_once()
     call_kwargs = mock_ai.call_args[1]
     assert call_kwargs["system_prompt"] == DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT
 
 
-@patch('backend.safe_ai_json')
+@patch("backend.safe_ai_json")
 def test_verify_linkedin_evidence_against_resume_uses_schema(mock_ai):
     """Test that verify_linkedin_evidence_against_resume uses correct schema."""
     mock_ai.return_value = {
         "identity_confirmed": True,
         "overall_status": "CORROBORATED",
         "summary": "Test summary",
-        "findings": []
+        "findings": [],
     }
 
     resume_profile = {"skills": {"contact_info": {}}}
     linkedin_profile = {"name": "Test User"}
     jd_structured = {"experience": "Test"}
 
-    verify_linkedin_evidence_against_resume(resume_profile, linkedin_profile, jd_structured)
+    verify_linkedin_evidence_against_resume(
+        resume_profile, linkedin_profile, jd_structured
+    )
 
     mock_ai.assert_called_once()
     call_args = mock_ai.call_args
     assert call_args[0][1] == LINKEDIN_VERIFICATION_SCHEMA
 
 
-@patch('backend.safe_ai_json')
+@patch("backend.safe_ai_json")
 def test_verify_linkedin_evidence_against_resume_uses_fallback(mock_ai):
     """Test that verify_linkedin_evidence_against_resume uses correct fallback."""
     mock_ai.return_value = {
         "identity_confirmed": True,
         "overall_status": "CORROBORATED",
         "summary": "Test summary",
-        "findings": []
+        "findings": [],
     }
 
     resume_profile = {"skills": {"contact_info": {}}}
     linkedin_profile = {"name": "Test User"}
     jd_structured = {"experience": "Test"}
 
-    verify_linkedin_evidence_against_resume(resume_profile, linkedin_profile, jd_structured)
+    verify_linkedin_evidence_against_resume(
+        resume_profile, linkedin_profile, jd_structured
+    )
 
     mock_ai.assert_called_once()
     call_args = mock_ai.call_args
@@ -363,7 +372,9 @@ def test_phone_normalization_indian():
 
     for input_phone, expected in test_cases:
         result = normalize_phone_number(input_phone)
-        assert result == expected, f"Failed for {input_phone}: got {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"Failed for {input_phone}: got {result}, expected {expected}"
 
 
 if __name__ == "__main__":

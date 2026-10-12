@@ -11,7 +11,13 @@ from backend import persist_analysis_session
 client = TestClient(api)
 
 
-def _token(monkeypatch, assessment_id, candidate_id, token_type="assessment", subject="recruiter-1"):
+def _token(
+    monkeypatch,
+    assessment_id,
+    candidate_id,
+    token_type="assessment",
+    subject="recruiter-1",
+):
     secret = "test-jwt-secret"
     monkeypatch.setenv("JWT_SECRET", secret)
     payload = {
@@ -19,11 +25,13 @@ def _token(monkeypatch, assessment_id, candidate_id, token_type="assessment", su
         "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
     }
     if token_type:
-        payload.update({
-            "token_type": token_type,
-            "assessment_id": assessment_id,
-            "candidate_id": candidate_id,
-        })
+        payload.update(
+            {
+                "token_type": token_type,
+                "assessment_id": assessment_id,
+                "candidate_id": candidate_id,
+            }
+        )
     return jwt.encode(payload, secret, algorithm="HS256")
 
 
@@ -38,23 +46,27 @@ WEBM_BYTES = b"\x1a\x45\xdf\xa3valid-test-webm"
 def test_analysis_session_persistence_excludes_embedding_arrays(tmp_path):
     resume_embedding = np.asarray([[0.1, 0.2]], dtype="float32")
     chunk_embedding = np.asarray([[0.3, 0.4]], dtype="float32")
-    file_cache = [{
-        "record": {"resume_id": "resume-1", "resume_name": "resume.pdf"},
-        "resume_text": "Python experience",
-        "resume_skill_profile": {"skills": ["Python"]},
-        "resume_embedding": resume_embedding,
-        "chunk_data": {
-            "embeddings": [chunk_embedding],
-            "chunks": [{"chunk_id": "resume-1_chunk_000"}],
-        },
-    }]
+    file_cache = [
+        {
+            "record": {"resume_id": "resume-1", "resume_name": "resume.pdf"},
+            "resume_text": "Python experience",
+            "resume_skill_profile": {"skills": ["Python"]},
+            "resume_embedding": resume_embedding,
+            "chunk_data": {
+                "embeddings": [chunk_embedding],
+                "chunks": [{"chunk_id": "resume-1_chunk_000"}],
+            },
+        }
+    ]
 
     persistable_cache = _build_persistable_file_cache(file_cache)
-    persist_analysis_session({
-        "base_dir": str(tmp_path),
-        "job_description": "Python role",
-        "file_cache": persistable_cache,
-    })
+    persist_analysis_session(
+        {
+            "base_dir": str(tmp_path),
+            "job_description": "Python role",
+            "file_cache": persistable_cache,
+        }
+    )
 
     stored_sessions = json.loads(
         (tmp_path / "analysis_sessions.json").read_text(encoding="utf-8")
@@ -119,7 +131,7 @@ def test_behavior_events_accept_eye_event_types(monkeypatch):
 
     monkeypatch.setattr(
         "backend_question_generator.get_assessment_questions",
-        lambda assessment_id: {"candidate_id": "candidate-eye-events", "questions": []}
+        lambda assessment_id: {"candidate_id": "candidate-eye-events", "questions": []},
     )
 
     def capture_events(assessment_id, candidate_id, new_events):
@@ -127,8 +139,7 @@ def test_behavior_events_accept_eye_event_types(monkeypatch):
         return {"assessment_id": assessment_id, "events": new_events}
 
     monkeypatch.setattr(
-        "backend_question_generator.append_assessment_behavior_events",
-        capture_events
+        "backend_question_generator.append_assessment_behavior_events", capture_events
     )
 
     eye_event_types = [
@@ -136,23 +147,21 @@ def test_behavior_events_accept_eye_event_types(monkeypatch):
         "eye_looking_right",
         "eye_looking_up",
         "eye_looking_down",
-        "eye_looking_forward"
+        "eye_looking_forward",
     ]
     response = client.post(
         "/api/assessment/behavior-events",
-        headers={"Authorization": f"Bearer {_token(monkeypatch, 'assessment-eye-events', 'candidate-eye-events')}"},
+        headers={
+            "Authorization": f"Bearer {_token(monkeypatch, 'assessment-eye-events', 'candidate-eye-events')}"
+        },
         json={
             "assessment_id": "assessment-eye-events",
             "candidate_id": "candidate-eye-events",
             "events": [
-                {
-                    "type": event_type,
-                    "timestamp": _now(),
-                    "details": "face_landmarker"
-                }
+                {"type": event_type, "timestamp": _now(), "details": "face_landmarker"}
                 for event_type in eye_event_types
-            ]
-        }
+            ],
+        },
     )
 
     assert response.status_code == 200
@@ -165,7 +174,10 @@ def test_behavior_events_reject_unknown_event_types(monkeypatch):
 
     monkeypatch.setattr(
         "backend_question_generator.get_assessment_questions",
-        lambda assessment_id: {"candidate_id": "candidate-unknown-event", "questions": []}
+        lambda assessment_id: {
+            "candidate_id": "candidate-unknown-event",
+            "questions": [],
+        },
     )
 
     def unexpected_append(*args, **kwargs):
@@ -175,31 +187,35 @@ def test_behavior_events_reject_unknown_event_types(monkeypatch):
 
     monkeypatch.setattr(
         "backend_question_generator.append_assessment_behavior_events",
-        unexpected_append
+        unexpected_append,
     )
 
     response = client.post(
         "/api/assessment/behavior-events",
-        headers={"Authorization": f"Bearer {_token(monkeypatch, 'assessment-unknown-event', 'candidate-unknown-event')}"},
+        headers={
+            "Authorization": f"Bearer {_token(monkeypatch, 'assessment-unknown-event', 'candidate-unknown-event')}"
+        },
         json={
             "assessment_id": "assessment-unknown-event",
             "candidate_id": "candidate-unknown-event",
-            "events": [{
-                "type": "eye_coordinate_dump",
-                    "timestamp": _now()
-            }]
-        }
+            "events": [{"type": "eye_coordinate_dump", "timestamp": _now()}],
+        },
     )
 
     assert response.status_code == 200
-    assert response.json() == {"message": "No valid behavior events to record", "count": 0}
+    assert response.json() == {
+        "message": "No valid behavior events to record",
+        "count": 0,
+    }
     assert append_called is False
 
 
 def test_recruiter_can_issue_scoped_assessment_token(monkeypatch):
     import api as api_module
 
-    monkeypatch.setattr("assessment_auth._is_recruiter_user", lambda subject: subject == "recruiter-1")
+    monkeypatch.setattr(
+        "assessment_auth._is_recruiter_user", lambda subject: subject == "recruiter-1"
+    )
     monkeypatch.setattr(
         "backend_question_generator.get_assessment_questions",
         lambda assessment_id: {"candidate_id": "candidate-token-1", "questions": []},
@@ -207,7 +223,12 @@ def test_recruiter_can_issue_scoped_assessment_token(monkeypatch):
     monkeypatch.setattr(
         api_module,
         "get_shortlists",
-        lambda: [{"user_id": "recruiter-1", "candidates": [{"resume_id": "candidate-token-1"}]}],
+        lambda: [
+            {
+                "user_id": "recruiter-1",
+                "candidates": [{"resume_id": "candidate-token-1"}],
+            }
+        ],
     )
     recruiter_token = _token(
         monkeypatch,
@@ -219,7 +240,10 @@ def test_recruiter_can_issue_scoped_assessment_token(monkeypatch):
     response = client.post(
         "/api/assessment/access-token",
         headers={"Authorization": f"Bearer {recruiter_token}"},
-        json={"assessment_id": "assessment-token-1", "candidate_id": "candidate-token-1"},
+        json={
+            "assessment_id": "assessment-token-1",
+            "candidate_id": "candidate-token-1",
+        },
     )
 
     assert response.status_code == 200
@@ -233,28 +257,37 @@ def test_recruiter_can_issue_scoped_assessment_token(monkeypatch):
 def test_evidence_upload_is_assessment_scoped_and_allowlisted(tmp_path, monkeypatch):
     import api as api_module
 
-    monkeypatch.setattr("assessment_auth._is_recruiter_user", lambda subject: subject == "recruiter-1")
+    monkeypatch.setattr(
+        "assessment_auth._is_recruiter_user", lambda subject: subject == "recruiter-1"
+    )
     monkeypatch.setattr(api_module, "ASSESSMENT_EVIDENCE_DIR", tmp_path / "evidence")
     monkeypatch.setattr(
         api_module,
         "ASSESSMENT_EVIDENCE_METADATA_PATH",
-        tmp_path / "evidence" / "metadata.json"
+        tmp_path / "evidence" / "metadata.json",
     )
+
     def get_questions(assessment_id):
         if assessment_id == "assessment-evidence-1":
             return {"candidate_id": "candidate-evidence-1", "questions": []}
         return None
 
-    monkeypatch.setattr("backend_question_generator.get_assessment_questions", get_questions)
+    monkeypatch.setattr(
+        "backend_question_generator.get_assessment_questions", get_questions
+    )
     monkeypatch.setattr(
         api_module,
         "get_shortlists",
-        lambda: [{
-            "user_id": "recruiter-1",
-            "candidates": [{"resume_id": "candidate-evidence-1"}],
-        }],
+        lambda: [
+            {
+                "user_id": "recruiter-1",
+                "candidates": [{"resume_id": "candidate-evidence-1"}],
+            }
+        ],
     )
-    candidate_token = _token(monkeypatch, "assessment-evidence-1", "candidate-evidence-1")
+    candidate_token = _token(
+        monkeypatch, "assessment-evidence-1", "candidate-evidence-1"
+    )
     recruiter_token = _token(
         monkeypatch,
         "assessment-evidence-1",
@@ -271,9 +304,9 @@ def test_evidence_upload_is_assessment_scoped_and_allowlisted(tmp_path, monkeypa
             "event_type": "looking_away",
             "timestamp": _now(),
             "duration_seconds": "2.5",
-            "evidence_type": "screen_video"
+            "evidence_type": "screen_video",
         },
-        files={"clip": ("evidence.webm", WEBM_BYTES, "video/webm")}
+        files={"clip": ("evidence.webm", WEBM_BYTES, "video/webm")},
     )
 
     assert response.status_code == 200
@@ -312,9 +345,9 @@ def test_evidence_upload_is_assessment_scoped_and_allowlisted(tmp_path, monkeypa
             "event_type": "face_present",
             "timestamp": _now(),
             "duration_seconds": "2.5",
-            "evidence_type": "screen_video"
+            "evidence_type": "screen_video",
         },
-        files={"clip": ("evidence.webm", WEBM_BYTES, "video/webm")}
+        files={"clip": ("evidence.webm", WEBM_BYTES, "video/webm")},
     )
     assert rejected_response.status_code == 400
 
@@ -327,9 +360,9 @@ def test_evidence_upload_is_assessment_scoped_and_allowlisted(tmp_path, monkeypa
             "event_type": "copy_attempt",
             "timestamp": _now(),
             "duration_seconds": "0.1",
-            "evidence_type": "screen_screenshot"
+            "evidence_type": "screen_screenshot",
         },
-        files={"clip": ("evidence.png", PNG_BYTES, "image/png")}
+        files={"clip": ("evidence.png", PNG_BYTES, "image/png")},
     )
     assert screenshot_response.status_code == 200
     screenshot = screenshot_response.json()
@@ -351,16 +384,26 @@ def test_assessment_endpoints_reject_unauthenticated_requests(monkeypatch):
 
     response = client.post(
         "/api/assessment/behavior-events",
-        json={"assessment_id": "assessment-evidence-1", "candidate_id": "candidate-evidence-1", "events": []},
+        json={
+            "assessment_id": "assessment-evidence-1",
+            "candidate_id": "candidate-evidence-1",
+            "events": [],
+        },
     )
     assert response.status_code == 401
 
 
-def test_assessment_endpoints_reject_cross_candidate_and_path_traversal(tmp_path, monkeypatch):
+def test_assessment_endpoints_reject_cross_candidate_and_path_traversal(
+    tmp_path, monkeypatch
+):
     import api as api_module
 
     monkeypatch.setattr(api_module, "ASSESSMENT_EVIDENCE_DIR", tmp_path / "evidence")
-    monkeypatch.setattr(api_module, "ASSESSMENT_EVIDENCE_METADATA_PATH", tmp_path / "evidence" / "metadata.json")
+    monkeypatch.setattr(
+        api_module,
+        "ASSESSMENT_EVIDENCE_METADATA_PATH",
+        tmp_path / "evidence" / "metadata.json",
+    )
     monkeypatch.setattr(
         "backend_question_generator.get_assessment_questions",
         lambda assessment_id: {"candidate_id": "candidate-evidence-1", "questions": []},
@@ -415,7 +458,9 @@ def test_evidence_rejects_malformed_upload_and_invalid_event(monkeypatch):
         json={
             "assessment_id": "assessment-evidence-1",
             "candidate_id": "candidate-evidence-1",
-            "events": [{"type": "tab_visible", "timestamp": _now(), "duration_seconds": -1}],
+            "events": [
+                {"type": "tab_visible", "timestamp": _now(), "duration_seconds": -1}
+            ],
         },
     )
     assert response.status_code == 400

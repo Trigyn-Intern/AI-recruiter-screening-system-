@@ -73,7 +73,9 @@ def test_verification_failure_preserves_existing_candidate_detail_fields(monkeyp
         "github_verification": {"overall_status": "corroborated"},
     }
 
-    monkeypatch.setattr("api.fetch_captapi_linkedin_profile", lambda url: linkedin_profile)
+    monkeypatch.setattr(
+        "api.fetch_captapi_linkedin_profile", lambda url: linkedin_profile
+    )
     monkeypatch.setattr("api.get_github_evidence", lambda url: {"status": "available"})
     monkeypatch.setattr(
         "api.verify_github_evidence_against_resume",
@@ -83,9 +85,13 @@ def test_verification_failure_preserves_existing_candidate_detail_fields(monkeyp
     def fail_verification(resume, profile, jd_structured):
         raise RuntimeError("verification unavailable")
 
-    monkeypatch.setattr("api.verify_linkedin_evidence_against_resume", fail_verification)
+    monkeypatch.setattr(
+        "api.verify_linkedin_evidence_against_resume", fail_verification
+    )
 
-    restored = restore_candidate_profile_fields(make_profile(), {"primary_skills": ["Python"]})
+    restored = restore_candidate_profile_fields(
+        make_profile(), {"primary_skills": ["Python"]}
+    )
     existing_detail.update(restored)
 
     assert existing_detail["linkedin_profile"] is linkedin_profile
@@ -119,4 +125,7 @@ def test_missing_linkedin_profile_uses_fallback_without_captapi_fetch(monkeypatc
     assert "linkedin_profile" not in restored
     assert restored["linkedin_verification"]["identity_confirmed"] is False
     assert restored["linkedin_verification"]["overall_status"] == "UNVERIFIABLE"
-    assert "LinkedIn profile data not available" in restored["linkedin_verification"]["summary"]
+    assert (
+        "LinkedIn profile data not available"
+        in restored["linkedin_verification"]["summary"]
+    )

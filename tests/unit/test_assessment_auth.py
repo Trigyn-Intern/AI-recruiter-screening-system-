@@ -17,10 +17,12 @@ def make_request(monkeypatch, payload, secret="test-secret"):
         secret,
         algorithm="HS256",
     )
-    return Request({
-        "type": "http",
-        "headers": [(b"authorization", f"Bearer {token}".encode())],
-    })
+    return Request(
+        {
+            "type": "http",
+            "headers": [(b"authorization", f"Bearer {token}".encode())],
+        }
+    )
 
 
 def write_users(path: Path, users):
@@ -29,7 +31,9 @@ def write_users(path: Path, users):
 
 def test_require_recruiter_accepts_existing_recruiter(tmp_path, monkeypatch):
     user_store = tmp_path / "users.json"
-    write_users(user_store, [{"_id": "recruiter-1", "role": "recruiter", "password": "hidden"}])
+    write_users(
+        user_store, [{"_id": "recruiter-1", "role": "recruiter", "password": "hidden"}]
+    )
     monkeypatch.setattr(assessment_auth, "USER_STORE_PATH", user_store)
 
     request = make_request(monkeypatch, {"sub": "recruiter-1"})
@@ -42,11 +46,17 @@ def test_require_recruiter_accepts_existing_recruiter(tmp_path, monkeypatch):
     [
         ([{"_id": "manager-1", "role": "manager"}], {"sub": "manager-1"}, 403),
         ([{"_id": "other", "role": "recruiter"}], {"sub": "missing"}, 403),
-        ([{"_id": "recruiter-1", "role": "recruiter"}], {"sub": "recruiter-1", "token_type": "assessment"}, 403),
+        (
+            [{"_id": "recruiter-1", "role": "recruiter"}],
+            {"sub": "recruiter-1", "token_type": "assessment"},
+            403,
+        ),
         ([{"_id": "recruiter-1", "role": "recruiter"}], {"sub": "   "}, 401),
     ],
 )
-def test_require_recruiter_rejects_non_recruiter_tokens(tmp_path, monkeypatch, users, payload, expected_status):
+def test_require_recruiter_rejects_non_recruiter_tokens(
+    tmp_path, monkeypatch, users, payload, expected_status
+):
     user_store = tmp_path / "users.json"
     write_users(user_store, users)
     monkeypatch.setattr(assessment_auth, "USER_STORE_PATH", user_store)
@@ -63,10 +73,12 @@ def test_require_recruiter_rejects_invalid_jwt(tmp_path, monkeypatch):
     write_users(user_store, [{"_id": "recruiter-1", "role": "recruiter"}])
     monkeypatch.setattr(assessment_auth, "USER_STORE_PATH", user_store)
     monkeypatch.setenv("JWT_SECRET", "test-secret")
-    request = Request({
-        "type": "http",
-        "headers": [(b"authorization", b"Bearer not-a-jwt")],
-    })
+    request = Request(
+        {
+            "type": "http",
+            "headers": [(b"authorization", b"Bearer not-a-jwt")],
+        }
+    )
 
     with pytest.raises(HTTPException) as error:
         assessment_auth.require_recruiter(request)
@@ -75,7 +87,9 @@ def test_require_recruiter_rejects_invalid_jwt(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("contents", ["not-json", "{}", "null"])
-def test_require_recruiter_fails_closed_for_malformed_user_store(tmp_path, monkeypatch, contents):
+def test_require_recruiter_fails_closed_for_malformed_user_store(
+    tmp_path, monkeypatch, contents
+):
     user_store = tmp_path / "users.json"
     user_store.write_text(contents, encoding="utf-8")
     monkeypatch.setattr(assessment_auth, "USER_STORE_PATH", user_store)
@@ -87,7 +101,9 @@ def test_require_recruiter_fails_closed_for_malformed_user_store(tmp_path, monke
     assert error.value.status_code == 403
 
 
-def test_require_recruiter_fails_closed_for_unreadable_user_store(tmp_path, monkeypatch):
+def test_require_recruiter_fails_closed_for_unreadable_user_store(
+    tmp_path, monkeypatch
+):
     user_store = tmp_path / "users-directory"
     user_store.mkdir()
     monkeypatch.setattr(assessment_auth, "USER_STORE_PATH", user_store)

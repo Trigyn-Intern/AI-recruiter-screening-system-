@@ -3,11 +3,9 @@ from unittest.mock import patch
 
 from backend import (
     DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT,
-    DEFAULT_LINKEDIN_VERIFICATION_USER_PROMPT_TEMPLATE,
     LINKEDIN_VERIFICATION_SCHEMA,
     verify_linkedin_evidence_against_resume,
 )
-
 
 RESUME = {
     "technical_skills": ["Python"],
@@ -121,7 +119,9 @@ def test_exact_prompts_and_schema_are_sent_to_selected_provider():
         return mocked_result()
 
     with patch("backend.safe_ai_json", side_effect=capture):
-        verify_linkedin_evidence_against_resume(RESUME, LINKEDIN, {"primary_skills": ["Python"]})
+        verify_linkedin_evidence_against_resume(
+            RESUME, LINKEDIN, {"primary_skills": ["Python"]}
+        )
 
     assert captured["system_prompt"] == DEFAULT_LINKEDIN_VERIFICATION_SYSTEM_PROMPT
     assert captured["schema"] is LINKEDIN_VERIFICATION_SCHEMA

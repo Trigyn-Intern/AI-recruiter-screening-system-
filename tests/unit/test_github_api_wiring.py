@@ -40,10 +40,14 @@ def test_candidate_detail_restores_github_without_changing_existing_fields(monke
     monkeypatch.setattr("api.get_github_evidence", get_evidence)
     monkeypatch.setattr("api.verify_github_evidence_against_resume", verify)
 
-    restored = restore_candidate_profile_fields({"skills": {
-        "technical_skills": ["Python"],
-        "contact_info": contact_info,
-    }})
+    restored = restore_candidate_profile_fields(
+        {
+            "skills": {
+                "technical_skills": ["Python"],
+                "contact_info": contact_info,
+            }
+        }
+    )
 
     assert restored["github_verification"] == verification
     assert calls["github_url"] == "github.com/test-candidate"

@@ -39,6 +39,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
         "resume-1",
         "resume.pdf",
         "resume text",
+        use_chunking=False,
     )
 
     assert result.shape == (1024,)

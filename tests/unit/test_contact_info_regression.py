@@ -6,7 +6,6 @@ contact_info objects, including those with all-None values.
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 
 def test_contact_info_with_all_none_values_is_preserved():
@@ -20,10 +19,10 @@ def test_contact_info_with_all_none_values_is_preserved():
                 "email": None,
                 "phone": None,
                 "linkedin": None,
-                "github": None
+                "github": None,
             }
         },
-        "resume_text": ""  # Empty resume text (typical for DB candidates)
+        "resume_text": "",  # Empty resume text (typical for DB candidates)
     }
 
     # Extract contact info using the fixed logic
@@ -35,6 +34,7 @@ def test_contact_info_with_all_none_values_is_preserved():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify the original contact_info is preserved
@@ -42,7 +42,7 @@ def test_contact_info_with_all_none_values_is_preserved():
         "email": None,
         "phone": None,
         "linkedin": None,
-        "github": None
+        "github": None,
     }
 
     # Verify the values are still None
@@ -60,10 +60,10 @@ def test_contact_info_with_values_is_preserved():
                 "email": "test@example.com",
                 "phone": "+91 12345 67890",
                 "linkedin": "https://linkedin.com/in/test",
-                "github": "https://github.com/test"
+                "github": "https://github.com/test",
             }
         },
-        "resume_text": "Sample resume text"
+        "resume_text": "Sample resume text",
     }
 
     contact_info = {}
@@ -73,6 +73,7 @@ def test_contact_info_with_values_is_preserved():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify the original contact_info is preserved
@@ -88,7 +89,7 @@ def test_missing_contact_info_uses_fallback():
         "resume_skill_profile": {
             # No contact_info key at all
         },
-        "resume_text": "Email: test@example.com Phone: 9876543210"
+        "resume_text": "Email: test@example.com Phone: 9876543210",
     }
 
     contact_info = {}
@@ -98,6 +99,7 @@ def test_missing_contact_info_uses_fallback():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify fallback extraction occurred
@@ -108,10 +110,8 @@ def test_missing_contact_info_uses_fallback():
 def test_empty_contact_info_uses_fallback():
     """Test that empty contact_info dict uses the resume_text fallback."""
     item = {
-        "resume_skill_profile": {
-            "contact_info": {}  # Empty dict
-        },
-        "resume_text": "Email: test@example.com Phone: 9876543210"
+        "resume_skill_profile": {"contact_info": {}},  # Empty dict
+        "resume_text": "Email: test@example.com Phone: 9876543210",
     }
 
     contact_info = {}
@@ -121,6 +121,7 @@ def test_empty_contact_info_uses_fallback():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify fallback extraction occurred
@@ -136,10 +137,10 @@ def test_contact_info_with_partial_values_is_preserved():
                 "email": "test@example.com",
                 "phone": None,
                 "linkedin": "https://linkedin.com/in/test",
-                "github": None
+                "github": None,
             }
         },
-        "resume_text": "Sample resume text"
+        "resume_text": "Sample resume text",
     }
 
     contact_info = {}
@@ -149,6 +150,7 @@ def test_contact_info_with_partial_values_is_preserved():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify the original contact_info is preserved
@@ -166,10 +168,10 @@ def test_contact_info_with_all_none_and_empty_resume_text():
                 "email": None,
                 "phone": None,
                 "linkedin": None,
-                "github": None
+                "github": None,
             }
         },
-        "resume_text": ""  # Empty resume text
+        "resume_text": "",  # Empty resume text
     }
 
     contact_info = {}
@@ -179,6 +181,7 @@ def test_contact_info_with_all_none_and_empty_resume_text():
     if not contact_info:
         if item.get("resume_text"):
             from backend import extract_contact_info
+
             contact_info = extract_contact_info(item["resume_text"])
 
     # Verify the original contact_info is preserved (not re-extracted)
@@ -186,7 +189,7 @@ def test_contact_info_with_all_none_and_empty_resume_text():
         "email": None,
         "phone": None,
         "linkedin": None,
-        "github": None
+        "github": None,
     }
 
 

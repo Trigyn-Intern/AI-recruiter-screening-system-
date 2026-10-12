@@ -2,8 +2,9 @@
 Simple test for Phase 1 chunking functionality without requiring full model loading.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 
@@ -27,7 +28,9 @@ def test_text_cleaning():
     cleaned = clean_resume_text(dirty_text)
 
     assert "\n\n\n" not in cleaned, "Should not have triple newlines"
-    assert "excessive    whitespace" not in cleaned, "Should normalize internal whitespace"
+    assert (
+        "excessive    whitespace" not in cleaned
+    ), "Should normalize internal whitespace"
     assert "excessive whitespace" in cleaned, "Should preserve single spaces"
 
     print("✓ Text cleaning works")
@@ -77,7 +80,7 @@ def test_section_detection():
 
     sections = detect_resume_sections(sample_resume_items)
 
-    detected_section_names = [s['section'] for s in sections]
+    detected_section_names = [s["section"] for s in sections]
     assert "Summary" in detected_section_names
     assert "Experience" in detected_section_names
     assert "Skills" in detected_section_names
@@ -90,13 +93,15 @@ def test_recursive_splitting():
     """Test recursive splitting."""
     print("Testing recursive splitting...")
 
-    from backend import recursively_split_large_chunk, MAX_CHUNK_SIZE
+    from backend import MAX_CHUNK_SIZE, recursively_split_large_chunk
 
     large_text = "This is a test sentence. " * 100
     split_chunks = recursively_split_large_chunk(large_text, MAX_CHUNK_SIZE)
 
     assert len(split_chunks) > 1, "Should split large text"
-    assert all(len(c) <= MAX_CHUNK_SIZE + 50 for c in split_chunks), "Chunks should be within size limit"
+    assert all(
+        len(c) <= MAX_CHUNK_SIZE + 50 for c in split_chunks
+    ), "Chunks should be within size limit"
 
     print(f"✓ Recursive splitting works (split into {len(split_chunks)} chunks)")
     return True
@@ -124,7 +129,9 @@ def test_chunk_creation():
     chunks = process_resume_into_chunks(resume_id, resume_name, sample_resume_items)
 
     assert len(chunks) > 0, "Should create chunks"
-    assert all(c['section'] == 'Projects' for c in chunks), "All chunks should be in Projects"
+    assert all(
+        c["section"] == "Projects" for c in chunks
+    ), "All chunks should be in Projects"
 
     print(f"✓ Chunk creation works (created {len(chunks)} chunks)")
     return True

@@ -4,6 +4,7 @@ Test that RESUME_SKILL_SCHEMA includes contact_info and can be returned by Gemin
 
 import pytest
 from jsonschema import validate
+
 from backend import RESUME_SKILL_FALLBACK, RESUME_SKILL_SCHEMA, normalize_skill_evidence
 
 
@@ -81,21 +82,25 @@ def test_resume_skill_fallback_validates_against_schema():
 
 
 def test_normalize_skill_evidence_preserves_chunk_id():
-    result = normalize_skill_evidence([
+    result = normalize_skill_evidence(
+        [
+            {
+                "skill": "Python",
+                "evidence": "Built Python",
+                "source": "Work",
+                "chunk_id": "resume_chunk_001",
+            }
+        ]
+    )
+
+    assert result == [
         {
             "skill": "Python",
             "evidence": "Built Python",
             "source": "Work",
             "chunk_id": "resume_chunk_001",
         }
-    ])
-
-    assert result == [{
-        "skill": "Python",
-        "evidence": "Built Python",
-        "source": "Work",
-        "chunk_id": "resume_chunk_001",
-    }]
+    ]
 
 
 if __name__ == "__main__":

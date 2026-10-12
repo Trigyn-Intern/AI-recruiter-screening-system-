@@ -16,8 +16,13 @@ def test_prompt_template_includes_contact_info():
 
 def test_prompt_template_contact_extraction_rules():
     """Test that the prompt template includes rules for contact extraction."""
-    assert "Extract contact information" in DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
-    assert "email, phone, LinkedIn, GitHub" in DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
+    assert (
+        "Extract contact information" in DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
+    )
+    assert (
+        "email, phone, LinkedIn, GitHub"
+        in DEFAULT_RESUME_SKILL_EXTRACTION_PROMPT_TEMPLATE
+    )
 
 
 if __name__ == "__main__":

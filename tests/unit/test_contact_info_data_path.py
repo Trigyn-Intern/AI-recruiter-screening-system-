@@ -24,18 +24,18 @@ def test_contact_info_data_path_from_actual_structure():
                 {
                     "skill": "Python",
                     "evidence": "Built Python applications",
-                    "source": "Projects"
+                    "source": "Projects",
                 }
             ],
             "contact_info": {
                 "email": "candidate@example.test",
                 "phone": "+1-202-555-0100",
                 "linkedin": "linkedin.com/in/synthetic-candidate",
-                "github": "github.com/synthetic-candidate"
-            }
+                "github": "github.com/synthetic-candidate",
+            },
         },
         "model": "llama3.2",
-        "last_updated_at": "2026-09-10T00:00:00"
+        "last_updated_at": "2026-09-10T00:00:00",
     }
 
     # The CORRECT access pattern (the fix)
@@ -90,9 +90,7 @@ def test_contact_info_data_path_missing_skills():
         "resume_id": "test_id",
         "resume_name": "test.pdf",
         "technical_skills": ["Python"],  # Top level, not under skills
-        "contact_info": {
-            "email": "test@example.com"
-        }
+        "contact_info": {"email": "test@example.com"},
     }
 
     # Correct access should handle missing skills gracefully
@@ -109,10 +107,7 @@ def test_contact_info_data_path_missing_contact_info():
     resume_skill_profile = {
         "resume_id": "test_id",
         "resume_name": "test.pdf",
-        "skills": {
-            "technical_skills": ["Python"],
-            "soft_skills": []
-        }
+        "skills": {"technical_skills": ["Python"], "soft_skills": []},
     }
 
     # Correct access should handle missing contact_info gracefully
@@ -129,10 +124,7 @@ def test_contact_info_data_path_empty_contact_info():
     resume_skill_profile = {
         "resume_id": "test_id",
         "resume_name": "test.pdf",
-        "skills": {
-            "technical_skills": ["Python"],
-            "contact_info": {}
-        }
+        "skills": {"technical_skills": ["Python"], "contact_info": {}},
     }
 
     # Correct access should handle empty contact_info gracefully
@@ -154,8 +146,8 @@ def test_contact_info_data_path_partial_contact_info():
             "contact_info": {
                 "email": "test@example.com",
                 # linkedin and github missing
-            }
-        }
+            },
+        },
     }
 
     # Correct access should return partial data
@@ -181,4 +173,5 @@ def test_contact_info_data_path_non_dict_profile():
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

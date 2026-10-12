@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test that cache version changes invalidate stale cached results.
 
 This test verifies that when ANALYSIS_CACHE_VERSION is incremented,
@@ -6,8 +6,8 @@ cached results with the old version are treated as stale and regenerated.
 """
 
 import pytest
-from unittest.mock import Mock, patch
-from backend import ANALYSIS_CACHE_VERSION, get_ai_cache_key, get_ai_cache
+
+from backend import ANALYSIS_CACHE_VERSION, get_ai_cache, get_ai_cache_key
 
 
 def test_cache_version_change_invalidates_old_cache():
@@ -20,7 +20,6 @@ def test_cache_version_change_invalidates_old_cache():
 
     # Simulate a cached result with the old version
     cache = get_ai_cache()
-    test_resume_id = "test_resume_123"
     old_cache_key = get_ai_cache_key(
         "candidate_detail_with_grading_v2",
         "Gemini",
@@ -45,7 +44,7 @@ def test_cache_version_change_invalidates_old_cache():
     cached_version = cached_result.get("cache_version", "")
 
     # This should be True (cache is stale)
-    is_stale = (cached_version != ANALYSIS_CACHE_VERSION)
+    is_stale = cached_version != ANALYSIS_CACHE_VERSION
 
     assert is_stale, "Cache should be stale when version changes"
     assert cached_version == old_version
@@ -58,7 +57,9 @@ def test_cache_version_change_invalidates_old_cache():
 
 def test_cache_version_matches_current_not_invalidated():
     """Test that cached results with current version are not invalidated."""
-    current_version = "evidence_chunks_v7_contact_prompt_fix_captapi_linkedin_verification"
+    current_version = (
+        "evidence_chunks_v7_contact_prompt_fix_captapi_linkedin_verification"
+    )
 
     cache = get_ai_cache()
     test_cache_key = get_ai_cache_key(
@@ -84,7 +85,7 @@ def test_cache_version_matches_current_not_invalidated():
     cached_version = cached_result.get("cache_version", "")
 
     # This should be False (cache is valid)
-    is_stale = (cached_version != ANALYSIS_CACHE_VERSION)
+    is_stale = cached_version != ANALYSIS_CACHE_VERSION
 
     assert not is_stale, "Cache should NOT be stale when version matches"
     assert cached_version == current_version
@@ -121,7 +122,7 @@ def test_cache_without_version_is_invalidated():
     cached_version = cached_result.get("cache_version", "")
 
     # This should be True (cache is stale when version is missing)
-    is_stale = (cached_version != ANALYSIS_CACHE_VERSION)
+    is_stale = cached_version != ANALYSIS_CACHE_VERSION
 
     assert is_stale, "Cache should be stale when version is missing"
     assert cached_version == ""
