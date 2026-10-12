@@ -2391,13 +2391,10 @@ def _extract_linkedin_path(url):
                     is_bare = True
             elif "/" not in clean_url:
                 # Bare handle without slash: must not look like an external host or domain
-                if (
-                    not re.search(
-                        r"\.(com|net|org|edu|gov|io|co|ai|app|dev|biz|info|me|tv|cc|xyz|attacker)$",
-                        clean_url.lower(),
-                    )
-                    and re.match(r"^[a-zA-Z0-9_\-]+$", clean_url)
-                ):
+                if not re.search(
+                    r"\.(com|net|org|edu|gov|io|co|ai|app|dev|biz|info|me|tv|cc|xyz|attacker)$",
+                    clean_url.lower(),
+                ) and re.match(r"^[a-zA-Z0-9_\-]+$", clean_url):
                     path = clean_url
                     is_bare = True
 

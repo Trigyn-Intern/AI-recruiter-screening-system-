@@ -49,30 +49,76 @@ def test_normalize_linkedin_security_regression():
 
     # 1. Valid URLs
     valid_urls = [
-        ("https://linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("http://linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("https://www.linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("http://www.linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("https://linkedin.com/in/johndoe/", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("www.linkedin.com/in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("https://LINKEDIN.COM/IN/JohnDoe", "linkedin.com/in/IN/JohnDoe", "https://linkedin.com/IN/JohnDoe"),
-        ("https://linkedin.com/in/john-doe-123", "linkedin.com/in/john-doe-123", "https://linkedin.com/in/john-doe-123"),
+        (
+            "https://linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "http://linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "https://www.linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "http://www.linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "https://linkedin.com/in/johndoe/",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "www.linkedin.com/in/johndoe",
+            "linkedin.com/in/johndoe",
+            "https://linkedin.com/in/johndoe",
+        ),
+        (
+            "https://LINKEDIN.COM/IN/JohnDoe",
+            "linkedin.com/in/IN/JohnDoe",
+            "https://linkedin.com/IN/JohnDoe",
+        ),
+        (
+            "https://linkedin.com/in/john-doe-123",
+            "linkedin.com/in/john-doe-123",
+            "https://linkedin.com/in/john-doe-123",
+        ),
     ]
     for raw_url, expected_norm, expected_profile in valid_urls:
         assert normalize_linkedin_url(raw_url) == expected_norm, f"Failed for {raw_url}"
-        assert normalize_linkedin_profile_url(raw_url) == expected_profile, f"Failed profile for {raw_url}"
+        assert (
+            normalize_linkedin_profile_url(raw_url) == expected_profile
+        ), f"Failed profile for {raw_url}"
 
     # 2. Bare handles
     bare_handles = [
         ("johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
         ("in/johndoe", "linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
-        ("john-doe-456", "linkedin.com/in/john-doe-456", "https://linkedin.com/in/john-doe-456"),
+        (
+            "john-doe-456",
+            "linkedin.com/in/john-doe-456",
+            "https://linkedin.com/in/john-doe-456",
+        ),
         ("john_doe", "linkedin.com/in/john_doe", "https://linkedin.com/in/john_doe"),
     ]
     for raw_handle, expected_norm, expected_profile in bare_handles:
-        assert normalize_linkedin_url(raw_handle) == expected_norm, f"Failed handle for {raw_handle}"
-        assert normalize_linkedin_profile_url(raw_handle) == expected_profile, f"Failed handle profile for {raw_handle}"
+        assert (
+            normalize_linkedin_url(raw_handle) == expected_norm
+        ), f"Failed handle for {raw_handle}"
+        assert (
+            normalize_linkedin_profile_url(raw_handle) == expected_profile
+        ), f"Failed handle profile for {raw_handle}"
 
     # 3. Lookalike hosts (must reject)
     lookalike_hosts = [
@@ -88,8 +134,12 @@ def test_normalize_linkedin_security_regression():
         "linkedin.com.attacker.com",
     ]
     for bad_url in lookalike_hosts:
-        assert normalize_linkedin_url(bad_url) is None, f"Expected None for lookalike {bad_url}"
-        assert normalize_linkedin_profile_url(bad_url) is None, f"Expected None for lookalike profile {bad_url}"
+        assert (
+            normalize_linkedin_url(bad_url) is None
+        ), f"Expected None for lookalike {bad_url}"
+        assert (
+            normalize_linkedin_profile_url(bad_url) is None
+        ), f"Expected None for lookalike profile {bad_url}"
 
     # 4. Unrelated external hosts (must reject)
     unrelated_hosts = [
@@ -103,8 +153,12 @@ def test_normalize_linkedin_security_regression():
         "google.com",
     ]
     for bad_url in unrelated_hosts:
-        assert normalize_linkedin_url(bad_url) is None, f"Expected None for unrelated host {bad_url}"
-        assert normalize_linkedin_profile_url(bad_url) is None, f"Expected None for unrelated profile {bad_url}"
+        assert (
+            normalize_linkedin_url(bad_url) is None
+        ), f"Expected None for unrelated host {bad_url}"
+        assert (
+            normalize_linkedin_profile_url(bad_url) is None
+        ), f"Expected None for unrelated profile {bad_url}"
 
     # 5. Malformed URLs and invalid schemes (must reject)
     malformed_urls = [
@@ -129,8 +183,12 @@ def test_normalize_linkedin_security_regression():
         "linkedin.com/in/",
     ]
     for bad_url in malformed_urls:
-        assert normalize_linkedin_url(bad_url) is None, f"Expected None for malformed {bad_url}"
-        assert normalize_linkedin_profile_url(bad_url) is None, f"Expected None for malformed profile {bad_url}"
+        assert (
+            normalize_linkedin_url(bad_url) is None
+        ), f"Expected None for malformed {bad_url}"
+        assert (
+            normalize_linkedin_profile_url(bad_url) is None
+        ), f"Expected None for malformed profile {bad_url}"
 
     # 6. Traversal-like profile paths (must reject)
     traversal_paths = [
@@ -148,8 +206,12 @@ def test_normalize_linkedin_security_regression():
         "https://linkedin.com/in/..",
     ]
     for bad_url in traversal_paths:
-        assert normalize_linkedin_url(bad_url) is None, f"Expected None for traversal {bad_url}"
-        assert normalize_linkedin_profile_url(bad_url) is None, f"Expected None for traversal profile {bad_url}"
+        assert (
+            normalize_linkedin_url(bad_url) is None
+        ), f"Expected None for traversal {bad_url}"
+        assert (
+            normalize_linkedin_profile_url(bad_url) is None
+        ), f"Expected None for traversal profile {bad_url}"
 
 
 def test_persist_linkedin_profile():

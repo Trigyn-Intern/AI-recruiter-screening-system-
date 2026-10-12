@@ -856,7 +856,10 @@ async def get_evidence_alignment(request: EvidenceAlignmentRequest):
                 resume_id=request.resume_id,
             )
         except ImportError:
-            logger.warning("[EVIDENCE ALIGNMENT] Failed to import evidence alignment function", exc_info=True)
+            logger.warning(
+                "[EVIDENCE ALIGNMENT] Failed to import evidence alignment function",
+                exc_info=True,
+            )
             return {
                 "resume_id": request.resume_id,
                 "matches": [],
@@ -866,7 +869,9 @@ async def get_evidence_alignment(request: EvidenceAlignmentRequest):
 
         return result
     except Exception:
-        logger.exception("[EVIDENCE ALIGNMENT] Unexpected error generating evidence alignment")
+        logger.exception(
+            "[EVIDENCE ALIGNMENT] Unexpected error generating evidence alignment"
+        )
         return {
             "resume_id": request.resume_id,
             "matches": [],

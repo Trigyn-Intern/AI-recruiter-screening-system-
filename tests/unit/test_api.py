@@ -515,12 +515,12 @@ def test_evidence_path_traversal_attempts_create_no_directories(monkeypatch, tmp
         files={"clip": ("clip.png", PNG_BYTES, "image/png")},
     )
     assert response.status_code == 400
-    assert not outside_dir.exists(), "Directory outside evidence root must not be created!"
+    assert (
+        not outside_dir.exists()
+    ), "Directory outside evidence root must not be created!"
 
 
 def test_evidence_alignment_masks_import_error_and_exception(monkeypatch):
-    import api as api_module
-
     # Mock read_json_file to provide valid chunks so the function reaches the generation block
     monkeypatch.setattr(
         "backend.read_json_file",
@@ -554,7 +554,9 @@ def test_evidence_alignment_masks_import_error_and_exception(monkeypatch):
 
     # 2. Simulate generic Exception with sensitive internal details
     def raise_sensitive_error(*args, **kwargs):
-        raise RuntimeError("Database connection string postgres://secret:password@internal-db:5432 failed")
+        raise RuntimeError(
+            "Database connection string postgres://secret:password@internal-db:5432 failed"
+        )
 
     monkeypatch.setattr(
         "backend.generate_evidence_alignment",
