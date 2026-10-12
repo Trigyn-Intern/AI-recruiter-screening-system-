@@ -47,7 +47,7 @@ ignore = ["BLE001"]
 # Additional per-file ignores for core test files
 "tests/unit/*" = ["S101", "E501"]  # Allow assert, long lines in unit tests
 "tests/run_all.py" = ["E501", "E741"]  # Allow long lines, ambiguous var names
-"backend.py" = ["E501", "W293"]  # Allow long lines and trailing whitespace for debug print statements
+"backend.py" = ["E501", "W293", "E402"]  # Allow long lines, trailing whitespace, and late imports (dotenv/HF_HUB_OFFLINE must load before sentence_transformers)
 "api.py" = ["E501", "W293", "E402"]  # Allow long lines, trailing whitespace, and late imports (dotenv must load before backend)
 
 [tool.black]

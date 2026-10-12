@@ -2,26 +2,20 @@
 
 This module is responsible for:
 1. Validating assessment question schemas (10 MCQs, 5 Short Answer = 15 total).
-2. Generating candidate-specific questions based primarily on JD requirements and contextualized by candidate resume/experience.
+2. Generating candidate-specific questions based primarily on JD requirements
+   and contextualized by candidate resume/experience.
 3. Persisting generated questions locally in vector_store/assessment_questions.json.
 4. Exporting validation and generation functions for backend API & frontend consumption.
 """
 
-import hashlib
 import json
 import math
-import os
 import re
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import backend
 from backend import (
     OPENAI_ASSESSMENT_MODEL,
-    PROJECT_ROOT,
     VECTOR_STORE_DIR,
-    get_active_resume_db_records,
-    get_shortlists,
     read_json_file,
     safe_ai_json,
     write_json_file,
@@ -48,22 +42,19 @@ QUESTION_SCHEMA = {
                     "question": {"type": "string", "minLength": 5},
                     "type": {"type": "string", "enum": ["mcq", "short_answer"]},
                     "skill": {"type": "string", "minLength": 1},
-                    "difficulty": {"type": "string", "enum": ["easy", "medium", "hard"]},
-                    "options": {
-                        "type": "array",
-                        "items": {"type": "string"}
+                    "difficulty": {
+                        "type": "string",
+                        "enum": ["easy", "medium", "hard"],
                     },
+                    "options": {"type": "array", "items": {"type": "string"}},
                     "correct_answer": {"type": "string"},
                     "explanation": {"type": "string"},
                     "expected_answer": {"type": "string"},
-                    "evaluation_points": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    }
-                }
-            }
+                    "evaluation_points": {"type": "array", "items": {"type": "string"}},
+                },
+            },
         }
-    }
+    },
 }
 
 
@@ -162,7 +153,13 @@ def validate_questions_set(questions: List[Dict[str, Any]]) -> tuple[bool, str]:
         return False, f"Expected 5 short answer questions, got {short_count}"
 
     if len(skills_found) < 2:
-        return False, "Questions lack skill coverage diversity (minimum 2 distinct skills required)"
+        return (
+            False,
+            (
+                "Questions lack skill coverage diversity "
+                "(minimum 2 distinct skills required)"
+            ),
+        )
 
     return True, "Questions set is valid"
 
@@ -172,7 +169,9 @@ def get_all_assessment_questions() -> Dict[str, Any]:
     return read_json_file(ASSESSMENT_QUESTIONS_PATH, {})
 
 
-def get_assessment_questions(assessment_id: str, candidate_id: str = None) -> Optional[Dict[str, Any]]:
+def get_assessment_questions(
+    assessment_id: str, candidate_id: str = None
+) -> Optional[Dict[str, Any]]:
     """Retrieve persisted questions for a specific assessment ID.
 
     Lookup order:
@@ -200,8 +199,9 @@ def get_assessment_questions(assessment_id: str, candidate_id: str = None) -> Op
     lookup_ids = {assessment_id}
     if candidate_id:
         lookup_ids.add(candidate_id)
-    
-    # If the assessment_id is a composite key like 'resumeHash_shortlistId', also look for the resumeHash
+
+    # If the assessment_id is a composite key like 'resumeHash_shortlistId',
+    # also look for the resumeHash
     if "_" in assessment_id:
         lookup_ids.add(assessment_id.split("_")[0])
 
@@ -251,9 +251,16 @@ def get_assessment_attempt(assessment_id: str) -> Optional[Dict[str, Any]]:
             return res
     for _key, record in store.items():
         if isinstance(record, dict):
-            if record.get("candidate_id") == assessment_id or record.get("resume_id") == assessment_id or record.get("assessment_id") == assessment_id:
+            if (
+                record.get("candidate_id") == assessment_id
+                or record.get("resume_id") == assessment_id
+                or record.get("assessment_id") == assessment_id
+            ):
                 return record
-            if "_" in assessment_id and (record.get("candidate_id") == assessment_id.split("_")[0] or record.get("resume_id") == assessment_id.split("_")[0]):
+            if "_" in assessment_id and (
+                record.get("candidate_id") == assessment_id.split("_")[0]
+                or record.get("resume_id") == assessment_id.split("_")[0]
+            ):
                 return record
     return None
 
@@ -285,7 +292,10 @@ def get_assessment_result(assessment_id: str) -> Optional[Dict[str, Any]]:
             return res
     for _key, record in store.items():
         if isinstance(record, dict):
-            if record.get("candidate_id") == assessment_id or record.get("assessment_id") == assessment_id:
+            if (
+                record.get("candidate_id") == assessment_id
+                or record.get("assessment_id") == assessment_id
+            ):
                 return record
     return None
 
@@ -335,7 +345,9 @@ def calculate_behavior_score(events: Optional[List[Dict[str, Any]]]) -> Dict[str
         for event in unique_events
         if event.get("type") == "tab_visible"
     )
-    face_absent_events = sum(event.get("type") == "face_absent" for event in unique_events)
+    face_absent_events = sum(
+        event.get("type") == "face_absent" for event in unique_events
+    )
     multiple_faces_events = sum(
         event.get("type") == "multiple_faces_detected" for event in unique_events
     )
@@ -371,7 +383,7 @@ def calculate_behavior_score(events: Optional[List[Dict[str, Any]]]) -> Dict[str
 
 def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
     """Score the assessment attempt for the given assessment ID.
-    
+
     MCQs are scored strictly based on exact match.
     Short answers use OpenAI for evaluation.
     This function is idempotent.
@@ -382,67 +394,86 @@ def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
         behavior_result = calculate_behavior_score(
             (get_assessment_behavior_events(assessment_id) or {}).get("events", [])
         )
-        technical_score = float(existing.get("technical_score", existing.get("total_score", 0)))
-        technical_max_score = float(existing.get("technical_max_score", existing.get("max_score", 0)))
+        technical_score = float(
+            existing.get("technical_score", existing.get("total_score", 0))
+        )
+        technical_max_score = float(
+            existing.get("technical_max_score", existing.get("max_score", 0))
+        )
         technical_percentage = float(
             existing.get(
                 "technical_percentage",
-                existing.get("percentage", (technical_score / technical_max_score) * 100
-                if technical_max_score else 0),
+                existing.get(
+                    "percentage",
+                    (
+                        (technical_score / technical_max_score) * 100
+                        if technical_max_score
+                        else 0
+                    ),
+                ),
             )
         )
         updated = dict(existing)
-        updated.update({
-            "technical_score": technical_score,
-            "technical_max_score": technical_max_score,
-            "technical_percentage": technical_percentage,
-            "behavior_score": behavior_result["behavior_score"],
-            "behavior_weight": 20,
-            "technical_weight": 80,
-            "overall_percentage": round(
-                (technical_percentage * 0.80) + (behavior_result["behavior_score"] * 0.20), 2
-            ),
-            "behavior_summary": behavior_result["behavior_summary"],
-        })
+        updated.update(
+            {
+                "technical_score": technical_score,
+                "technical_max_score": technical_max_score,
+                "technical_percentage": technical_percentage,
+                "behavior_score": behavior_result["behavior_score"],
+                "behavior_weight": 20,
+                "technical_weight": 80,
+                "overall_percentage": round(
+                    (technical_percentage * 0.80)
+                    + (behavior_result["behavior_score"] * 0.20),
+                    2,
+                ),
+                "behavior_summary": behavior_result["behavior_summary"],
+            }
+        )
         if updated != existing:
             save_assessment_result(assessment_id, updated)
         return updated
-        
+
     # 2. Get questions and attempt
     questions_data = get_assessment_questions(assessment_id)
     attempt_data = get_assessment_attempt(assessment_id)
-    
+
     if not questions_data or "questions" not in questions_data:
         raise ValueError(f"Assessment questions not found for ID: {assessment_id}")
     if not attempt_data or "answers" not in attempt_data:
         raise ValueError(f"Assessment attempt not found for ID: {assessment_id}")
-        
+
     questions = questions_data["questions"]
     answers = attempt_data["answers"]
-    
+
     total_score = 0.0
     max_score = float(len(questions))
-    
+
     skill_scores = {}
     question_results = []
-    
+
     SHORT_ANSWER_SCORING_SCHEMA = {
         "type": "object",
-        "required": ["score", "evaluation_points_met", "evaluation_points_missed", "reason"],
+        "required": [
+            "score",
+            "evaluation_points_met",
+            "evaluation_points_missed",
+            "reason",
+        ],
         "properties": {
             "score": {"type": "number", "enum": [0, 0.25, 0.5, 0.75, 1]},
             "evaluation_points_met": {"type": "array", "items": {"type": "string"}},
             "evaluation_points_missed": {"type": "array", "items": {"type": "string"}},
-            "reason": {"type": "string"}
-        }
+            "reason": {"type": "string"},
+        },
     }
-    
+
     for idx, q in enumerate(questions):
         q_id = q["id"]
         q_type = q.get("type")
         skill = q.get("skill", "Unknown")
         cand_ans = answers.get(q_id, "")
-        
+
         score = 0.0
         q_result = {
             "question_id": q_id,
@@ -450,20 +481,24 @@ def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
             "question_type": q_type,
             "skill": skill,
             "candidate_answer": cand_ans,
-            "max_score": 1.0
+            "max_score": 1.0,
         }
-        
+
         if skill not in skill_scores:
             skill_scores[skill] = {"score": 0.0, "max_score": 0.0, "percentage": 0.0}
-            
+
         skill_scores[skill]["max_score"] += 1.0
-        
+
         if q_type == "mcq":
             correct_ans = q.get("correct_answer", "")
-            if cand_ans and isinstance(cand_ans, str) and cand_ans.strip().lower() == correct_ans.strip().lower():
+            if (
+                cand_ans
+                and isinstance(cand_ans, str)
+                and cand_ans.strip().lower() == correct_ans.strip().lower()
+            ):
                 score = 1.0
             q_result["score"] = score
-            
+
         elif q_type == "short_answer":
             if not cand_ans or not str(cand_ans).strip():
                 score = 0.0
@@ -472,50 +507,68 @@ def score_assessment_attempt(assessment_id: str) -> Dict[str, Any]:
                 q_result["evaluation_points_missed"] = q.get("evaluation_points", [])
                 q_result["reason"] = "No answer provided."
             else:
-                prompt = f'''You are an expert technical evaluator. Evaluate the candidate's short answer against the expected answer and evaluation points.
+                prompt = f"""You are an expert technical evaluator. \
+Evaluate the candidate's short answer against the expected answer and evaluation points.
 Question: {q.get("question")}
 Expected Answer: {q.get("expected_answer")}
 Evaluation Points: {json.dumps(q.get("evaluation_points", []))}
 
 Candidate's Answer: {cand_ans}
 
-Assign a score of 0, 0.25, 0.5, 0.75, or 1 based on how many evaluation points the candidate met and the overall correctness.
+Assign a score of 0, 0.25, 0.5, 0.75, or 1 based on how many \
+evaluation points the candidate met and the overall correctness.
 Return JSON matching the provided schema.
-'''
+"""
                 ai_eval = safe_ai_json(
                     prompt=prompt,
                     schema=SHORT_ANSWER_SCORING_SCHEMA,
                     fallback=None,
                     model_name=OPENAI_ASSESSMENT_MODEL,
-                    provider="OpenAI"
+                    provider="OpenAI",
                 )
-                
-                if ai_eval and "score" in ai_eval and ai_eval["score"] in [0, 0.25, 0.5, 0.75, 1]:
+
+                if (
+                    ai_eval
+                    and "score" in ai_eval
+                    and ai_eval["score"] in [0, 0.25, 0.5, 0.75, 1]
+                ):
                     score = float(ai_eval["score"])
-                    q_result["evaluation_points_met"] = ai_eval.get("evaluation_points_met", [])
-                    q_result["evaluation_points_missed"] = ai_eval.get("evaluation_points_missed", [])
+                    q_result["evaluation_points_met"] = ai_eval.get(
+                        "evaluation_points_met", []
+                    )
+                    q_result["evaluation_points_missed"] = ai_eval.get(
+                        "evaluation_points_missed", []
+                    )
                     q_result["reason"] = ai_eval.get("reason", "")
                 else:
                     score = 0.0
                     q_result["evaluation_points_met"] = []
-                    q_result["evaluation_points_missed"] = q.get("evaluation_points", [])
+                    q_result["evaluation_points_missed"] = q.get(
+                        "evaluation_points", []
+                    )
                     q_result["reason"] = "Evaluation failed or returned invalid score."
-                
+
                 q_result["score"] = score
-        
+
         total_score += score
         skill_scores[skill]["score"] += score
         question_results.append(q_result)
-        
+
     for s_info in skill_scores.values():
-        s_info["percentage"] = round((s_info["score"] / s_info["max_score"]) * 100, 2) if s_info["max_score"] > 0 else 0.0
-        
+        s_info["percentage"] = (
+            round((s_info["score"] / s_info["max_score"]) * 100, 2)
+            if s_info["max_score"] > 0
+            else 0.0
+        )
+
     percentage = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
     behavior_result = calculate_behavior_score(
         (get_assessment_behavior_events(assessment_id) or {}).get("events", [])
     )
-    overall_percentage = round((percentage * 0.80) + (behavior_result["behavior_score"] * 0.20), 2)
-    
+    overall_percentage = round(
+        (percentage * 0.80) + (behavior_result["behavior_score"] * 0.20), 2
+    )
+
     result_payload = {
         "assessment_id": assessment_id,
         "total_score": total_score,
@@ -530,9 +583,9 @@ Return JSON matching the provided schema.
         "overall_percentage": overall_percentage,
         "behavior_summary": behavior_result["behavior_summary"],
         "skill_scores": [{"skill": k, **v} for k, v in skill_scores.items()],
-        "question_results": question_results
+        "question_results": question_results,
     }
-    
+
     save_assessment_result(assessment_id, result_payload)
     return result_payload
 
@@ -549,17 +602,14 @@ def get_assessment_behavior_events(assessment_id: str) -> Optional[Dict[str, Any
 
 
 def append_assessment_behavior_events(
-    assessment_id: str,
-    candidate_id: str,
-    new_events: List[Dict[str, Any]]
+    assessment_id: str, candidate_id: str, new_events: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
     """Append new behavior monitoring events to an assessment ID."""
     store = get_all_assessment_behavior_events()
-    record = store.get(assessment_id, {
-        "assessment_id": assessment_id,
-        "candidate_id": candidate_id,
-        "events": []
-    })
+    record = store.get(
+        assessment_id,
+        {"assessment_id": assessment_id, "candidate_id": candidate_id, "events": []},
+    )
 
     if "events" not in record or not isinstance(record["events"], list):
         record["events"] = []
@@ -585,10 +635,29 @@ def extract_jd_skills(jd_text_or_dict: Any) -> List[str]:
         text = str(jd_text_or_dict)
 
     candidates = [
-        "Python", "JavaScript", "TypeScript", "React", "Node.js", "FastAPI",
-        "SQL", "PostgreSQL", "MongoDB", "Docker", "Kubernetes", "AWS",
-        "Machine Learning", "Deep Learning", "NLP", "RAG", "LLMs",
-        "System Design", "REST API", "Git", "CI/CD", "Data Structures", "Algorithms"
+        "Python",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Node.js",
+        "FastAPI",
+        "SQL",
+        "PostgreSQL",
+        "MongoDB",
+        "Docker",
+        "Kubernetes",
+        "AWS",
+        "Machine Learning",
+        "Deep Learning",
+        "NLP",
+        "RAG",
+        "LLMs",
+        "System Design",
+        "REST API",
+        "Git",
+        "CI/CD",
+        "Data Structures",
+        "Algorithms",
     ]
 
     found = []
@@ -607,7 +676,12 @@ def extract_jd_skills(jd_text_or_dict: Any) -> List[str]:
                 break
 
     if not found:
-        found = ["Software Engineering", "Problem Solving", "System Architecture", "Coding Principles"]
+        found = [
+            "Software Engineering",
+            "Problem Solving",
+            "System Architecture",
+            "Coding Principles",
+        ]
 
     # Deduplicate preserving order
     seen = set()
@@ -624,7 +698,9 @@ def extract_jd_skills(jd_text_or_dict: Any) -> List[str]:
 def generate_fallback_questions(
     skills: List[str], candidate_name: str = "Candidate", job_title: str = "Engineer"
 ) -> List[Dict[str, Any]]:
-    """Generate a deterministic fallback set of 15 valid questions if LLM fails or is unavailable."""
+    """Generate a deterministic fallback set of 15 valid questions
+    if LLM fails or is unavailable.
+    """
     primary_skill = skills[0] if skills else "Software Development"
     secondary_skill = skills[1] if len(skills) > 1 else "System Design"
     third_skill = skills[2] if len(skills) > 2 else "Problem Solving"
@@ -633,7 +709,10 @@ def generate_fallback_questions(
         # 10 MCQs
         {
             "id": "q1",
-            "question": f"In {primary_skill}, what is the primary advantage of using immutable data structures?",
+            "question": (
+                f"In {primary_skill}, what is the primary advantage of using "
+                "immutable data structures?"
+            ),
             "type": "mcq",
             "skill": primary_skill,
             "difficulty": "easy",
@@ -641,14 +720,20 @@ def generate_fallback_questions(
                 "Improves thread safety and predictable state management",
                 "Decreases memory footprint by deleting old references",
                 "Allows direct modification of global variables",
-                "Disables runtime type checking completely"
+                "Disables runtime type checking completely",
             ],
             "correct_answer": "Improves thread safety and predictable state management",
-            "explanation": "Immutable data structures prevent unintended side-effects and simplify concurrency."
+            "explanation": (
+                "Immutable data structures prevent unintended side-effects and "
+                "simplify concurrency."
+            ),
         },
         {
             "id": "q2",
-            "question": f"Which architectural pattern is best suited for decoupling microservices in a {job_title} ecosystem?",
+            "question": (
+                f"Which architectural pattern is best suited for decoupling "
+                f"microservices in a {job_title} ecosystem?"
+            ),
             "type": "mcq",
             "skill": secondary_skill,
             "difficulty": "medium",
@@ -656,59 +741,85 @@ def generate_fallback_questions(
                 "Event-driven architecture with message brokers",
                 "Monolithic shared memory pool",
                 "Direct synchronous HTTP calls with no retries",
-                "Database triggers mutating remote tables"
+                "Database triggers mutating remote tables",
             ],
             "correct_answer": "Event-driven architecture with message brokers",
-            "explanation": "Event-driven architecture decouples services by allowing asynchronous event publishing."
+            "explanation": (
+                "Event-driven architecture decouples services by allowing "
+                "asynchronous event publishing."
+            ),
         },
         {
             "id": "q3",
-            "question": f"When optimizing performance in {primary_skill}, what is time complexity of accessing an element by key in a standard Hash Table?",
+            "question": (
+                f"When optimizing performance in {primary_skill}, what is time "
+                "complexity of accessing an element by key in a standard Hash Table?"
+            ),
             "type": "mcq",
             "skill": primary_skill,
             "difficulty": "easy",
-            "options": [
-                "Average O(1)",
-                "Always O(N log N)",
-                "O(N^2)",
-                "O(log N)"
-            ],
+            "options": ["Average O(1)", "Always O(N log N)", "O(N^2)", "O(log N)"],
             "correct_answer": "Average O(1)",
-            "explanation": "Hash tables provide average O(1) time complexity for lookup."
+            "explanation": (
+                "Hash tables provide average O(1) time complexity for lookup."
+            ),
         },
         {
             "id": "q4",
-            "question": f"What is the main purpose of connection pooling when interacting with databases in {secondary_skill}?",
+            "question": (
+                f"What is the main purpose of connection pooling when interacting "
+                f"with databases in {secondary_skill}?"
+            ),
             "type": "mcq",
             "skill": secondary_skill,
             "difficulty": "medium",
             "options": [
-                "Reuse existing database connections to reduce creation overhead",
+                ("Reuse existing database connections to reduce creation overhead"),
                 "Encrypt all data stored on disk automatically",
                 "Bypass SQL syntax validation",
-                "Automatically generate database indexes"
+                "Automatically generate database indexes",
             ],
-            "correct_answer": "Reuse existing database connections to reduce creation overhead",
-            "explanation": "Connection pooling avoids the overhead of creating and tearing down connections repeatedly."
+            "correct_answer": (
+                "Reuse existing database connections to reduce creation overhead"
+            ),
+            "explanation": (
+                "Connection pooling avoids the overhead of creating and tearing down "
+                "connections repeatedly."
+            ),
         },
         {
             "id": "q5",
-            "question": f"In modern API design for {job_title} applications, what does idempotency mean?",
+            "question": (
+                f"In modern API design for {job_title} applications, "
+                "what does idempotency mean?"
+            ),
             "type": "mcq",
             "skill": third_skill,
             "difficulty": "medium",
             "options": [
-                "Making identical requests multiple times has the same side effect as a single request",
+                (
+                    "Making identical requests multiple times has the same "
+                    "side effect as a single request"
+                ),
                 "An endpoint returns response in less than 10 milliseconds",
                 "Requests must always use GET method without query parameters",
-                "Data is cached permanently in client browser storage"
+                "Data is cached permanently in client browser storage",
             ],
-            "correct_answer": "Making identical requests multiple times has the same side effect as a single request",
-            "explanation": "Idempotent operations can be applied multiple times without altering the result beyond the initial application."
+            "correct_answer": (
+                "Making identical requests multiple times has the same side effect "
+                "as a single request"
+            ),
+            "explanation": (
+                "Idempotent operations can be applied multiple times without altering "
+                "the result beyond the initial application."
+            ),
         },
         {
             "id": "q6",
-            "question": f"Which security vulnerability involves executing arbitrary commands injected into database queries?",
+            "question": (
+                "Which security vulnerability involves executing arbitrary commands "
+                "injected into database queries?"
+            ),
             "type": "mcq",
             "skill": third_skill,
             "difficulty": "easy",
@@ -716,59 +827,96 @@ def generate_fallback_questions(
                 "SQL Injection (SQLi)",
                 "Cross-Site Scripting (XSS)",
                 "Cross-Site Request Forgery (CSRF)",
-                "Buffer Overflow"
+                "Buffer Overflow",
             ],
             "correct_answer": "SQL Injection (SQLi)",
-            "explanation": "SQL Injection occurs when untrusted input is concatenated into database commands."
+            "explanation": (
+                "SQL Injection occurs when untrusted input is concatenated into "
+                "database commands."
+            ),
         },
         {
             "id": "q7",
-            "question": f"When handling concurrency in {primary_skill}, what is a deadlock?",
+            "question": (
+                f"When handling concurrency in {primary_skill}, what is a deadlock?"
+            ),
             "type": "mcq",
             "skill": primary_skill,
             "difficulty": "hard",
             "options": [
-                "A situation where two or more threads are blocked forever, waiting for each other",
+                (
+                    "A situation where two or more threads are blocked forever, "
+                    "waiting for each other"
+                ),
                 "A memory leak caused by uncollected cyclic references",
                 "An uncaught exception thrown during garbage collection",
-                "A network timeout occurring during high load"
+                "A network timeout occurring during high load",
             ],
-            "correct_answer": "A situation where two or more threads are blocked forever, waiting for each other",
-            "explanation": "Deadlocks occur when threads hold locks needed by each other in a circular chain."
+            "correct_answer": (
+                "A situation where two or more threads are blocked forever, "
+                "waiting for each other"
+            ),
+            "explanation": (
+                "Deadlocks occur when threads hold locks needed by each other "
+                "in a circular chain."
+            ),
         },
         {
             "id": "q8",
-            "question": f"What is the primary role of indexing in database query optimization?",
+            "question": (
+                "What is the primary role of indexing in database query optimization?"
+            ),
             "type": "mcq",
             "skill": secondary_skill,
             "difficulty": "medium",
             "options": [
-                "Speeds up data retrieval operations at the cost of additional storage and write speed",
+                (
+                    "Speeds up data retrieval operations at the cost of "
+                    "additional storage and write speed"
+                ),
                 "Compresses tables on disk to reduce cloud storage cost",
                 "Ensures foreign keys cannot be deleted",
-                "Converts SQL queries into C++ bytecode"
+                "Converts SQL queries into C++ bytecode",
             ],
-            "correct_answer": "Speeds up data retrieval operations at the cost of additional storage and write speed",
-            "explanation": "Indexes create data structures to quickly locate table rows without scanning every row."
+            "correct_answer": (
+                "Speeds up data retrieval operations at the cost of "
+                "additional storage and write speed"
+            ),
+            "explanation": (
+                "Indexes create data structures to quickly locate table rows "
+                "without scanning every row."
+            ),
         },
         {
             "id": "q9",
-            "question": f"In distributed systems, according to CAP theorem, what does 'Consistency' guarantee?",
+            "question": (
+                "In distributed systems, according to CAP theorem, "
+                "what does 'Consistency' guarantee?"
+            ),
             "type": "mcq",
             "skill": third_skill,
             "difficulty": "hard",
             "options": [
                 "Every read receives the most recent write or an error",
-                "Every request receives a non-error response without guarantee of latest write",
+                (
+                    "Every request receives a non-error response without "
+                    "guarantee of latest write"
+                ),
                 "System operates continuously despite arbitrary node failure",
-                "All transactions complete in strictly under 100 milliseconds"
+                "All transactions complete in strictly under 100 milliseconds",
             ],
             "correct_answer": "Every read receives the most recent write or an error",
-            "explanation": "Linearizability/Consistency guarantees all nodes see the same data at the same time."
+            "explanation": (
+                "Linearizability/Consistency guarantees all nodes see the same "
+                "data at the same time."
+            ),
         },
         {
             "id": "q10",
-            "question": f"What design pattern allows an object to alter its behavior when its internal state changes?",
+            "question": (
+                "What design pattern allows an object to alter its behavior when "
+                "its internal state changes?"
+            ),
             "type": "mcq",
             "skill": primary_skill,
             "difficulty": "medium",
@@ -776,77 +924,129 @@ def generate_fallback_questions(
                 "State Pattern",
                 "Singleton Pattern",
                 "Factory Method Pattern",
-                "Adapter Pattern"
+                "Adapter Pattern",
             ],
             "correct_answer": "State Pattern",
-            "explanation": "The State pattern allows an object to change its behavior dynamically based on state."
+            "explanation": (
+                "The State pattern allows an object to change its behavior "
+                "dynamically based on state."
+            ),
         },
         # 5 Short Answers
         {
             "id": "q11",
-            "question": f"Describe how you would design a rate limiter in {secondary_skill} to protect an API from traffic spikes. Mention key algorithms or data structures.",
+            "question": (
+                f"Describe how you would design a rate limiter in {secondary_skill} "
+                "to protect an API from traffic spikes. Mention key algorithms or "
+                "data structures."
+            ),
             "type": "short_answer",
             "skill": secondary_skill,
             "difficulty": "hard",
-            "expected_answer": "Explain Token Bucket or Leaky Bucket algorithm using Redis/in-memory store with sliding window counter.",
+            "expected_answer": (
+                "Explain Token Bucket or Leaky Bucket algorithm using "
+                "Redis/in-memory store with sliding window counter."
+            ),
             "evaluation_points": [
                 "Mentions Token Bucket, Leaky Bucket, or Sliding Window algorithm",
-                "Discusses centralized storage like Redis for distributed API instances",
-                "Addresses handling edge cases like concurrency and rate limit headers (HTTP 429)"
-            ]
+                (
+                    "Discusses centralized storage like Redis for distributed "
+                    "API instances"
+                ),
+                (
+                    "Addresses handling edge cases like concurrency and rate "
+                    "limit headers (HTTP 429)"
+                ),
+            ],
         },
         {
             "id": "q12",
-            "question": f"Explain the difference between synchronous and asynchronous execution in {primary_skill} and when to use each.",
+            "question": (
+                f"Explain the difference between synchronous and asynchronous "
+                f"execution in {primary_skill} and when to use each."
+            ),
             "type": "short_answer",
             "skill": primary_skill,
             "difficulty": "medium",
-            "expected_answer": "Synchronous blocks execution until task finishes; asynchronous releases control for non-blocking I/O operations.",
+            "expected_answer": (
+                "Synchronous blocks execution until task finishes; asynchronous "
+                "releases control for non-blocking I/O operations."
+            ),
             "evaluation_points": [
                 "Clear explanation of blocking vs non-blocking behavior",
-                "Identifies I/O bound tasks (network, disk) as prime candidates for async execution",
-                "Understands CPU bound limitations and worker threads/processes"
-            ]
+                (
+                    "Identifies I/O bound tasks (network, disk) as prime "
+                    "candidates for async execution"
+                ),
+                ("Understands CPU bound limitations and worker threads/processes"),
+            ],
         },
         {
             "id": "q13",
-            "question": f"How do you ensure data integrity during database transactions in a {job_title} project?",
+            "question": (
+                f"How do you ensure data integrity during database transactions "
+                f"in a {job_title} project?"
+            ),
             "type": "short_answer",
             "skill": third_skill,
             "difficulty": "medium",
-            "expected_answer": "Use ACID compliant transactions, proper isolation levels, and explicit error rollback handling.",
+            "expected_answer": (
+                "Use ACID compliant transactions, proper isolation levels, "
+                "and explicit error rollback handling."
+            ),
             "evaluation_points": [
-                "Mentions ACID properties (Atomicity, Consistency, Isolation, Durability)",
+                (
+                    "Mentions ACID properties "
+                    "(Atomicity, Consistency, Isolation, Durability)"
+                ),
                 "Explains transaction rollbacks on failure",
-                "Discusses locking mechanisms or optimistic/pessimistic concurrency control"
-            ]
+                (
+                    "Discusses locking mechanisms or "
+                    "optimistic/pessimistic concurrency control"
+                ),
+            ],
         },
         {
             "id": "q14",
-            "question": f"Walk through your approach to debugging a memory leak or sudden latency spike in a production environment using {primary_skill}.",
+            "question": (
+                f"Walk through your approach to debugging a memory leak or sudden "
+                f"latency spike in a production environment using {primary_skill}."
+            ),
             "type": "short_answer",
             "skill": primary_skill,
             "difficulty": "hard",
-            "expected_answer": "Check APM metrics, analyze heap dumps/profiler traces, inspect log correlations, and isolate leak source.",
+            "expected_answer": (
+                "Check APM metrics, analyze heap dumps/profiler traces, "
+                "inspect log correlations, and isolate leak source."
+            ),
             "evaluation_points": [
                 "Structured debugging methodology starting with metrics/alerts",
                 "Mentions profiling tools, heap analysis, or log aggregation",
-                "Proposes verification through load testing or canary deployment"
-            ]
+                "Proposes verification through load testing or canary deployment",
+            ],
         },
         {
             "id": "q15",
-            "question": f"Explain key considerations for API versioning and backward compatibility when refactoring core endpoints.",
+            "question": (
+                "Explain key considerations for API versioning and backward "
+                "compatibility when refactoring core endpoints."
+            ),
             "type": "short_answer",
             "skill": secondary_skill,
             "difficulty": "medium",
-            "expected_answer": "Use URI/header versioning, avoid breaking field deletions, deprecate gracefully, and maintain documentation.",
+            "expected_answer": (
+                "Use URI/header versioning, avoid breaking field deletions, "
+                "deprecate gracefully, and maintain documentation."
+            ),
             "evaluation_points": [
-                "Suggests explicit versioning strategies (URI path vs HTTP headers)",
+                (
+                    "Suggests explicit versioning strategies "
+                    "(URI path vs HTTP headers)"
+                ),
                 "Emphasizes non-breaking changes (additive schema updates)",
-                "Mentions deprecation timelines and backward compatibility layers"
-            ]
-        }
+                "Mentions deprecation timelines and backward compatibility layers",
+            ],
+        },
     ]
 
     return questions
@@ -857,25 +1057,37 @@ def generate_candidate_assessment(
     candidate_id: str,
     job_description: Any,
     candidate_resume: Any = None,
-    job_role: str = "Engineer"
+    job_role: str = "Engineer",
 ) -> Dict[str, Any]:
     """Generate or retrieve candidate-specific 15-question assessment.
 
     Tied strictly to assessment_id, candidate_id, JD, and resume_id.
     """
-    # 1. Check if already generated and persisted (search by both assessment_id and candidate_id)
+    # 1. Check if already generated and persisted
+    # (search by both assessment_id and candidate_id)
     existing = get_assessment_questions(assessment_id, candidate_id=candidate_id)
-    if existing and existing.get("questions") and len(existing.get("questions", [])) == 15:
+    if (
+        existing
+        and existing.get("questions")
+        and len(existing.get("questions", [])) == 15
+    ):
         return existing
 
     # 2. Extract JD text & candidate experience
     jd_str = ""
     if isinstance(job_description, dict):
-        title = job_description.get("job_title") or job_description.get("title") or job_role
+        title = (
+            job_description.get("job_title") or job_description.get("title") or job_role
+        )
         p_skills = job_description.get("primary_skills") or ""
         s_skills = job_description.get("secondary_skills") or ""
         exp = job_description.get("experience") or ""
-        jd_str = f"Role: {title}\nPrimary Skills: {p_skills}\nSecondary Skills: {s_skills}\nExperience: {exp}"
+        jd_str = (
+            f"Role: {title}\n"
+            f"Primary Skills: {p_skills}\n"
+            f"Secondary Skills: {s_skills}\n"
+            f"Experience: {exp}"
+        )
     else:
         jd_str = str(job_description or f"Job Role: {job_role}")
 
@@ -888,17 +1100,23 @@ def generate_candidate_assessment(
         skills_data = candidate_resume.get("skills", {})
         tech = ", ".join(skills_data.get("technical_skills", []))
         exp_sum = skills_data.get("experience_summary", "")
-        resume_summary = f"Candidate Name: {candidate_name}\nTechnical Skills: {tech}\nExperience Summary: {exp_sum}"
+        resume_summary = (
+            f"Candidate Name: {candidate_name}\n"
+            f"Technical Skills: {tech}\n"
+            f"Experience Summary: {exp_sum}"
+        )
 
     prompt = f"""
 You are an expert AI Technical Recruiter and Assessment Designer.
 
-Task: Generate an assessment containing EXACTLY 15 questions for the candidate based on the Job Description and candidate profile below.
+Task: Generate an assessment containing EXACTLY 15 questions for the candidate \
+based on the Job Description and candidate profile below.
 
 JOB DESCRIPTION:
 {jd_str}
 
-CANDIDATE PROFILE CONTEXT (Use for subtle personalization/contextualization, but the JD is primary):
+CANDIDATE PROFILE CONTEXT (Use for subtle personalization/contextualization, \
+but the JD is primary):
 {resume_summary or "Candidate ID: " + str(candidate_id)}
 
 REQUIREMENTS:
@@ -907,15 +1125,19 @@ REQUIREMENTS:
    - EXACTLY 10 MCQs ('type': 'mcq')
    - EXACTLY 5 Short Answer ('type': 'short_answer')
 3. Skill Distribution:
-   - Distribute questions across the core technical skills from the JD ({", ".join(extracted_skills)}).
+   - Distribute questions across the core technical skills from the JD \
+({", ".join(extracted_skills)}).
 4. Question Format:
-   - For MCQs: Include 'options' (array of 4 options), 'correct_answer' (must match one option), 'explanation'.
-   - For Short Answer: Include 'expected_answer', 'evaluation_points' (array of criteria points).
+   - For MCQs: Include 'options' (array of 4 options), \
+'correct_answer' (must match one option), 'explanation'.
+   - For Short Answer: Include 'expected_answer', \
+'evaluation_points' (array of criteria points).
 5. Difficulty: A mix of easy, medium, and hard.
 6. Skill Tag Accuracy:
    - The 'skill' field MUST correspond to the actual topic being tested by the question.
    - For example, a question about REST API versioning should NOT have skill = "SQL".
-   - A question about rate limiting should NOT have skill = "SQL" unless it genuinely tests SQL.
+   - A question about rate limiting should NOT have skill = "SQL" \
+unless it genuinely tests SQL.
    - Only use skills from the JD skill list above.
 
 Return ONLY valid JSON matching this structure:
@@ -946,7 +1168,7 @@ Return ONLY valid JSON matching this structure:
         "job_role": job_role,
         "extracted_skills": extracted_skills,
         "questions": fallback_questions,
-        "generation_source": "fallback"
+        "generation_source": "fallback",
     }
 
     try:
@@ -955,7 +1177,7 @@ Return ONLY valid JSON matching this structure:
             schema=QUESTION_SCHEMA,
             fallback=None,
             model_name=OPENAI_ASSESSMENT_MODEL,
-            provider="OpenAI"
+            provider="OpenAI",
         )
 
         if data and isinstance(data, dict) and "questions" in data:
@@ -968,14 +1190,20 @@ Return ONLY valid JSON matching this structure:
                     "job_role": job_role,
                     "extracted_skills": extracted_skills,
                     "questions": questions,
-                    "generation_source": "llm"
+                    "generation_source": "llm",
                 }
                 save_assessment_questions(assessment_id, payload)
                 return payload
             else:
-                print(f"[QUESTION_GEN] LLM generated invalid question set: {msg}. Using validated fallback.")
+                print(
+                    f"[QUESTION_GEN] LLM generated invalid question set: {msg}. "
+                    "Using validated fallback."
+                )
     except Exception as exc:
-        print(f"[QUESTION_GEN] LLM call failed with exception: {exc}. Using validated fallback.")
+        print(
+            f"[QUESTION_GEN] LLM call failed with exception: {exc}. "
+            "Using validated fallback."
+        )
 
     # Save and return fallback if LLM failed or failed validation
     save_assessment_questions(assessment_id, fallback_payload)

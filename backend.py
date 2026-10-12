@@ -4,9 +4,9 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
-import urllib.error
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -79,8 +79,8 @@ EMBEDDING_DIMENSION = 1024
 
 # Chunking configuration
 MAX_CHUNK_SIZE = 1000  # Maximum characters per chunk
-CHUNK_OVERLAP = 100    # Overlap between chunks when recursive splitting is needed
-MIN_CHUNK_SIZE = 200   # Minimum characters for a valid chunk
+CHUNK_OVERLAP = 100  # Overlap between chunks when recursive splitting is needed
+MIN_CHUNK_SIZE = 200  # Minimum characters for a valid chunk
 PROJECT_ROOT = Path(__file__).resolve().parent
 VECTOR_STORE_DIR = PROJECT_ROOT / "vector_store"
 FAISS_INDEX_PATH = VECTOR_STORE_DIR / "resume_embeddings.faiss"
@@ -94,6 +94,9 @@ CAPTAPI_CACHE_PATH = VECTOR_STORE_DIR / "captapi_cache.json"
 CAPTAPI_CACHE_VERSION = "v1"
 LINKEDIN_PROFILE_CACHE_PATH = VECTOR_STORE_DIR / "linkedin_profile_cache.json"
 LINKEDIN_PROFILE_CACHE_VERSION = "v1"
+ANALYSIS_CACHE_VERSION = (
+    "evidence_chunks_v7_contact_prompt_fix_captapi_linkedin_verification"
+)
 
 AI_PROVIDER_OPTIONS = [
     "Ollama",
@@ -498,44 +501,64 @@ LINKEDIN_VERIFICATION_SCHEMA = {
         "identity_confirmed": {"type": "boolean"},
         "overall_status": {
             "type": "string",
-            "enum": ["CORROBORATED", "PARTIALLY_CORROBORATED", "UNVERIFIABLE", "DISCREPANCY"]
+            "enum": [
+                "CORROBORATED",
+                "PARTIALLY_CORROBORATED",
+                "UNVERIFIABLE",
+                "DISCREPANCY",
+            ],
         },
         "summary": {"type": "string"},
         "findings": {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["claim", "status", "jd_relevance", "recency", "resume_evidence", "resume_chunk_id", "resume_section", "linkedin_evidence", "justification"],
+                "required": [
+                    "claim",
+                    "status",
+                    "jd_relevance",
+                    "recency",
+                    "resume_evidence",
+                    "resume_chunk_id",
+                    "resume_section",
+                    "linkedin_evidence",
+                    "justification",
+                ],
                 "properties": {
                     "claim": {"type": "string"},
                     "status": {
                         "type": "string",
-                        "enum": ["CORROBORATED", "PARTIALLY_CORROBORATED", "UNVERIFIABLE", "DISCREPANCY"]
+                        "enum": [
+                            "CORROBORATED",
+                            "PARTIALLY_CORROBORATED",
+                            "UNVERIFIABLE",
+                            "DISCREPANCY",
+                        ],
                     },
                     "jd_relevance": {
                         "type": "string",
-                        "enum": ["must_have", "nice_to_have", "unrelated", "unknown"]
+                        "enum": ["must_have", "nice_to_have", "unrelated", "unknown"],
                     },
                     "recency": {
                         "type": "string",
-                        "enum": ["recent", "stale", "unknown", "not_applicable"]
+                        "enum": ["recent", "stale", "unknown", "not_applicable"],
                     },
                     "resume_evidence": {"type": "string"},
                     "resume_chunk_id": {"type": "string"},
                     "resume_section": {"type": "string"},
                     "linkedin_evidence": {"type": "string"},
-                    "justification": {"type": "string"}
-                }
-            }
-        }
-    }
+                    "justification": {"type": "string"},
+                },
+            },
+        },
+    },
 }
 
 LINKEDIN_VERIFICATION_FALLBACK = {
     "identity_confirmed": False,
     "overall_status": "UNVERIFIABLE",
     "summary": "LinkedIn verification unavailable due to API or parsing error.",
-    "findings": []
+    "findings": [],
 }
 
 JD_SCHEMA = {
@@ -735,7 +758,12 @@ CANDIDATE_COMPARISON_SCHEMA = {
                                 },
                                 "status": {
                                     "type": "string",
-                                    "enum": ["strong", "partial", "weak", "unavailable"],
+                                    "enum": [
+                                        "strong",
+                                        "partial",
+                                        "weak",
+                                        "unavailable",
+                                    ],
                                 },
                                 "evidence": {
                                     "type": "string",
@@ -1153,7 +1181,9 @@ def get_current_timestamp():
     return datetime.now(timezone.utc).isoformat()
 
 
-def get_or_create_resume_embedding(resume_id, resume_name, resume_text, use_chunking=True):
+def get_or_create_resume_embedding(
+    resume_id, resume_name, resume_text, use_chunking=True
+):
     """Get or create resume embedding.
 
     Args:
@@ -1168,7 +1198,9 @@ def get_or_create_resume_embedding(resume_id, resume_name, resume_text, use_chun
     """
     if not use_chunking:
         # Legacy behavior for backward compatibility
-        return get_or_create_resume_embedding_legacy(resume_id, resume_name, resume_text)
+        return get_or_create_resume_embedding_legacy(
+            resume_id, resume_name, resume_text
+        )
 
     # Chunk-based approach (Phase 1)
     return get_or_create_resume_embeddings_chunked(resume_id, resume_name, resume_text)
@@ -1273,7 +1305,7 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
     # Check if chunks already exist for this resume
     chunks_store = read_json_file(RESUME_CHUNKS_PATH, {})
     existing_chunks = []
-    
+
     if isinstance(chunks_store, list):
         existing_chunks = [c for c in chunks_store if c.get("resume_id") == resume_id]
     elif isinstance(chunks_store, dict):
@@ -1287,8 +1319,8 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
             valid_chunks = []
 
             for chunk in existing_chunks:
-                chunk_id = chunk.get('chunk_id')
-                faiss_row = chunk.get('faiss_row')
+                chunk_id = chunk.get("chunk_id")
+                faiss_row = chunk.get("faiss_row")
 
                 if faiss_row is not None and 0 <= faiss_row < index.ntotal:
                     try:
@@ -1302,28 +1334,24 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
                 RUNTIME_STATE["last_vector_store_status"] = (
                     f"Loaded {len(embeddings)} cached chunk embeddings for {resume_name}."
                 )
-                return {
-                    'embeddings': embeddings,
-                    'chunks': valid_chunks
-                }
+                return {"embeddings": embeddings, "chunks": valid_chunks}
 
     # Process resume into chunks
     chunks = process_resume_into_chunks(resume_id, resume_name, text_items)
 
     if not chunks:
-        RUNTIME_STATE["last_vector_store_error"] = "No chunks could be created from resume."
-        return {
-            'embeddings': [],
-            'chunks': []
-        }
+        RUNTIME_STATE["last_vector_store_error"] = (
+            "No chunks could be created from resume."
+        )
+        return {"embeddings": [], "chunks": []}
 
     # Generate embeddings for each chunk
     index, metadata = load_resume_vector_store()
     embeddings = []
 
     for chunk in chunks:
-        chunk_text = chunk['text']
-        chunk_id = chunk['chunk_id']
+        chunk_text = chunk["text"]
+        chunk_id = chunk["chunk_id"]
 
         # Generate embedding for this chunk
         embedding = encode_text_embedding(
@@ -1342,7 +1370,7 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
         new_row = int(index.ntotal - 1)
 
         # Update chunk with FAISS row
-        chunk['faiss_row'] = new_row
+        chunk["faiss_row"] = new_row
 
         embeddings.append(embedding)
 
@@ -1351,13 +1379,13 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
     # faiss_row as the representative row.
     existing_meta = find_resume_metadata(metadata, resume_id)
     if existing_meta is None and chunks:
-        first_row = chunks[0].get('faiss_row')
+        first_row = chunks[0].get("faiss_row")
         if first_row is not None:
             metadata.append(
                 {
                     "resume_id": resume_id,
                     "resume_name": resume_name,
-                    "chunk_id": chunks[0].get('chunk_id', f"{resume_id}_chunk_000"),
+                    "chunk_id": chunks[0].get("chunk_id", f"{resume_id}_chunk_000"),
                     "faiss_row": first_row,
                     "embedding_model": EMBEDDING_MODEL_NAME,
                     "created_at": get_current_timestamp(),
@@ -1374,8 +1402,8 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
         chunks_store = [c for c in chunks_store if c.get("resume_id") != resume_id]
         # Add new chunks
         for chunk in chunks:
-            chunk['resume_id'] = resume_id
-            chunk['resume_name'] = resume_name
+            chunk["resume_id"] = resume_id
+            chunk["resume_name"] = resume_name
             chunks_store.append(chunk)
     else:
         chunks_store[resume_id] = chunks
@@ -1385,10 +1413,7 @@ def get_or_create_resume_embeddings_chunked(resume_id, resume_name, text_items):
         f"Created {len(chunks)} new chunk embeddings for {resume_name}."
     )
 
-    return {
-        'embeddings': embeddings,
-        'chunks': chunks
-    }
+    return {"embeddings": embeddings, "chunks": chunks}
 
 
 def search_chunks_by_embedding(query_embedding, top_k=10):
@@ -1428,19 +1453,21 @@ def search_chunks_by_embedding(query_embedding, top_k=10):
             # Find chunk with this faiss_row
             for resume_id, chunks in chunks_store.items():
                 for chunk in chunks:
-                    if chunk.get('faiss_row') == idx_int:
+                    if chunk.get("faiss_row") == idx_int:
                         similarity_score = float(dist) * 100
-                        results.append({
-                            'chunk': chunk,
-                            'similarity_score': similarity_score,
-                            'resume_id': resume_id
-                        })
+                        results.append(
+                            {
+                                "chunk": chunk,
+                                "similarity_score": similarity_score,
+                                "resume_id": resume_id,
+                            }
+                        )
                         break
                 if results:
                     break
 
         # Sort by similarity score
-        results.sort(key=lambda x: x['similarity_score'], reverse=True)
+        results.sort(key=lambda x: x["similarity_score"], reverse=True)
 
         return results[:top_k]
 
@@ -1673,16 +1700,16 @@ def get_faiss_index_size():
 def get_active_resume_db_records():
     """
     Load active Resume DB records independently of FAISS.
-    
+
     This is the source of truth for the active candidate pool.
     FAISS is an optimization layer on top of this.
-    
+
     Returns:
         Dict mapping resume_id to resume record (skills, name, etc.)
     """
     initialize_project_storage_files()
     skills_store = read_json_file(RESUME_SKILLS_PATH, {})
-    
+
     # Filter to only resumes with valid skills
     records = {}
     for resume_id, data in skills_store.items():
@@ -1694,7 +1721,7 @@ def get_active_resume_db_records():
                 "skills_model": data.get("model", ""),
                 "last_updated_at": data.get("last_updated_at", ""),
             }
-    
+
     return records
 
 
@@ -2175,7 +2202,10 @@ def verify_github_evidence_against_resume(resume_profile, github_evidence):
         "discrepancies": [],
         "supporting_repositories": [],
     }
-    if not isinstance(github_evidence, dict) or github_evidence.get("status") != "available":
+    if (
+        not isinstance(github_evidence, dict)
+        or github_evidence.get("status") != "available"
+    ):
         return unavailable
 
     repositories = [
@@ -2228,9 +2258,7 @@ def verify_github_evidence_against_resume(resume_profile, github_evidence):
             f" {skill_normalized} " in f" {normalized(text)} "
             for text in repository_text
         )
-        skill_tokens = [
-            token for token in skill_normalized.split() if len(token) > 2
-        ]
+        skill_tokens = [token for token in skill_normalized.split() if len(token) > 2]
         partial_match = bool(skill_tokens) and any(
             all(token in set(normalized(text).split()) for token in skill_tokens)
             for text in repository_text
@@ -2278,6 +2306,7 @@ def verify_github_evidence_against_resume(resume_profile, github_evidence):
 # LINKEDIN / CAPTAPI INTEGRATION
 # ==================================================
 
+
 def normalize_linkedin_url(url):
     """Normalize LinkedIn URL for consistent lookup.
 
@@ -2314,7 +2343,7 @@ def normalize_linkedin_url(url):
 
     # Normalize to linkedin.com
     if url.startswith("linkedin.com/"):
-        url = url[len("linkedin.com/"):]
+        url = url[len("linkedin.com/") :]
 
     # Ensure in/ prefix exists
     if not url.startswith("in/"):
@@ -2466,10 +2495,10 @@ def fetch_captapi_linkedin_profile(linkedin_url):
 
     cached_entry = cache.get(cache_key)
     if cached_entry:
-        cached_version = cached_entry.get('cache_version', '')
+        cached_version = cached_entry.get("cache_version", "")
         if cached_version == CAPTAPI_CACHE_VERSION:
             print(f"[CAPTAPI] Cache hit for {cache_key}")
-            return cached_entry.get('profile')
+            return cached_entry.get("profile")
 
     # Fetch from Captapi
     try:
@@ -2485,9 +2514,9 @@ def fetch_captapi_linkedin_profile(linkedin_url):
         if normalized_profile:
             # Cache the result
             cache[cache_key] = {
-                'profile': normalized_profile,
-                'cache_version': CAPTAPI_CACHE_VERSION,
-                'cached_at': get_current_timestamp()
+                "profile": normalized_profile,
+                "cache_version": CAPTAPI_CACHE_VERSION,
+                "cached_at": get_current_timestamp(),
             }
             write_json_file(CAPTAPI_CACHE_PATH, cache)
             print(f"[CAPTAPI] Profile fetched and cached for {cache_key}")
@@ -2574,9 +2603,7 @@ def verify_linkedin_evidence_against_resume(
         verification_result["overall_status"] = "UNVERIFIABLE"
     else:
         statuses = {
-            finding.get("status")
-            for finding in findings
-            if isinstance(finding, dict)
+            finding.get("status") for finding in findings if isinstance(finding, dict)
         }
         if "DISCREPANCY" in statuses:
             verification_result["overall_status"] = "DISCREPANCY"
@@ -2611,6 +2638,7 @@ def get_file_bytes(file):
 # CONTACT INFORMATION EXTRACTION
 # ==================================================
 
+
 def normalize_phone_number(phone):
     """Normalize phone number to standard format.
 
@@ -2626,10 +2654,10 @@ def normalize_phone_number(phone):
     if not phone:
         return None
 
-    phone_clean = re.sub(r'[^\d+]', '', str(phone))
+    phone_clean = re.sub(r"[^\d+]", "", str(phone))
 
     # For Indian 11-digit numbers with leading 0
-    if len(phone_clean) == 11 and phone_clean.startswith('0'):
+    if len(phone_clean) == 11 and phone_clean.startswith("0"):
         phone_clean = phone_clean[1:]  # Remove leading 0
 
     # For Indian 10-digit numbers (without country code)
@@ -2637,12 +2665,12 @@ def normalize_phone_number(phone):
         return f"+91 {phone_clean[:5]} {phone_clean[5:]}"
 
     # For Indian numbers with +91 prefix
-    if phone_clean.startswith('+91') and len(phone_clean) == 13:
+    if phone_clean.startswith("+91") and len(phone_clean) == 13:
         local_num = phone_clean[3:]
         return f"+91 {local_num[:5]} {local_num[5:]}"
 
     # For Indian numbers with 91 prefix (no +)
-    if phone_clean.startswith('91') and len(phone_clean) == 12:
+    if phone_clean.startswith("91") and len(phone_clean) == 12:
         local_num = phone_clean[2:]
         return f"+91 {local_num[:5]} {local_num[5:]}"
 
@@ -2664,18 +2692,18 @@ def extract_contact_info(text):
         }
 
     # Email pattern
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     email_match = re.search(email_pattern, text)
     email = email_match.group(0) if email_match else None
 
     # Phone pattern (Indian and international)
     phone_patterns = [
-        r'\+91[-\s]?\d{5}[-\s]?\d{5}',  # +91 XXXXX XXXXX
-        r'\+91\s?\d{10}',  # +91 XXXXXXXXXX
-        r'91[-\s]?\d{5}[-\s]?\d{5}',  # 91 XXXXX XXXXX
-        r'\b\d{10}\b',  # 10 digits
-        r'\b\d{11}\b',  # 11 digits (with leading 0)
-        r'\+?\d{1,3}[-\s(]?\d{3,4}[-\s)]?\d{3,4}[-\s]?\d{3,4}',  # International with various separators
+        r"\+91[-\s]?\d{5}[-\s]?\d{5}",  # +91 XXXXX XXXXX
+        r"\+91\s?\d{10}",  # +91 XXXXXXXXXX
+        r"91[-\s]?\d{5}[-\s]?\d{5}",  # 91 XXXXX XXXXX
+        r"\b\d{10}\b",  # 10 digits
+        r"\b\d{11}\b",  # 11 digits (with leading 0)
+        r"\+?\d{1,3}[-\s(]?\d{3,4}[-\s)]?\d{3,4}[-\s]?\d{3,4}",  # International with various separators
     ]
 
     phone = None
@@ -2688,10 +2716,10 @@ def extract_contact_info(text):
 
     # LinkedIn URL pattern
     linkedin_patterns = [
-        r'https?://(?:www\.)?linkedin\.com/in/[A-Za-z0-9-]+',
-        r'linkedin\.com/in/[A-Za-z0-9-]+',
-        r'https?://(?:www\.)?linkedin\.com/[A-Za-z0-9-]+',
-        r'linkedin\.com/[A-Za-z0-9-]+',
+        r"https?://(?:www\.)?linkedin\.com/in/[A-Za-z0-9-]+",
+        r"linkedin\.com/in/[A-Za-z0-9-]+",
+        r"https?://(?:www\.)?linkedin\.com/[A-Za-z0-9-]+",
+        r"linkedin\.com/[A-Za-z0-9-]+",
     ]
 
     linkedin = None
@@ -2700,14 +2728,14 @@ def extract_contact_info(text):
         if match:
             linkedin = match.group(0)
             # Add https:// prefix if not present
-            if not linkedin.startswith('http'):
+            if not linkedin.startswith("http"):
                 linkedin = f"https://{linkedin}"
             break
 
     # GitHub URL pattern
     github_patterns = [
-        r'https?://(?:www\.)?github\.com/[A-Za-z0-9_-]+',
-        r'github\.com/[A-Za-z0-9_-]+',
+        r"https?://(?:www\.)?github\.com/[A-Za-z0-9_-]+",
+        r"github\.com/[A-Za-z0-9_-]+",
     ]
 
     github = None
@@ -2716,7 +2744,7 @@ def extract_contact_info(text):
         if match:
             github = match.group(0)
             # Add https:// prefix if not present
-            if not github.startswith('http'):
+            if not github.startswith("http"):
                 github = f"https://{github}"
             break
 
@@ -2834,13 +2862,11 @@ def safe_gemini_json(prompt, schema, fallback, model_name=None, system_prompt=No
                     # Use system and user content structure
                     contents = [
                         genai.types.Content(
-                            role="system",
-                            parts=[genai.types.Part(text=system_prompt)]
+                            role="system", parts=[genai.types.Part(text=system_prompt)]
                         ),
                         genai.types.Content(
-                            role="user",
-                            parts=[genai.types.Part(text=prompt)]
-                        )
+                            role="user", parts=[genai.types.Part(text=prompt)]
+                        ),
                     ]
                     response = client.models.generate_content(
                         model=selected_model,
@@ -2899,7 +2925,7 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
 
     if is_gpt5_comparison:
         print(f"[GPT-5 COMPARISON DEBUG] OpenAI request started model={model_name}")
-    
+
     if is_gpt4_comparison:
         print(f"[GPT-4 COMPARISON DEBUG] OpenAI request started model={model_name}")
 
@@ -2934,7 +2960,7 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
                 },
             ],
         }
-        
+
         # Add timeout for GPT-5 comparison to handle connection errors
         if is_gpt5_comparison:
             completion_params["timeout"] = 120.0
@@ -2959,7 +2985,7 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
 
         if is_gpt5_comparison:
             print("[GPT-5 COMPARISON DEBUG] OpenAI response received")
-        
+
         if is_gpt4_comparison:
             print("[GPT-4 COMPARISON DEBUG] OpenAI response received")
 
@@ -2967,7 +2993,7 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
 
         if is_gpt5_comparison and not content:
             print("[GPT-5 COMPARISON DEBUG] Response content is empty")
-        
+
         if is_gpt4_comparison and not content:
             print("[GPT-4 COMPARISON DEBUG] Response content is empty")
 
@@ -2985,7 +3011,7 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
 
         if is_gpt5_comparison:
             print("[GPT-5 COMPARISON DEBUG] Schema validation passed")
-        
+
         if is_gpt4_comparison:
             print("[GPT-4 COMPARISON DEBUG] Schema validation passed")
 
@@ -2993,14 +3019,20 @@ def safe_openai_json(prompt, schema, fallback, model_name=None, system_prompt=No
         return data
     except Exception as error:
         if is_gpt5_comparison:
-            print(f"[GPT-5 COMPARISON DEBUG] Exception: {type(error).__name__}: {str(error)}")
+            print(
+                f"[GPT-5 COMPARISON DEBUG] Exception: {type(error).__name__}: {str(error)}"
+            )
         if is_gpt4_comparison:
-            print(f"[GPT-4 COMPARISON DEBUG] Exception: {type(error).__name__}: {str(error)}")
+            print(
+                f"[GPT-4 COMPARISON DEBUG] Exception: {type(error).__name__}: {str(error)}"
+            )
         RUNTIME_STATE["last_ai_error"] = str(error)
         return fallback
 
 
-def safe_ai_json(prompt, schema, fallback, model_name=None, provider=None, system_prompt=None):
+def safe_ai_json(
+    prompt, schema, fallback, model_name=None, provider=None, system_prompt=None
+):
     provider = provider or get_selected_provider()
 
     if provider == "Gemini":
@@ -3668,6 +3700,7 @@ def summarize_gemini_error(error):
 # RESUME PROCESSING - PHASE 1
 # ==================================================
 
+
 def clean_resume_text(text):
     """Clean resume text while preserving structure.
 
@@ -3681,17 +3714,17 @@ def clean_resume_text(text):
         return ""
 
     # Remove excessive blank lines (more than 2 consecutive)
-    text = re.sub(r'\n\s*\n\s*\n+', '\n\n', text)
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
 
     # Normalize whitespace within lines
     lines = []
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         # Remove leading/trailing whitespace but preserve internal spacing
         cleaned = line.strip()
         if cleaned:
             lines.append(cleaned)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def normalize_section_heading(heading):
@@ -3705,72 +3738,64 @@ def normalize_section_heading(heading):
         return None
 
     # Normalize: lowercase, remove extra spaces, remove special chars
-    normalized = re.sub(r'[^a-zA-Z\s]', '', heading.lower().strip())
+    normalized = re.sub(r"[^a-zA-Z\s]", "", heading.lower().strip())
 
     # Section mapping rules
     section_mappings = {
         # Skills
-        'skills': 'Skills',
-        'technical skills': 'Skills',
-        'technical': 'Skills',
-        'core skills': 'Skills',
-        'key skills': 'Skills',
-        'technologies': 'Skills',
-        'tech stack': 'Skills',
-        'programming languages': 'Skills',
-
+        "skills": "Skills",
+        "technical skills": "Skills",
+        "technical": "Skills",
+        "core skills": "Skills",
+        "key skills": "Skills",
+        "technologies": "Skills",
+        "tech stack": "Skills",
+        "programming languages": "Skills",
         # Experience
-        'experience': 'Experience',
-        'work experience': 'Experience',
-        'professional experience': 'Experience',
-        'employment': 'Experience',
-        'work history': 'Experience',
-        'professional background': 'Experience',
-        'internships': 'Experience',
-        'internship experience': 'Experience',
-
+        "experience": "Experience",
+        "work experience": "Experience",
+        "professional experience": "Experience",
+        "employment": "Experience",
+        "work history": "Experience",
+        "professional background": "Experience",
+        "internships": "Experience",
+        "internship experience": "Experience",
         # Projects
-        'projects': 'Projects',
-        'project experience': 'Projects',
-        'personal projects': 'Projects',
-        'academic projects': 'Projects',
-        'key projects': 'Projects',
-
+        "projects": "Projects",
+        "project experience": "Projects",
+        "personal projects": "Projects",
+        "academic projects": "Projects",
+        "key projects": "Projects",
         # Education
-        'education': 'Education',
-        'educational background': 'Education',
-        'academic background': 'Education',
-        'qualifications': 'Education',
-        'academic': 'Education',
-
+        "education": "Education",
+        "educational background": "Education",
+        "academic background": "Education",
+        "qualifications": "Education",
+        "academic": "Education",
         # Certifications
-        'certifications': 'Certifications',
-        'certificates': 'Certifications',
-        'certification': 'Certifications',
-        'credentials': 'Certifications',
-
+        "certifications": "Certifications",
+        "certificates": "Certifications",
+        "certification": "Certifications",
+        "credentials": "Certifications",
         # Achievements
-        'achievements': 'Achievements',
-        'accomplishments': 'Achievements',
-        'awards': 'Achievements',
-        'honors': 'Achievements',
-
+        "achievements": "Achievements",
+        "accomplishments": "Achievements",
+        "awards": "Achievements",
+        "honors": "Achievements",
         # Publications
-        'publications': 'Publications',
-        'research papers': 'Publications',
-        'papers': 'Publications',
-
+        "publications": "Publications",
+        "research papers": "Publications",
+        "papers": "Publications",
         # Research
-        'research': 'Research',
-        'research experience': 'Research',
-
+        "research": "Research",
+        "research experience": "Research",
         # Summary
-        'summary': 'Summary',
-        'profile': 'Summary',
-        'professional summary': 'Summary',
-        'career summary': 'Summary',
-        'objective': 'Summary',
-        'career objective': 'Summary',
+        "summary": "Summary",
+        "profile": "Summary",
+        "professional summary": "Summary",
+        "career summary": "Summary",
+        "objective": "Summary",
+        "career objective": "Summary",
     }
 
     # Try exact match first
@@ -3781,26 +3806,26 @@ def normalize_section_heading(heading):
 
 
 RESUME_SUBSECTION_LABELS = {
-    'project duration',
-    'project description',
-    'project name',
-    'project',
-    'responsibilities',
-    'environment',
-    'technologies',
-    'team size',
-    'role',
-    'client',
-    'location',
+    "project duration",
+    "project description",
+    "project name",
+    "project",
+    "responsibilities",
+    "environment",
+    "technologies",
+    "team size",
+    "role",
+    "client",
+    "location",
 }
 
 
 def _is_resume_subsection_label(heading):
     """Return whether a heading candidate is a known project subsection label."""
-    label = heading.split(':', 1)[0]
-    label = re.sub(r'^\s*\d+\s*[.)-]\s*', '', label)
-    label = re.sub(r'[^a-zA-Z\s]', ' ', label.lower())
-    label = re.sub(r'\s+', ' ', label).strip()
+    label = heading.split(":", 1)[0]
+    label = re.sub(r"^\s*\d+\s*[.)-]\s*", "", label)
+    label = re.sub(r"[^a-zA-Z\s]", " ", label.lower())
+    label = re.sub(r"\s+", " ", label).strip()
     return label in RESUME_SUBSECTION_LABELS
 
 
@@ -3822,7 +3847,7 @@ def detect_resume_sections(text_items):
     sections = []
 
     for idx, item in enumerate(text_items):
-        text = item['text'].strip()
+        text = item["text"].strip()
         if not text:
             continue
 
@@ -3831,12 +3856,14 @@ def detect_resume_sections(text_items):
 
         normalized_section = normalize_section_heading(text)
         if normalized_section:
-            sections.append({
-                'section': normalized_section,
-                'heading': text,
-                'start_index': idx,
-                'page': item.get('page')
-            })
+            sections.append(
+                {
+                    "section": normalized_section,
+                    "heading": text,
+                    "start_index": idx,
+                    "page": item.get("page"),
+                }
+            )
 
     return sections
 
@@ -3855,50 +3882,64 @@ def create_context_aware_chunks(text_items, sections):
 
     if not sections:
         # No sections detected - treat entire document as one chunk
-        full_text = '\n'.join(item['text'] for item in text_items)
+        full_text = "\n".join(item["text"] for item in text_items)
         if full_text.strip():
-            chunks.append({
-                'section': 'Summary',
-                'subsection': None,
-                'text': full_text,
-                'page': text_items[0].get('page') if text_items else None,
-                'start_index': 0,
-                'end_index': len(text_items) - 1
-            })
+            chunks.append(
+                {
+                    "section": "Summary",
+                    "subsection": None,
+                    "text": full_text,
+                    "page": text_items[0].get("page") if text_items else None,
+                    "start_index": 0,
+                    "end_index": len(text_items) - 1,
+                }
+            )
         return chunks
 
     # Process each section
     for i, section in enumerate(sections):
-        section_name = section['section']
-        start_idx = section['start_index']
+        section_name = section["section"]
+        start_idx = section["start_index"]
 
         # Determine end index (next section or end of document)
         if i + 1 < len(sections):
-            end_idx = sections[i + 1]['start_index']
+            end_idx = sections[i + 1]["start_index"]
         else:
             end_idx = len(text_items)
 
         # Extract text for this section
         section_text_items = text_items[start_idx:end_idx]
-        section_text = '\n'.join(item['text'] for item in section_text_items)
+        section_text = "\n".join(item["text"] for item in section_text_items)
 
         if not section_text.strip():
             continue
 
         # Apply section-specific chunking strategies
-        if section_name == 'Projects':
-            section_chunks = chunk_projects_section(section_text_items, section, start_idx)
-        elif section_name == 'Experience':
-            section_chunks = chunk_experience_section(section_text_items, section, start_idx)
-        elif section_name == 'Skills':
-            section_chunks = chunk_skills_section(section_text_items, section, start_idx)
-        elif section_name == 'Education':
-            section_chunks = chunk_education_section(section_text_items, section, start_idx)
-        elif section_name == 'Certifications':
-            section_chunks = chunk_certifications_section(section_text_items, section, start_idx)
+        if section_name == "Projects":
+            section_chunks = chunk_projects_section(
+                section_text_items, section, start_idx
+            )
+        elif section_name == "Experience":
+            section_chunks = chunk_experience_section(
+                section_text_items, section, start_idx
+            )
+        elif section_name == "Skills":
+            section_chunks = chunk_skills_section(
+                section_text_items, section, start_idx
+            )
+        elif section_name == "Education":
+            section_chunks = chunk_education_section(
+                section_text_items, section, start_idx
+            )
+        elif section_name == "Certifications":
+            section_chunks = chunk_certifications_section(
+                section_text_items, section, start_idx
+            )
         else:
             # Generic chunking for other sections
-            section_chunks = chunk_generic_section(section_text_items, section, start_idx)
+            section_chunks = chunk_generic_section(
+                section_text_items, section, start_idx
+            )
 
         chunks.extend(section_chunks)
 
@@ -3913,17 +3954,58 @@ def chunk_projects_section(text_items, section_info, base_index):
 
     # Words that commonly start result/achievement sentences
     result_starting_words = {
-        'achieved', 'achieve', 'built', 'build', 'developed', 'develop',
-        'implemented', 'implement', 'created', 'create', 'designed', 'design',
-        'reduced', 'reduce', 'increased', 'increase', 'improved', 'improve',
-        'optimized', 'optimize', 'led', 'lead', 'managed', 'manage',
-        'delivered', 'deliver', 'deployed', 'deploy', 'launched', 'launch',
-        'won', 'win', 'received', 'receive', 'published', 'publish',
-        'completed', 'complete', 'finished', 'finish', 'executed', 'execute'
+        "achieved",
+        "achieve",
+        "built",
+        "build",
+        "developed",
+        "develop",
+        "implemented",
+        "implement",
+        "created",
+        "create",
+        "designed",
+        "design",
+        "reduced",
+        "reduce",
+        "increased",
+        "increase",
+        "improved",
+        "improve",
+        "optimized",
+        "optimize",
+        "led",
+        "lead",
+        "managed",
+        "manage",
+        "delivered",
+        "deliver",
+        "deployed",
+        "deploy",
+        "launched",
+        "launch",
+        "won",
+        "win",
+        "received",
+        "receive",
+        "published",
+        "publish",
+        "completed",
+        "complete",
+        "finished",
+        "finish",
+        "executed",
+        "execute",
     }
 
     # Section headers to skip
-    section_headers = ['PROJECTS', 'PROJECT', 'KEY PROJECTS', 'PERSONAL PROJECTS', 'ACADEMIC PROJECTS']
+    section_headers = [
+        "PROJECTS",
+        "PROJECT",
+        "KEY PROJECTS",
+        "PERSONAL PROJECTS",
+        "ACADEMIC PROJECTS",
+    ]
 
     def is_project_name(text, idx, text_items):
         """Check if text looks like a project name."""
@@ -3939,7 +4021,7 @@ def chunk_projects_section(text_items, section_info, base_index):
             return False
 
         # Lines starting with bullets/dashes are content, not project names
-        if text_stripped.startswith(('•', '-', '*')):
+        if text_stripped.startswith(("•", "-", "*")):
             return False
 
         # Lines starting with numbers are content, not project names
@@ -3947,19 +4029,32 @@ def chunk_projects_section(text_items, section_info, base_index):
             return False
 
         # Lines starting with month abbreviations are content, not project names
-        if text_stripped[:3].lower() in ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'n', 'dec']:
+        if text_stripped[:3].lower() in [
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "may",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "oct",
+            "n",
+            "dec",
+        ]:
             return False
 
         # Lines with colons are descriptions, not project names
-        if ':' in text_stripped:
+        if ":" in text_stripped:
             return False
 
         # Lines with percentages are results, not project names
-        if '%' in text_stripped:
+        if "%" in text_stripped:
             return False
 
         # Lines that start with result verbs are content, not project names
-        first_word = text_stripped.split()[0].lower() if text_stripped.split() else ''
+        first_word = text_stripped.split()[0].lower() if text_stripped.split() else ""
         if first_word in result_starting_words:
             return False
 
@@ -3974,7 +4069,7 @@ def chunk_projects_section(text_items, section_info, base_index):
         # Check if previous line was empty or this is the first line after section header
         # This indicates a new project is starting
         if idx > 0:
-            prev_text = text_items[idx - 1]['text'].strip()
+            prev_text = text_items[idx - 1]["text"].strip()
             if not prev_text or prev_text.upper() in section_headers:
                 return True
 
@@ -3986,7 +4081,7 @@ def chunk_projects_section(text_items, section_info, base_index):
         return False
 
     for idx, item in enumerate(text_items):
-        text = item['text'].strip()
+        text = item["text"].strip()
         text_upper = text.upper()
 
         # Skip section headers and empty lines
@@ -3999,17 +4094,23 @@ def chunk_projects_section(text_items, section_info, base_index):
                 # Save previous project - include project name in chunk text
                 if current_project_lines:
                     # Include project name at the start of the chunk
-                    chunk_text = current_project + '\n' + '\n'.join(current_project_lines)
-                    chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
+                    chunk_text = (
+                        current_project + "\n" + "\n".join(current_project_lines)
+                    )
+                    chunk_text = recursively_split_large_chunk(
+                        chunk_text, MAX_CHUNK_SIZE
+                    )
                     for split_chunk in chunk_text:
-                        chunks.append({
-                            'section': 'Projects',
-                            'subsection': current_project,
-                            'text': split_chunk,
-                            'page': item.get('page'),
-                            'start_index': base_index,
-                            'end_index': base_index + idx
-                        })
+                        chunks.append(
+                            {
+                                "section": "Projects",
+                                "subsection": current_project,
+                                "text": split_chunk,
+                                "page": item.get("page"),
+                                "start_index": base_index,
+                                "end_index": base_index + idx,
+                            }
+                        )
                 current_project_lines = []
                 current_project = text
             else:
@@ -4025,17 +4126,19 @@ def chunk_projects_section(text_items, section_info, base_index):
     # Don't forget the last project - include project name in chunk text
     if current_project and current_project_lines:
         # Include project name at the start of the chunk
-        chunk_text = current_project + '\n' + '\n'.join(current_project_lines)
+        chunk_text = current_project + "\n" + "\n".join(current_project_lines)
         chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
         for split_chunk in chunk_text:
-            chunks.append({
-                'section': 'Projects',
-                'subsection': current_project,
-                'text': split_chunk,
-                'page': text_items[-1].get('page') if text_items else None,
-                'start_index': base_index,
-                'end_index': base_index + len(text_items) - 1
-            })
+            chunks.append(
+                {
+                    "section": "Projects",
+                    "subsection": current_project,
+                    "text": split_chunk,
+                    "page": text_items[-1].get("page") if text_items else None,
+                    "start_index": base_index,
+                    "end_index": base_index + len(text_items) - 1,
+                }
+            )
 
     return chunks
 
@@ -4048,10 +4151,19 @@ def chunk_experience_section(text_items, section_info, base_index):
     current_experience_lines = []
 
     # Skip section headers
-    section_headers = ['WORK EXPERIENCE', 'EXPERIENCE', 'PROFESSIONAL EXPERIENCE', 'EMPLOYMENT', 'WORK HISTORY', 'PROFESSIONAL BACKGROUND', 'INTERNSHIPS', 'INTERNSHIP EXPERIENCE']
+    section_headers = [
+        "WORK EXPERIENCE",
+        "EXPERIENCE",
+        "PROFESSIONAL EXPERIENCE",
+        "EMPLOYMENT",
+        "WORK HISTORY",
+        "PROFESSIONAL BACKGROUND",
+        "INTERNSHIPS",
+        "INTERNSHIP EXPERIENCE",
+    ]
 
     for idx, item in enumerate(text_items):
-        text = item['text'].strip()
+        text = item["text"].strip()
         text_upper = text.upper()
 
         # Skip section headers
@@ -4064,28 +4176,48 @@ def chunk_experience_section(text_items, section_info, base_index):
         # Heuristic: company/role lines are often prominent
         # Look for lines that might be company names or roles
         is_company_role = (
-            len(text) < 100 and
-            not text.startswith('•') and
-            not text.startswith('-') and
-            any(keyword in text.lower() for keyword in ['company', 'corporation', 'inc', 'llc', 'ltd', 'intern', 'engineer', 'developer', 'manager', 'analyst'])
+            len(text) < 100
+            and not text.startswith("•")
+            and not text.startswith("-")
+            and any(
+                keyword in text.lower()
+                for keyword in [
+                    "company",
+                    "corporation",
+                    "inc",
+                    "llc",
+                    "ltd",
+                    "intern",
+                    "engineer",
+                    "developer",
+                    "manager",
+                    "analyst",
+                ]
+            )
         )
 
         if is_company_role and current_company:
             # Save previous experience - include company/role in chunk text
             if current_experience_lines:
                 # Include company/role at the start of the chunk
-                header = f"{current_company} - {current_role}" if current_role else current_company
-                chunk_text = header + '\n' + '\n'.join(current_experience_lines)
+                header = (
+                    f"{current_company} - {current_role}"
+                    if current_role
+                    else current_company
+                )
+                chunk_text = header + "\n" + "\n".join(current_experience_lines)
                 chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
                 for split_chunk in chunk_text:
-                    chunks.append({
-                        'section': 'Experience',
-                        'subsection': header,
-                        'text': split_chunk,
-                        'page': item.get('page'),
-                        'start_index': base_index,
-                        'end_index': base_index + idx
-                    })
+                    chunks.append(
+                        {
+                            "section": "Experience",
+                            "subsection": header,
+                            "text": split_chunk,
+                            "page": item.get("page"),
+                            "start_index": base_index,
+                            "end_index": base_index + idx,
+                        }
+                    )
             current_experience_lines = []
             current_company = text
             current_role = None
@@ -4098,37 +4230,43 @@ def chunk_experience_section(text_items, section_info, base_index):
 
     # Don't forget the last experience - include company/role in chunk text
     if current_company and current_experience_lines:
-        header = f"{current_company} - {current_role}" if current_role else current_company
-        chunk_text = header + '\n' + '\n'.join(current_experience_lines)
+        header = (
+            f"{current_company} - {current_role}" if current_role else current_company
+        )
+        chunk_text = header + "\n" + "\n".join(current_experience_lines)
         chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
         for split_chunk in chunk_text:
-            chunks.append({
-                'section': 'Experience',
-                'subsection': header,
-                'text': split_chunk,
-                'page': text_items[-1].get('page') if text_items else None,
-                'start_index': base_index,
-                'end_index': base_index + len(text_items) - 1
-            })
+            chunks.append(
+                {
+                    "section": "Experience",
+                    "subsection": header,
+                    "text": split_chunk,
+                    "page": text_items[-1].get("page") if text_items else None,
+                    "start_index": base_index,
+                    "end_index": base_index + len(text_items) - 1,
+                }
+            )
 
     return chunks
 
 
 def chunk_skills_section(text_items, section_info, base_index):
     """Chunk skills section - keep as one chunk if reasonable."""
-    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = "\n".join(item["text"] for item in text_items)
     section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
 
     chunks = []
     for split_chunk in section_text:
-        chunks.append({
-            'section': 'Skills',
-            'subsection': None,
-            'text': split_chunk,
-            'page': text_items[0].get('page') if text_items else None,
-            'start_index': base_index,
-            'end_index': base_index + len(text_items) - 1
-        })
+        chunks.append(
+            {
+                "section": "Skills",
+                "subsection": None,
+                "text": split_chunk,
+                "page": text_items[0].get("page") if text_items else None,
+                "start_index": base_index,
+                "end_index": base_index + len(text_items) - 1,
+            }
+        )
 
     return chunks
 
@@ -4140,30 +4278,44 @@ def chunk_education_section(text_items, section_info, base_index):
     current_education_lines = []
 
     for idx, item in enumerate(text_items):
-        text = item['text'].strip()
+        text = item["text"].strip()
         if not text:
             continue
 
         # Heuristic: education entries often contain degree words
         is_education_start = (
-            any(keyword in text.lower() for keyword in ['bachelor', 'master', 'phd', 'doctor', 'degree', 'university', 'college', 'institute'])
+            any(
+                keyword in text.lower()
+                for keyword in [
+                    "bachelor",
+                    "master",
+                    "phd",
+                    "doctor",
+                    "degree",
+                    "university",
+                    "college",
+                    "institute",
+                ]
+            )
             and len(text) < 150
         )
 
         if is_education_start and current_education:
             # Save previous education
             if current_education_lines:
-                chunk_text = '\n'.join(current_education_lines)
+                chunk_text = "\n".join(current_education_lines)
                 chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
                 for split_chunk in chunk_text:
-                    chunks.append({
-                        'section': 'Education',
-                        'subsection': current_education,
-                        'text': split_chunk,
-                        'page': item.get('page'),
-                        'start_index': base_index,
-                        'end_index': base_index + idx
-                    })
+                    chunks.append(
+                        {
+                            "section": "Education",
+                            "subsection": current_education,
+                            "text": split_chunk,
+                            "page": item.get("page"),
+                            "start_index": base_index,
+                            "end_index": base_index + idx,
+                        }
+                    )
             current_education_lines = []
             current_education = text
         elif is_education_start:
@@ -4175,55 +4327,61 @@ def chunk_education_section(text_items, section_info, base_index):
 
     # Don't forget the last education
     if current_education and current_education_lines:
-        chunk_text = '\n'.join(current_education_lines)
+        chunk_text = "\n".join(current_education_lines)
         chunk_text = recursively_split_large_chunk(chunk_text, MAX_CHUNK_SIZE)
         for split_chunk in chunk_text:
-            chunks.append({
-                'section': 'Education',
-                'subsection': current_education,
-                'text': split_chunk,
-                'page': text_items[-1].get('page') if text_items else None,
-                'start_index': base_index,
-                'end_index': base_index + len(text_items) - 1
-            })
+            chunks.append(
+                {
+                    "section": "Education",
+                    "subsection": current_education,
+                    "text": split_chunk,
+                    "page": text_items[-1].get("page") if text_items else None,
+                    "start_index": base_index,
+                    "end_index": base_index + len(text_items) - 1,
+                }
+            )
 
     return chunks
 
 
 def chunk_certifications_section(text_items, section_info, base_index):
     """Chunk certifications section - keep as one chunk if reasonable."""
-    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = "\n".join(item["text"] for item in text_items)
     section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
 
     chunks = []
     for split_chunk in section_text:
-        chunks.append({
-            'section': 'Certifications',
-            'subsection': None,
-            'text': split_chunk,
-            'page': text_items[0].get('page') if text_items else None,
-            'start_index': base_index,
-            'end_index': base_index + len(text_items) - 1
-        })
+        chunks.append(
+            {
+                "section": "Certifications",
+                "subsection": None,
+                "text": split_chunk,
+                "page": text_items[0].get("page") if text_items else None,
+                "start_index": base_index,
+                "end_index": base_index + len(text_items) - 1,
+            }
+        )
 
     return chunks
 
 
 def chunk_generic_section(text_items, section_info, base_index):
     """Generic chunking for sections without specific logic."""
-    section_text = '\n'.join(item['text'] for item in text_items)
+    section_text = "\n".join(item["text"] for item in text_items)
     section_text = recursively_split_large_chunk(section_text, MAX_CHUNK_SIZE)
 
     chunks = []
     for split_chunk in section_text:
-        chunks.append({
-            'section': section_info['section'],
-            'subsection': None,
-            'text': split_chunk,
-            'page': text_items[0].get('page') if text_items else None,
-            'start_index': base_index,
-            'end_index': base_index + len(text_items) - 1
-        })
+        chunks.append(
+            {
+                "section": section_info["section"],
+                "subsection": None,
+                "text": split_chunk,
+                "page": text_items[0].get("page") if text_items else None,
+                "start_index": base_index,
+                "end_index": base_index + len(text_items) - 1,
+            }
+        )
 
     return chunks
 
@@ -4242,7 +4400,7 @@ def recursively_split_large_chunk(text, max_size):
     chunks = []
 
     # Try to split at sentence boundaries (., !, ?)
-    sentence_endings = r'(?<=[.!?])\s+'
+    sentence_endings = r"(?<=[.!?])\s+"
     sentence_splits = list(re.finditer(sentence_endings, text))
 
     if sentence_splits:
@@ -4264,7 +4422,7 @@ def recursively_split_large_chunk(text, max_size):
                 return chunks
 
     # Try to split at line boundaries
-    lines = text.split('\n')
+    lines = text.split("\n")
     if len(lines) > 1:
         # Find best line split
         current_length = 0
@@ -4277,8 +4435,8 @@ def recursively_split_large_chunk(text, max_size):
             current_length += len(line) + 1  # +1 for newline
 
         if split_idx > 0 and split_idx < len(lines):
-            first_part = '\n'.join(lines[:split_idx]).strip()
-            second_part = '\n'.join(lines[split_idx:]).strip()
+            first_part = "\n".join(lines[:split_idx]).strip()
+            second_part = "\n".join(lines[split_idx:]).strip()
 
             if len(first_part) >= MIN_CHUNK_SIZE and len(second_part) >= MIN_CHUNK_SIZE:
                 chunks.extend(recursively_split_large_chunk(first_part, max_size))
@@ -4288,7 +4446,7 @@ def recursively_split_large_chunk(text, max_size):
     # Last resort: force split at max_size with overlap
     if len(text) > max_size:
         first_part = text[:max_size].strip()
-        second_part = text[max_size - CHUNK_OVERLAP:].strip()
+        second_part = text[max_size - CHUNK_OVERLAP :].strip()
 
         if len(first_part) >= MIN_CHUNK_SIZE:
             chunks.append(first_part)
@@ -4317,30 +4475,30 @@ def enrich_chunk_metadata(chunks, resume_id, resume_name):
         chunk_id = f"{resume_id}_chunk_{idx:03d}"
 
         # Extract additional metadata from chunk text
-        text = chunk['text']
-        company = extract_company_from_chunk(text, chunk['section'])
-        role = extract_role_from_chunk(text, chunk['section'])
-        project = extract_project_from_chunk(text, chunk['section'])
+        text = chunk["text"]
+        company = extract_company_from_chunk(text, chunk["section"])
+        role = extract_role_from_chunk(text, chunk["section"])
+        project = extract_project_from_chunk(text, chunk["section"])
         technologies = extract_technologies_from_chunk(text)
         skills = extract_skills_from_chunk(text)
 
         enriched_chunk = {
-            'chunk_id': chunk_id,
-            'resume_id': resume_id,
-            'resume_name': resume_name,
-            'section': chunk['section'],
-            'subsection': chunk.get('subsection'),
-            'text': chunk['text'],
-            'page': chunk.get('page'),
-            'company': company,
-            'role': role,
-            'project': project,
-            'technologies': technologies,
-            'skills': skills,
-            'chunk_index': idx,
-            'parent_chunk_id': None,  # Will be set if this is a split chunk
-            'source': 'resume',
-            'created_at': get_current_timestamp()
+            "chunk_id": chunk_id,
+            "resume_id": resume_id,
+            "resume_name": resume_name,
+            "section": chunk["section"],
+            "subsection": chunk.get("subsection"),
+            "text": chunk["text"],
+            "page": chunk.get("page"),
+            "company": company,
+            "role": role,
+            "project": project,
+            "technologies": technologies,
+            "skills": skills,
+            "chunk_index": idx,
+            "parent_chunk_id": None,  # Will be set if this is a split chunk
+            "source": "resume",
+            "created_at": get_current_timestamp(),
         }
 
         enriched_chunks.append(enriched_chunk)
@@ -4350,13 +4508,13 @@ def enrich_chunk_metadata(chunks, resume_id, resume_name):
 
 def extract_company_from_chunk(text, section):
     """Extract company name from chunk text."""
-    if section != 'Experience':
+    if section != "Experience":
         return None
 
     # Simple heuristic: look for company-like patterns
     company_patterns = [
-        r'([A-Z][A-Za-z\s]+(?:Inc|LLC|Ltd|Corp|Company|Corporation))',
-        r'([A-Z][A-Za-z\s+(?:Technologies|Solutions|Systems)])',
+        r"([A-Z][A-Za-z\s]+(?:Inc|LLC|Ltd|Corp|Company|Corporation))",
+        r"([A-Z][A-Za-z\s+(?:Technologies|Solutions|Systems)])",
     ]
 
     for pattern in company_patterns:
@@ -4369,13 +4527,13 @@ def extract_company_from_chunk(text, section):
 
 def extract_role_from_chunk(text, section):
     """Extract role/title from chunk text."""
-    if section != 'Experience':
+    if section != "Experience":
         return None
 
     # Simple heuristic: look for role-like patterns
     role_patterns = [
-        r'(?:Senior|Junior|Lead|Principal)?\s*(?:Software|Data|Machine Learning|AI|Full Stack|Backend|Frontend)?\s*(?:Engineer|Developer|Analyst|Manager|Director|Intern)',
-        r'(?:Software|Data|Machine Learning|AI)?\s*(?:Engineer|Developer|Analyst|Manager|Director)',
+        r"(?:Senior|Junior|Lead|Principal)?\s*(?:Software|Data|Machine Learning|AI|Full Stack|Backend|Frontend)?\s*(?:Engineer|Developer|Analyst|Manager|Director|Intern)",
+        r"(?:Software|Data|Machine Learning|AI)?\s*(?:Engineer|Developer|Analyst|Manager|Director)",
     ]
 
     for pattern in role_patterns:
@@ -4388,14 +4546,14 @@ def extract_role_from_chunk(text, section):
 
 def extract_project_from_chunk(text, section):
     """Extract project name from chunk text."""
-    if section != 'Projects':
+    if section != "Projects":
         return None
 
     # Use subsection if available, otherwise try to extract from text
-    lines = text.split('\n')
+    lines = text.split("\n")
     if lines:
         first_line = lines[0].strip()
-        if len(first_line) < 80 and ':' not in first_line:
+        if len(first_line) < 80 and ":" not in first_line:
             return first_line
 
     return None
@@ -4405,11 +4563,41 @@ def extract_technologies_from_chunk(text):
     """Extract technology mentions from chunk text."""
     # Common technology keywords
     tech_keywords = [
-        'Python', 'Java', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue',
-        'Node.js', 'FastAPI', 'Flask', 'Django', 'Spring Boot', 'SQL', 'PostgreSQL',
-        'MySQL', 'MongoDB', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Git',
-        'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy', 'Linux', 'REST',
-        'GraphQL', 'Machine Learning', 'Deep Learning', 'NLP', 'CI/CD', 'Jenkins'
+        "Python",
+        "Java",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Angular",
+        "Vue",
+        "Node.js",
+        "FastAPI",
+        "Flask",
+        "Django",
+        "Spring Boot",
+        "SQL",
+        "PostgreSQL",
+        "MySQL",
+        "MongoDB",
+        "AWS",
+        "Azure",
+        "GCP",
+        "Docker",
+        "Kubernetes",
+        "Git",
+        "TensorFlow",
+        "PyTorch",
+        "Scikit-learn",
+        "Pandas",
+        "NumPy",
+        "Linux",
+        "REST",
+        "GraphQL",
+        "Machine Learning",
+        "Deep Learning",
+        "NLP",
+        "CI/CD",
+        "Jenkins",
     ]
 
     found_tech = []
@@ -4426,11 +4614,40 @@ def extract_skills_from_chunk(text):
     """Extract skill mentions from chunk text."""
     # This is similar to technologies but broader
     skill_keywords = [
-        'Python', 'Java', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue',
-        'Node.js', 'FastAPI', 'Flask', 'Django', 'SQL', 'PostgreSQL', 'MySQL',
-        'MongoDB', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Git', 'Machine Learning',
-        'Deep Learning', 'NLP', 'TensorFlow', 'PyTorch', 'Pandas', 'NumPy', 'Data Analysis',
-        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+        "Python",
+        "Java",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Angular",
+        "Vue",
+        "Node.js",
+        "FastAPI",
+        "Flask",
+        "Django",
+        "SQL",
+        "PostgreSQL",
+        "MySQL",
+        "MongoDB",
+        "AWS",
+        "Azure",
+        "GCP",
+        "Docker",
+        "Kubernetes",
+        "Git",
+        "Machine Learning",
+        "Deep Learning",
+        "NLP",
+        "TensorFlow",
+        "PyTorch",
+        "Pandas",
+        "NumPy",
+        "Data Analysis",
+        "Project Management",
+        "Agile",
+        "Scrum",
+        "Leadership",
+        "Communication",
     ]
 
     found_skills = []
@@ -4457,12 +4674,9 @@ def process_resume_into_chunks(resume_id, resume_name, text_items):
     # Clean text while preserving structure
     cleaned_items = []
     for item in text_items:
-        cleaned_text = clean_resume_text(item['text'])
+        cleaned_text = clean_resume_text(item["text"])
         if cleaned_text:
-            cleaned_items.append({
-                'page': item.get('page'),
-                'text': cleaned_text
-            })
+            cleaned_items.append({"page": item.get("page"), "text": cleaned_text})
 
     if not cleaned_items:
         return []
@@ -4492,10 +4706,7 @@ def extract_pdf_text(pdf_file):
     for page_num, page in enumerate(reader.pages, start=1):
         page_text = page.extract_text()
         if page_text:
-            pages.append({
-                "page": page_num,
-                "text": page_text
-            })
+            pages.append({"page": page_num, "text": page_text})
 
     return pages
 
@@ -4513,10 +4724,12 @@ def extract_docx_text(docx_file):
 
     for para in document.paragraphs:
         if para.text.strip():
-            paragraphs.append({
-                "page": None,  # DOCX doesn't have reliable page numbers
-                "text": para.text
-            })
+            paragraphs.append(
+                {
+                    "page": None,  # DOCX doesn't have reliable page numbers
+                    "text": para.text,
+                }
+            )
 
     return paragraphs
 
@@ -4730,7 +4943,10 @@ def analyze_job_description(
     # Heuristic fallback extraction if safe_ai_json returned "Not Found" for fields
     heuristics = extract_jd_heuristics(job_text)
     for field, heur_val in heuristics.items():
-        if (result.get(field) in (None, "", "Not Found") or result.get(field) == "Not Found") and heur_val:
+        if (
+            result.get(field) in (None, "", "Not Found")
+            or result.get(field) == "Not Found"
+        ) and heur_val:
             result[field] = heur_val
 
     if not RUNTIME_STATE.get("last_ai_error"):
@@ -4746,43 +4962,75 @@ def extract_jd_heuristics(job_text: str) -> dict:
         return heuristics
 
     # 1. Job Title
-    title_match = re.search(r'(?:job\s*title|position|role|title)\s*:\s*(.+)', job_text, re.IGNORECASE)
+    title_match = re.search(
+        r"(?:job\s*title|position|role|title)\s*:\s*(.+)", job_text, re.IGNORECASE
+    )
     if title_match:
         heuristics["job_title"] = title_match.group(1).strip()
     else:
         first_line = lines[0]
-        if len(first_line) < 80 and not first_line.lower().startswith("job description") and not first_line.lower().startswith("required"):
+        if (
+            len(first_line) < 80
+            and not first_line.lower().startswith("job description")
+            and not first_line.lower().startswith("required")
+        ):
             heuristics["job_title"] = first_line
         else:
-            role_search = re.search(r'([A-Za-z0-9\s/]+(?:Engineer|Developer|Manager|Analyst|Architect|Lead|Specialist|Scientist|Consultant|Designer|Administrator))', job_text, re.IGNORECASE)
+            role_search = re.search(
+                r"([A-Za-z0-9\s/]+(?:Engineer|Developer|Manager|Analyst|Architect|Lead|Specialist|Scientist|Consultant|Designer|Administrator))",
+                job_text,
+                re.IGNORECASE,
+            )
             if role_search:
                 heuristics["job_title"] = role_search.group(1).strip()
 
     # 2. Experience
-    exp_match = re.search(r'(?:experience|required\s*experience|work\s*experience)\s*:\s*(.+)', job_text, re.IGNORECASE)
+    exp_match = re.search(
+        r"(?:experience|required\s*experience|work\s*experience)\s*:\s*(.+)",
+        job_text,
+        re.IGNORECASE,
+    )
     if exp_match:
         heuristics["experience"] = exp_match.group(1).strip()
     else:
-        exp_years = re.search(r'(\d+\+?\s*(?:-\s*\d+\+?)?\s*(?:years?|yrs?)(?:\s*of)?\s*(?:relevant\s*)?experience)', job_text, re.IGNORECASE)
+        exp_years = re.search(
+            r"(\d+\+?\s*(?:-\s*\d+\+?)?\s*(?:years?|yrs?)(?:\s*of)?\s*(?:relevant\s*)?experience)",
+            job_text,
+            re.IGNORECASE,
+        )
         if exp_years:
             heuristics["experience"] = exp_years.group(1).strip()
 
     # 3. Primary / Required Skills
-    skills_match = re.search(r'(?:primary\s*skills|required\s*skills|key\s*skills|technical\s*skills|skills)\s*:\s*(.+)', job_text, re.IGNORECASE)
+    skills_match = re.search(
+        r"(?:primary\s*skills|required\s*skills|key\s*skills|technical\s*skills|skills)\s*:\s*(.+)",
+        job_text,
+        re.IGNORECASE,
+    )
     if skills_match:
         heuristics["primary_skills"] = skills_match.group(1).strip()
 
     # 4. Secondary / Preferred Skills
-    sec_match = re.search(r'(?:secondary\s*skills|preferred\s*skills|nice\s*to\s*have|additional\s*skills)\s*:\s*(.+)', job_text, re.IGNORECASE)
+    sec_match = re.search(
+        r"(?:secondary\s*skills|preferred\s*skills|nice\s*to\s*have|additional\s*skills)\s*:\s*(.+)",
+        job_text,
+        re.IGNORECASE,
+    )
     if sec_match:
         heuristics["secondary_skills"] = sec_match.group(1).strip()
 
     # 5. Education
-    edu_match = re.search(r'(?:education|degree|qualifications)\s*:\s*(.+)', job_text, re.IGNORECASE)
+    edu_match = re.search(
+        r"(?:education|degree|qualifications)\s*:\s*(.+)", job_text, re.IGNORECASE
+    )
     if edu_match:
         heuristics["education"] = edu_match.group(1).strip()
     else:
-        deg_match = re.search(r'((?:Bachelor|Master|PhD|B\.S\.|B\.Tech|M\.S\.|M\.Tech|Associate|Diploma)[^.\n]*)', job_text, re.IGNORECASE)
+        deg_match = re.search(
+            r"((?:Bachelor|Master|PhD|B\.S\.|B\.Tech|M\.S\.|M\.Tech|Associate|Diploma)[^.\n]*)",
+            job_text,
+            re.IGNORECASE,
+        )
         if deg_match:
             heuristics["education"] = deg_match.group(1).strip()
 
@@ -5007,12 +5255,15 @@ def normalize_resume_skill_profile(data):
             "Not Found",
         ),
         "skill_evidence": normalize_skill_evidence(data.get("skill_evidence", [])),
-        "contact_info": data.get("contact_info", {
-            "email": None,
-            "phone": None,
-            "linkedin": None,
-            "github": None,
-        }),
+        "contact_info": data.get(
+            "contact_info",
+            {
+                "email": None,
+                "phone": None,
+                "linkedin": None,
+                "github": None,
+            },
+        ),
     }
 
 
@@ -5077,7 +5328,7 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
             f"Loaded cached Gemini skills for {resume_name}."
         )
         cached_profile = existing["skills"]
-        
+
         # Merge contact info from text extraction as fallback for cached profiles
         text_for_contact = display_value(resume_text, "")
         contact_from_text = extract_contact_info(text_for_contact)
@@ -5087,23 +5338,25 @@ def get_resume_skill_profile(resume_id, resume_name, resume_text):
                 profile_contact["email"] = contact_from_text["email"]
             if not profile_contact.get("phone") and contact_from_text.get("phone"):
                 profile_contact["phone"] = contact_from_text["phone"]
-            if not profile_contact.get("linkedin") and contact_from_text.get("linkedin"):
+            if not profile_contact.get("linkedin") and contact_from_text.get(
+                "linkedin"
+            ):
                 profile_contact["linkedin"] = contact_from_text["linkedin"]
             if not profile_contact.get("github") and contact_from_text.get("github"):
                 profile_contact["github"] = contact_from_text["github"]
             cached_profile["contact_info"] = profile_contact
-        
+
         return cached_profile
 
     prompt = format_prompt(
         get_resume_skill_extraction_prompt_template(),
         resume_text=resume_text,
     )
-    
+
     # Always extract contact info from text as fallback
     text_for_contact = display_value(resume_text, "")
     contact_from_text = extract_contact_info(text_for_contact)
-    
+
     data = safe_gemini_json(
         prompt,
         RESUME_SKILL_SCHEMA,
@@ -5415,7 +5668,7 @@ def analyze_candidate_grading(
     }
     provider = provider or get_selected_provider()
     model_name = model_name or get_selected_model()
-    
+
     cache_key = get_ai_cache_key(
         "candidate_grading_v4",
         provider,
@@ -5701,7 +5954,10 @@ EVIDENCE_ALIGNMENT_SCHEMA = {
                     "text": {"type": "string"},
                     "sources": {
                         "type": "array",
-                        "items": {"type": "string", "enum": ["linkedin", "github", "jd"]},
+                        "items": {
+                            "type": "string",
+                            "enum": ["linkedin", "github", "jd"],
+                        },
                     },
                     "reason": {"type": "string"},
                     "evidence": {
@@ -5766,12 +6022,12 @@ def generate_evidence_alignment(
     resume_id=None,
 ):
     """Generate evidence alignment using GPT-4 for highlighting.
-    
+
     This is a proof-of-concept function for single-resume highlighting.
     """
     if not resume_chunks or not isinstance(resume_chunks, list):
         return dict(EVIDENCE_ALIGNMENT_FALLBACK)
-    
+
     # Prepare resume chunks JSON (include only relevant fields)
     chunks_for_prompt = []
     for chunk in resume_chunks:
@@ -5786,13 +6042,17 @@ def generate_evidence_alignment(
             "text": chunk.get("text"),
         }
         chunks_for_prompt.append(chunk_data)
-    
+
     resume_chunks_json = json.dumps(chunks_for_prompt, indent=2, default=str)
-    
+
     # Prepare evidence JSON
-    linkedin_verification_json = json.dumps(linkedin_verification or {}, indent=2, default=str)
-    github_verification_json = json.dumps(github_verification or {}, indent=2, default=str)
-    
+    linkedin_verification_json = json.dumps(
+        linkedin_verification or {}, indent=2, default=str
+    )
+    github_verification_json = json.dumps(
+        github_verification or {}, indent=2, default=str
+    )
+
     # Format prompt
     prompt = format_prompt(
         DEFAULT_EVIDENCE_ALIGNMENT_USER_PROMPT_TEMPLATE,
@@ -5801,7 +6061,7 @@ def generate_evidence_alignment(
         linkedin_verification_json=linkedin_verification_json,
         github_verification_json=github_verification_json,
     )
-    
+
     # Call GPT-4
     result = safe_openai_json(
         prompt,
@@ -5810,35 +6070,37 @@ def generate_evidence_alignment(
         model_name="gpt-4",
         system_prompt=DEFAULT_EVIDENCE_ALIGNMENT_SYSTEM_PROMPT,
     )
-    
+
     # Add resume_id to result
     if isinstance(result, dict):
         result["resume_id"] = resume_id or ""
-    
+
     # Validate exact text matches
     if isinstance(result, dict) and "matches" in result:
         validated_matches = []
-        chunk_text_map = {chunk.get("chunk_id"): chunk.get("text") for chunk in resume_chunks}
-        
+        chunk_text_map = {
+            chunk.get("chunk_id"): chunk.get("text") for chunk in resume_chunks
+        }
+
         for match in result["matches"]:
             if not isinstance(match, dict):
                 continue
-            
+
             chunk_id = match.get("chunk_id")
             text = match.get("text")
-            
+
             # Verify chunk_id exists
             if chunk_id not in chunk_text_map:
                 continue
-            
+
             original_text = chunk_text_map[chunk_id]
-            
+
             # Verify text is exact substring
             if text and text in original_text:
                 validated_matches.append(match)
-        
+
         result["matches"] = validated_matches
-    
+
     return result
 
 
@@ -6082,18 +6344,18 @@ def compare_selected_candidates_gpt4(job_description, candidates_data, model_nam
         Structured comparison result following CANDIDATE_COMPARISON_SCHEMA
     """
     import time
-    
+
     comparison_start = time.perf_counter()
-    
+
     # Validation: Need at least 2 candidates
     if not isinstance(candidates_data, list) or len(candidates_data) < 2:
         return {
             "comparison_summary": "Error: At least 2 candidates are required for comparison.",
             "candidates": [],
             "comparisons": [],
-            "error": "insufficient_candidates"
+            "error": "insufficient_candidates",
         }
-    
+
     # Validation: Check candidate data integrity
     for candidate in candidates_data:
         if not isinstance(candidate, dict):
@@ -6101,26 +6363,28 @@ def compare_selected_candidates_gpt4(job_description, candidates_data, model_nam
                 "comparison_summary": "Error: Invalid candidate data format.",
                 "candidates": [],
                 "comparisons": [],
-                "error": "invalid_candidate_data"
+                "error": "invalid_candidate_data",
             }
-        
-        if not candidate.get('candidate_id'):
+
+        if not candidate.get("candidate_id"):
             return {
                 "comparison_summary": "Error: Candidate ID is required for all candidates.",
                 "candidates": [],
                 "comparisons": [],
-                "error": "missing_candidate_id"
+                "error": "missing_candidate_id",
             }
-    
+
     # Use default GPT-4 model if not specified
     model_name = model_name or GPT4_COMPARISON_MODEL
-    
+
     # Format the comparison prompt using the same formatting function
     prompt = format_candidate_comparison_prompt(job_description, candidates_data)
     system_prompt = get_gpt4_comparison_system_prompt()
-    
-    print(f"[GPT-4 COMPARISON] START candidates={len(candidates_data)} model={model_name}")
-    
+
+    print(
+        f"[GPT-4 COMPARISON] START candidates={len(candidates_data)} model={model_name}"
+    )
+
     try:
         # Call GPT-4 using existing OpenAI infrastructure
         result = safe_openai_json(
@@ -6130,38 +6394,52 @@ def compare_selected_candidates_gpt4(job_description, candidates_data, model_nam
             model_name=model_name,
             system_prompt=system_prompt,
         )
-        
+
         # Validate that candidate IDs are preserved correctly
         if result and isinstance(result, dict):
-            candidates_result = result.get('candidates', [])
-            input_candidate_ids = {c.get('candidate_id') for c in candidates_data}
-            
+            candidates_result = result.get("candidates", [])
+            input_candidate_ids = {c.get("candidate_id") for c in candidates_data}
+
             if candidates_result:
-                result_candidate_ids = {c.get('candidate_id') for c in candidates_result if isinstance(c, dict)}
-                
+                result_candidate_ids = {
+                    c.get("candidate_id")
+                    for c in candidates_result
+                    if isinstance(c, dict)
+                }
+
                 # Check for ID mismatch
                 if not result_candidate_ids.issubset(input_candidate_ids):
-                    print(f"[GPT-4 COMPARISON] WARNING: Candidate ID mismatch detected")
+                    print("[GPT-4 COMPARISON] WARNING: Candidate ID mismatch detected")
                     # Fallback to safe response if IDs are corrupted
                     return CANDIDATE_COMPARISON_FALLBACK
-            
+
             # Ensure no hiring recommendation field exists
-            forbidden_fields = ['hiring_recommendation', 'recommendation', 'should_hire', 'top_candidate', 'ranked_candidates']
+            forbidden_fields = [
+                "hiring_recommendation",
+                "recommendation",
+                "should_hire",
+                "top_candidate",
+                "ranked_candidates",
+            ]
             for field in forbidden_fields:
                 if field in result:
-                    print(f"[GPT-4 COMPARISON] WARNING: Forbidden field '{field}' detected in result")
+                    print(
+                        f"[GPT-4 COMPARISON] WARNING: Forbidden field '{field}' detected in result"
+                    )
                     del result[field]
-        
+
         comparison_duration = time.perf_counter() - comparison_start
         print(f"[GPT-4 COMPARISON] END duration={comparison_duration:.2f}s")
-        
+
         return result
-        
+
     except Exception as error:
         comparison_duration = time.perf_counter() - comparison_start
-        print(f"[GPT-4 COMPARISON] ERROR duration={comparison_duration:.2f}s error={str(error)}")
+        print(
+            f"[GPT-4 COMPARISON] ERROR duration={comparison_duration:.2f}s error={str(error)}"
+        )
         RUNTIME_STATE["last_ai_error"] = f"GPT-4 comparison failed: {str(error)}"
-        
+
         return CANDIDATE_COMPARISON_FALLBACK
 
 
@@ -6185,55 +6463,59 @@ Education Requirements: {display_value(job_description.get('education', 'Not spe
 
     candidates_text = "\n\nCANDIDATES:\n"
     for candidate in candidates_data:
-        candidate_id = candidate.get('candidate_id', 'unknown')
-        candidate_name = candidate.get('candidate_name', 'Unknown Candidate')
-        
+        candidate_id = candidate.get("candidate_id", "unknown")
+        candidate_name = candidate.get("candidate_name", "Unknown Candidate")
+
         # Build structured candidate evidence
         evidence_sections = []
-        
+
         # Skills evidence
-        skills = candidate.get('matching_skills', [])
+        skills = candidate.get("matching_skills", [])
         if skills:
             evidence_sections.append(f"Matching Skills: {', '.join(skills)}")
-        
-        missing_skills = candidate.get('missing_skills', [])
+
+        missing_skills = candidate.get("missing_skills", [])
         if missing_skills:
             evidence_sections.append(f"Missing Skills: {', '.join(missing_skills)}")
-        
+
         # Experience/Profile evidence
-        resume_skill_profile = candidate.get('resume_skill_profile', {})
+        resume_skill_profile = candidate.get("resume_skill_profile", {})
         if resume_skill_profile:
             profile_summary = format_resume_skill_profile(resume_skill_profile)
             evidence_sections.append(f"Resume Profile: {profile_summary}")
-        
+
         # Justification evidence
-        justification = candidate.get('justification', '')
+        justification = candidate.get("justification", "")
         if justification:
             evidence_sections.append(f"Analysis Justification: {justification}")
-        
+
         # Grading evidence
-        candidate_grading = candidate.get('candidate_grading', {})
+        candidate_grading = candidate.get("candidate_grading", {})
         if candidate_grading:
-            grade = candidate_grading.get('grade', 'N/A')
-            summary = candidate_grading.get('summary', '')
+            grade = candidate_grading.get("grade", "N/A")
+            summary = candidate_grading.get("summary", "")
             evidence_sections.append(f"Grade: {grade}")
             if summary:
                 evidence_sections.append(f"Grade Summary: {summary}")
-        
+
         # Evidence items
-        matching_evidence = candidate.get('matching_evidence', [])
+        matching_evidence = candidate.get("matching_evidence", [])
         if matching_evidence:
             evidence_items = []
             for item in matching_evidence[:5]:  # Limit to top 5 evidence items
-                skill = item.get('skill', '')
-                evidence_text = item.get('evidence', '')
+                skill = item.get("skill", "")
+                evidence_text = item.get("evidence", "")
                 if skill and evidence_text:
                     evidence_items.append(f"- {skill}: {evidence_text}")
             if evidence_items:
-                evidence_sections.append(f"Key Evidence:\n" + "\n".join(evidence_items))
-        
-        candidate_evidence = "\n".join(evidence_sections) if evidence_sections else "No detailed evidence available"
-        
+                evidence_sections.append("Key Evidence:\n" + "\n".join(evidence_items))
+
+        candidate_evidence = (
+            "\n".join(evidence_sections)
+            if evidence_sections
+            else "No detailed evidence available"
+        )
+
         candidates_text += f"""
 CANDIDATE ID: {candidate_id}
 CANDIDATE NAME: {candidate_name}
@@ -6264,18 +6546,18 @@ def compare_selected_candidates(job_description, candidates_data, model_name=Non
         Structured comparison result following CANDIDATE_COMPARISON_SCHEMA
     """
     import time
-    
+
     comparison_start = time.perf_counter()
-    
+
     # Validation: Need at least 2 candidates
     if not isinstance(candidates_data, list) or len(candidates_data) < 2:
         return {
             "comparison_summary": "Error: At least 2 candidates are required for comparison.",
             "candidates": [],
             "comparisons": [],
-            "error": "insufficient_candidates"
+            "error": "insufficient_candidates",
         }
-    
+
     # Validation: Check candidate data integrity
     for candidate in candidates_data:
         if not isinstance(candidate, dict):
@@ -6283,26 +6565,28 @@ def compare_selected_candidates(job_description, candidates_data, model_name=Non
                 "comparison_summary": "Error: Invalid candidate data format.",
                 "candidates": [],
                 "comparisons": [],
-                "error": "invalid_candidate_data"
+                "error": "invalid_candidate_data",
             }
-        
-        if not candidate.get('candidate_id'):
+
+        if not candidate.get("candidate_id"):
             return {
                 "comparison_summary": "Error: Candidate ID is required for all candidates.",
                 "candidates": [],
                 "comparisons": [],
-                "error": "missing_candidate_id"
+                "error": "missing_candidate_id",
             }
-    
+
     # Use default GPT-5 model if not specified
     model_name = model_name or GPT5_COMPARISON_MODEL
-    
+
     # Format the comparison prompt
     prompt = format_candidate_comparison_prompt(job_description, candidates_data)
     system_prompt = get_gpt5_comparison_system_prompt()
-    
-    print(f"[GPT-5 COMPARISON] START candidates={len(candidates_data)} model={model_name}")
-    
+
+    print(
+        f"[GPT-5 COMPARISON] START candidates={len(candidates_data)} model={model_name}"
+    )
+
     try:
         # Call GPT-5 using existing OpenAI infrastructure
         result = safe_openai_json(
@@ -6312,38 +6596,52 @@ def compare_selected_candidates(job_description, candidates_data, model_name=Non
             model_name=model_name,
             system_prompt=system_prompt,
         )
-        
+
         # Validate that candidate IDs are preserved correctly
         if result and isinstance(result, dict):
-            candidates_result = result.get('candidates', [])
-            input_candidate_ids = {c.get('candidate_id') for c in candidates_data}
-            
+            candidates_result = result.get("candidates", [])
+            input_candidate_ids = {c.get("candidate_id") for c in candidates_data}
+
             if candidates_result:
-                result_candidate_ids = {c.get('candidate_id') for c in candidates_result if isinstance(c, dict)}
-                
+                result_candidate_ids = {
+                    c.get("candidate_id")
+                    for c in candidates_result
+                    if isinstance(c, dict)
+                }
+
                 # Check for ID mismatch
                 if not result_candidate_ids.issubset(input_candidate_ids):
-                    print(f"[GPT-5 COMPARISON] WARNING: Candidate ID mismatch detected")
+                    print("[GPT-5 COMPARISON] WARNING: Candidate ID mismatch detected")
                     # Fallback to safe response if IDs are corrupted
                     return CANDIDATE_COMPARISON_FALLBACK
-            
+
             # Ensure no hiring recommendation field exists
-            forbidden_fields = ['hiring_recommendation', 'recommendation', 'should_hire', 'top_candidate', 'ranked_candidates']
+            forbidden_fields = [
+                "hiring_recommendation",
+                "recommendation",
+                "should_hire",
+                "top_candidate",
+                "ranked_candidates",
+            ]
             for field in forbidden_fields:
                 if field in result:
-                    print(f"[GPT-5 COMPARISON] WARNING: Forbidden field '{field}' detected in result")
+                    print(
+                        f"[GPT-5 COMPARISON] WARNING: Forbidden field '{field}' detected in result"
+                    )
                     del result[field]
-        
+
         comparison_duration = time.perf_counter() - comparison_start
         print(f"[GPT-5 COMPARISON] END duration={comparison_duration:.2f}s")
-        
+
         return result
-        
+
     except Exception as error:
         comparison_duration = time.perf_counter() - comparison_start
-        print(f"[GPT-5 COMPARISON] ERROR duration={comparison_duration:.2f}s error={str(error)}")
+        print(
+            f"[GPT-5 COMPARISON] ERROR duration={comparison_duration:.2f}s error={str(error)}"
+        )
         RUNTIME_STATE["last_ai_error"] = f"GPT-5 comparison failed: {str(error)}"
-        
+
         return CANDIDATE_COMPARISON_FALLBACK
 
 
@@ -6367,55 +6665,57 @@ Education Requirements: {display_value(job_description.get('education', 'Not spe
 
     candidates_text = "\n\nCANDIDATES:\n"
     for candidate in candidates_data:
-        candidate_name = candidate.get('candidate_name', 'Unknown Candidate')
-        
+        candidate_name = candidate.get("candidate_name", "Unknown Candidate")
+
         # Build structured candidate evidence
         evidence_sections = []
-        
+
         # Skills evidence
-        skills = candidate.get('matching_skills', [])
+        skills = candidate.get("matching_skills", [])
         if skills:
             evidence_sections.append(f"Matching Skills: {', '.join(skills)}")
-        
-        missing_skills = candidate.get('missing_skills', [])
+
+        missing_skills = candidate.get("missing_skills", [])
         if missing_skills:
             evidence_sections.append(f"Missing Skills: {', '.join(missing_skills)}")
-        
+
         # Experience/Profile evidence
-        resume_skill_profile = candidate.get('resume_skill_profile', {})
+        resume_skill_profile = candidate.get("resume_skill_profile", {})
         if resume_skill_profile:
             profile_summary = format_resume_skill_profile(resume_skill_profile)
             evidence_sections.append(f"Resume Profile: {profile_summary}")
-        
+
         # Justification evidence
-        justification = candidate.get('justification', '')
+        justification = candidate.get("justification", "")
         if justification:
             evidence_sections.append(f"Analysis Justification: {justification}")
-        
+
         # Grading evidence
-        candidate_grading = candidate.get('candidate_grading', {})
+        candidate_grading = candidate.get("candidate_grading", {})
         if candidate_grading:
-            grade = candidate_grading.get('grade', 'N/A')
-            summary = candidate_grading.get('summary', '')
+            grade = candidate_grading.get("grade", "N/A")
+            summary = candidate_grading.get("summary", "")
             evidence_sections.append(f"Grade: {grade}")
             if summary:
                 evidence_sections.append(f"Grade Summary: {summary}")
-        
+
         # Evidence items
-        matching_evidence = candidate.get('matching_evidence', [])
+        matching_evidence = candidate.get("matching_evidence", [])
         if matching_evidence:
-            evidence_text = "Evidence: " + "; ".join([
-                f"{item.get('skill', 'N/A')}: {item.get('evidence', 'N/A')}"
-                for item in matching_evidence[:5]
-            ])
+            evidence_text = "Evidence: " + "; ".join(
+                [
+                    f"{item.get('skill', 'N/A')}: {item.get('evidence', 'N/A')}"
+                    for item in matching_evidence[:5]
+                ]
+            )
             evidence_sections.append(evidence_text)
-        
+
         candidate_text = f"""
 CANDIDATE: {candidate_name}
 {chr(10).join(evidence_sections) if evidence_sections else "No detailed evidence available"}
 """
         candidates_text += candidate_text
-    
+
     return jd_text + candidates_text
 
 
@@ -6431,18 +6731,18 @@ def generate_evidence_assessment(job_description, candidates_data, model_name=No
         Structured evidence assessment following EVIDENCE_ASSESSMENT_SCHEMA
     """
     import time
-    
+
     assessment_start = time.perf_counter()
-    
+
     # Validation: Need at least 2 candidates
     if not isinstance(candidates_data, list) or len(candidates_data) < 2:
         return {
             "strongest_candidate": "Unable to determine",
             "assessment_summary": "Evidence assessment requires at least 2 candidates.",
             "supporting_points": [],
-            "error": "insufficient_candidates"
+            "error": "insufficient_candidates",
         }
-    
+
     # Validation: Check candidate data integrity
     for candidate in candidates_data:
         if not isinstance(candidate, dict):
@@ -6450,26 +6750,31 @@ def generate_evidence_assessment(job_description, candidates_data, model_name=No
                 "strongest_candidate": "Unable to determine",
                 "assessment_summary": "Invalid candidate data format.",
                 "supporting_points": [],
-                "error": "invalid_candidate_data"
+                "error": "invalid_candidate_data",
             }
-        
-        if not candidate.get('candidate_name'):
+
+        if not candidate.get("candidate_name"):
             return {
                 "strongest_candidate": "Unable to determine",
                 "assessment_summary": "Candidate name is required for all candidates.",
                 "supporting_points": [],
-                "error": "missing_candidate_name"
+                "error": "missing_candidate_name",
             }
-    
+
     # Use default GPT-5 model if not specified
     model_name = model_name or GPT5_COMPARISON_MODEL
-    
+
     # Format the evidence assessment prompt
     prompt = format_evidence_assessment_prompt(job_description, candidates_data)
-    system_prompt = RUNTIME_STATE.get("active_evidence_assessment_prompt_template", DEFAULT_EVIDENCE_ASSESSMENT_PROMPT_TEMPLATE)
-    
-    print(f"[EVIDENCE ASSESSMENT] START candidates={len(candidates_data)} model={model_name}")
-    
+    system_prompt = RUNTIME_STATE.get(
+        "active_evidence_assessment_prompt_template",
+        DEFAULT_EVIDENCE_ASSESSMENT_PROMPT_TEMPLATE,
+    )
+
+    print(
+        f"[EVIDENCE ASSESSMENT] START candidates={len(candidates_data)} model={model_name}"
+    )
+
     try:
         # Call GPT-5 using existing OpenAI infrastructure
         result = safe_openai_json(
@@ -6479,34 +6784,39 @@ def generate_evidence_assessment(job_description, candidates_data, model_name=No
             model_name=model_name,
             system_prompt=system_prompt,
         )
-        
+
         assessment_duration = time.perf_counter() - assessment_start
         print(f"[EVIDENCE ASSESSMENT] END duration={assessment_duration:.2f}s")
-        
+
         return result
-        
+
     except Exception as error:
         assessment_duration = time.perf_counter() - assessment_start
-        print(f"[EVIDENCE ASSESSMENT] ERROR duration={assessment_duration:.2f}s error={str(error)}")
+        print(
+            f"[EVIDENCE ASSESSMENT] ERROR duration={assessment_duration:.2f}s error={str(error)}"
+        )
         RUNTIME_STATE["last_ai_error"] = f"Evidence assessment failed: {str(error)}"
-        
-        return EVIDENCE_ASSESSMENT_FALLBACK
 
+        return EVIDENCE_ASSESSMENT_FALLBACK
 
 
 # ==================================================
 # JSON SHORTLIST PERSISTENCE
 # ==================================================
 
-SHORTLISTS_JSON_PATH = os.path.join(VECTOR_STORE_DIR, "shortlists.json")
+SHORTLISTS_PATH = VECTOR_STORE_DIR / "shortlists.json"
+SHORTLISTS_JSON_PATH = str(SHORTLISTS_PATH)
 
 
 def _load_shortlists_json():
     """Load shortlists from JSON file."""
     try:
-        if os.path.exists(SHORTLISTS_JSON_PATH):
-            with open(SHORTLISTS_JSON_PATH, 'r', encoding='utf-8') as f:
+        path = str(SHORTLISTS_PATH)
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+                if isinstance(data, list):
+                    return data
                 return data.get("shortlists", [])
         return []
     except Exception as e:
@@ -6517,8 +6827,9 @@ def _load_shortlists_json():
 def _save_shortlists_json(shortlists):
     """Save shortlists to JSON file."""
     try:
-        os.makedirs(VECTOR_STORE_DIR, exist_ok=True)
-        with open(SHORTLISTS_JSON_PATH, 'w', encoding='utf-8') as f:
+        path = str(SHORTLISTS_PATH)
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
             json.dump({"shortlists": shortlists}, f, indent=2, ensure_ascii=False)
         print(f"[SHORTLIST JSON] Saved {len(shortlists)} shortlists")
     except Exception as e:
@@ -6535,7 +6846,13 @@ def get_shortlists():
     return _load_shortlists_json()
 
 
-def create_shortlist(job_description, user_id, created_by_role, evidence_assessment_snapshot=None):
+def create_shortlist(
+    job_description,
+    user_id=None,
+    created_by_role="recruiter",
+    evidence_assessment_snapshot=None,
+    created_by=None,
+):
     """Create a new shortlist in JSON.
 
     Args:
@@ -6543,22 +6860,32 @@ def create_shortlist(job_description, user_id, created_by_role, evidence_assessm
         user_id: User ID who created the shortlist
         created_by_role: User role (recruiter/manager)
         evidence_assessment_snapshot: Optional AI evidence assessment snapshot
+        created_by: Optional alias for user_id
 
     Returns:
         Created shortlist dictionary with shortlist_id
     """
     import uuid
 
+    user_id = user_id or created_by
     print(f"[SHORTLIST JSON] create_shortlist called with user_id={user_id}")
 
     shortlists = _load_shortlists_json()
 
     # Check if matching shortlist already exists
     for shortlist in shortlists:
-        if (shortlist.get("user_id") == user_id and
-            shortlist.get("status") == "active" and
-            json.dumps(shortlist.get("job_description", {}), sort_keys=True) == json.dumps(job_description, sort_keys=True)):
-            print(f"[SHORTLIST JSON] Found existing matching shortlist: {shortlist['shortlist_id']}")
+        if (
+            shortlist.get("user_id") == user_id
+            and shortlist.get("created_by_role") == created_by_role
+            and shortlist.get("status") == "active"
+            and json.dumps(shortlist.get("job_description", {}), sort_keys=True)
+            == json.dumps(job_description, sort_keys=True)
+        ):
+            print(
+                f"[SHORTLIST JSON] Found existing matching shortlist: {shortlist['shortlist_id']}"
+            )
+            shortlist["created_by"] = shortlist.get("user_id")
+            shortlist["shortlisted_candidates"] = shortlist.get("candidates", [])
             return shortlist
 
     # Create new shortlist
@@ -6568,13 +6895,15 @@ def create_shortlist(job_description, user_id, created_by_role, evidence_assessm
     new_shortlist = {
         "shortlist_id": shortlist_id,
         "user_id": user_id,
+        "created_by": user_id,
         "created_by_role": created_by_role,
         "job_description": job_description,
         "created_at": created_at,
         "updated_at": created_at,
         "status": "active",
         "candidates": [],
-        "evidence_assessment_snapshot": evidence_assessment_snapshot or {}
+        "shortlisted_candidates": [],
+        "evidence_assessment_snapshot": evidence_assessment_snapshot or {},
     }
 
     shortlists.append(new_shortlist)
@@ -6598,8 +6927,8 @@ def get_user_shortlists(user_id):
     user_shortlists = [s for s in all_shortlists if s.get("user_id") == user_id]
     # Add compatibility fields for frontend
     for shortlist in user_shortlists:
-        shortlist['created_by'] = shortlist.get('user_id')
-        shortlist['shortlisted_candidates'] = shortlist.get('candidates', [])
+        shortlist["created_by"] = shortlist.get("user_id")
+        shortlist["shortlisted_candidates"] = shortlist.get("candidates", [])
     return user_shortlists
 
 
@@ -6616,14 +6945,21 @@ def get_shortlist(shortlist_id):
     for shortlist in all_shortlists:
         if shortlist.get("shortlist_id") == shortlist_id:
             # Add created_by for API compatibility
-            shortlist['created_by'] = shortlist.get('user_id')
+            shortlist["created_by"] = shortlist.get("user_id")
             # Add shortlisted_candidates alias for API compatibility
-            shortlist['shortlisted_candidates'] = shortlist.get('candidates', [])
+            shortlist["shortlisted_candidates"] = shortlist.get("candidates", [])
             return shortlist
     return None
 
 
-def add_candidate_to_shortlist(shortlist_id, resume_id, candidate_name, match_score, match_position, evidence_snapshot):
+def add_candidate_to_shortlist(
+    shortlist_id,
+    resume_id,
+    candidate_name,
+    match_score,
+    match_position,
+    evidence_snapshot,
+):
     """Add a candidate to a shortlist in JSON.
 
     Args:
@@ -6644,7 +6980,9 @@ def add_candidate_to_shortlist(shortlist_id, resume_id, candidate_name, match_sc
             # Check for duplicate
             for candidate in shortlist.get("candidates", []):
                 if candidate.get("resume_id") == resume_id:
-                    print(f"[SHORTLIST JSON] Candidate {resume_id} already in shortlist")
+                    print(
+                        f"[SHORTLIST JSON] Candidate {resume_id} already in shortlist"
+                    )
                     return get_shortlist(shortlist_id)
 
             # Add candidate
@@ -6654,17 +6992,28 @@ def add_candidate_to_shortlist(shortlist_id, resume_id, candidate_name, match_sc
                 "match_score": match_score,
                 "match_position": match_position,
                 "shortlisted_at": datetime.now(timezone.utc).isoformat(),
-                "strengths": evidence_snapshot.get("strengths", []) if evidence_snapshot else [],
+                "evidence_snapshot": evidence_snapshot or {},
+                "strengths": (
+                    evidence_snapshot.get("strengths", []) if evidence_snapshot else []
+                ),
                 "gaps": evidence_snapshot.get("gaps", []) if evidence_snapshot else [],
-                "jd_coverage": evidence_snapshot.get("jd_coverage", []) if evidence_snapshot else [],
-                "evidence": evidence_snapshot.get("evidence", []) if evidence_snapshot else []
+                "jd_coverage": (
+                    evidence_snapshot.get("jd_coverage", [])
+                    if evidence_snapshot
+                    else []
+                ),
+                "evidence": (
+                    evidence_snapshot.get("evidence", []) if evidence_snapshot else []
+                ),
             }
 
             shortlist["candidates"].append(new_candidate)
             shortlist["updated_at"] = datetime.now(timezone.utc).isoformat()
             _save_shortlists_json(shortlists)
 
-            print(f"[SHORTLIST JSON] Added candidate {resume_id} to shortlist {shortlist_id}")
+            print(
+                f"[SHORTLIST JSON] Added candidate {resume_id} to shortlist {shortlist_id}"
+            )
             return get_shortlist(shortlist_id)
 
     print(f"[SHORTLIST JSON] Shortlist {shortlist_id} not found")
@@ -6687,17 +7036,22 @@ def remove_candidate_from_shortlist(shortlist_id, resume_id):
         if shortlist.get("shortlist_id") == shortlist_id:
             original_count = len(shortlist.get("candidates", []))
             shortlist["candidates"] = [
-                c for c in shortlist.get("candidates", [])
+                c
+                for c in shortlist.get("candidates", [])
                 if c.get("resume_id") != resume_id
             ]
 
             if len(shortlist["candidates"]) < original_count:
                 shortlist["updated_at"] = datetime.now(timezone.utc).isoformat()
                 _save_shortlists_json(shortlists)
-                print(f"[SHORTLIST JSON] Removed candidate {resume_id} from shortlist {shortlist_id}")
+                print(
+                    f"[SHORTLIST JSON] Removed candidate {resume_id} from shortlist {shortlist_id}"
+                )
                 return get_shortlist(shortlist_id)
 
-    print(f"[SHORTLIST JSON] Could not remove candidate {resume_id} from shortlist {shortlist_id}")
+    print(
+        f"[SHORTLIST JSON] Could not remove candidate {resume_id} from shortlist {shortlist_id}"
+    )
     return get_shortlist(shortlist_id)
 
 
@@ -6711,6 +7065,9 @@ def update_shortlist_status(shortlist_id, status):
     Returns:
         Updated shortlist dictionary or None if not found
     """
+    if status not in ("active", "archived"):
+        return None
+
     shortlists = _load_shortlists_json()
 
     for shortlist in shortlists:
@@ -6718,7 +7075,9 @@ def update_shortlist_status(shortlist_id, status):
             shortlist["status"] = status
             shortlist["updated_at"] = datetime.now(timezone.utc).isoformat()
             _save_shortlists_json(shortlists)
-            print(f"[SHORTLIST JSON] Updated shortlist {shortlist_id} status to {status}")
+            print(
+                f"[SHORTLIST JSON] Updated shortlist {shortlist_id} status to {status}"
+            )
             return get_shortlist(shortlist_id)
 
     print(f"[SHORTLIST JSON] Shortlist {shortlist_id} not found")
@@ -6763,12 +7122,13 @@ def verify_shortlist_ownership(shortlist_id, user_id):
         return True
     return False
 
+
 def verify_candidate_exists(resume_id):
     """Verify that a candidate exists in the resume database.
-    
+
     Args:
         resume_id: Resume ID to verify
-    
+
     Returns:
         True if candidate exists, False otherwise
     """
@@ -6776,7 +7136,9 @@ def verify_candidate_exists(resume_id):
     return resume_id in active_resume_db
 
 
-def generate_comparison_report_pdf(evidence_assessment, gpt4_result, gpt5_result, job_description):
+def generate_comparison_report_pdf(
+    evidence_assessment, gpt4_result, gpt5_result, job_description
+):
     """Generate a PDF report for candidate comparison.
 
     Args:
@@ -6788,66 +7150,83 @@ def generate_comparison_report_pdf(evidence_assessment, gpt4_result, gpt5_result
     Returns:
         PDF bytes
     """
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-    from reportlab.lib import colors
     from io import BytesIO
-    
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        PageBreak,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+    )
+
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
-    
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=18,
+    )
+
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
+        "CustomTitle",
+        parent=styles["Heading1"],
         fontSize=18,
-        textColor=colors.HexColor('#2c3e50'),
+        textColor=colors.HexColor("#2c3e50"),
         spaceAfter=30,
     )
-    
+
     section_style = ParagraphStyle(
-        'CustomSection',
-        parent=styles['Heading2'],
+        "CustomSection",
+        parent=styles["Heading2"],
         fontSize=14,
-        textColor=colors.HexColor('#34495e'),
+        textColor=colors.HexColor("#34495e"),
         spaceAfter=12,
     )
-    
+
     subsection_style = ParagraphStyle(
-        'CustomSubsection',
-        parent=styles['Heading3'],
+        "CustomSubsection",
+        parent=styles["Heading3"],
         fontSize=12,
-        textColor=colors.HexColor('#7f8c8d'),
+        textColor=colors.HexColor("#7f8c8d"),
         spaceAfter=8,
     )
-    
+
     body_style = ParagraphStyle(
-        'CustomBody',
-        parent=styles['BodyText'],
+        "CustomBody",
+        parent=styles["BodyText"],
         fontSize=10,
         spaceAfter=6,
     )
-    
+
     content = []
-    
+
     # Title
     content.append(Paragraph("Candidate Comparison Report", title_style))
     content.append(Spacer(1, 0.2 * inch))
-    
+
     # Candidates being compared
-    if gpt5_result and gpt5_result.get('candidates'):
-        candidates = gpt5_result['candidates']
-        candidate_names = [c.get('candidate_name', 'Unknown') for c in candidates]
-        content.append(Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style))
+    if gpt5_result and gpt5_result.get("candidates"):
+        candidates = gpt5_result["candidates"]
+        candidate_names = [c.get("candidate_name", "Unknown") for c in candidates]
+        content.append(
+            Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style)
+        )
         content.append(Spacer(1, 0.2 * inch))
-    elif gpt4_result and gpt4_result.get('candidates'):
-        candidates = gpt4_result['candidates']
-        candidate_names = [c.get('candidate_name', 'Unknown') for c in candidates]
-        content.append(Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style))
+    elif gpt4_result and gpt4_result.get("candidates"):
+        candidates = gpt4_result["candidates"]
+        candidate_names = [c.get("candidate_name", "Unknown") for c in candidates]
+        content.append(
+            Paragraph(f"Candidates Compared: {', '.join(candidate_names)}", body_style)
+        )
         content.append(Spacer(1, 0.2 * inch))
-    
+
     # Job Description Summary
     if job_description:
         content.append(Paragraph("Job Description", section_style))
@@ -6857,141 +7236,194 @@ def generate_comparison_report_pdf(evidence_assessment, gpt4_result, gpt5_result
         jd_text += f"Education: {display_value(job_description.get('education', 'Not specified'))}"
         content.append(Paragraph(jd_text, body_style))
         content.append(Spacer(1, 0.3 * inch))
-    
+
     # AI Evidence Assessment
     if evidence_assessment:
         content.append(Paragraph("AI Evidence Assessment", section_style))
-        
-        if evidence_assessment.get('strongest_candidate'):
+
+        if evidence_assessment.get("strongest_candidate"):
             content.append(Paragraph("Strongest Candidate", subsection_style))
-            content.append(Paragraph(f"<b>{display_value(evidence_assessment['strongest_candidate'])}</b>", body_style))
+            content.append(
+                Paragraph(
+                    f"<b>{display_value(evidence_assessment['strongest_candidate'])}</b>",
+                    body_style,
+                )
+            )
             content.append(Spacer(1, 0.1 * inch))
-        
-        if evidence_assessment.get('assessment_summary'):
+
+        if evidence_assessment.get("assessment_summary"):
             content.append(Paragraph("Assessment Summary", subsection_style))
-            content.append(Paragraph(display_value(evidence_assessment['assessment_summary']), body_style))
+            content.append(
+                Paragraph(
+                    display_value(evidence_assessment["assessment_summary"]), body_style
+                )
+            )
             content.append(Spacer(1, 0.1 * inch))
-        
-        if evidence_assessment.get('supporting_points'):
+
+        if evidence_assessment.get("supporting_points"):
             content.append(Paragraph("Supporting Points", subsection_style))
-            for point in evidence_assessment['supporting_points']:
+            for point in evidence_assessment["supporting_points"]:
                 content.append(Paragraph(f"• {display_value(point)}", body_style))
             content.append(Spacer(1, 0.3 * inch))
-    
+
     # GPT-4 Assessment
     if gpt4_result:
         content.append(PageBreak())
         content.append(Paragraph("GPT-4 Assessment", section_style))
-        
-        if gpt4_result.get('comparison_summary'):
+
+        if gpt4_result.get("comparison_summary"):
             content.append(Paragraph("Comparison Summary", subsection_style))
-            content.append(Paragraph(display_value(gpt4_result['comparison_summary']), body_style))
+            content.append(
+                Paragraph(display_value(gpt4_result["comparison_summary"]), body_style)
+            )
             content.append(Spacer(1, 0.2 * inch))
-        
+
         # Candidate details
-        if gpt4_result.get('candidates'):
-            for candidate in gpt4_result['candidates']:
-                candidate_name = candidate.get('candidate_name', 'Unknown')
-                content.append(Paragraph(f"Candidate: {candidate_name}", subsection_style))
-                
-                if candidate.get('strengths'):
+        if gpt4_result.get("candidates"):
+            for candidate in gpt4_result["candidates"]:
+                candidate_name = candidate.get("candidate_name", "Unknown")
+                content.append(
+                    Paragraph(f"Candidate: {candidate_name}", subsection_style)
+                )
+
+                if candidate.get("strengths"):
                     content.append(Paragraph("Strengths:", body_style))
-                    for strength in candidate['strengths']:
-                        content.append(Paragraph(f"  • {display_value(strength)}", body_style))
-                
-                if candidate.get('gaps'):
+                    for strength in candidate["strengths"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(strength)}", body_style)
+                        )
+
+                if candidate.get("gaps"):
                     content.append(Paragraph("Gaps:", body_style))
-                    for gap in candidate['gaps']:
-                        content.append(Paragraph(f"  • {display_value(gap)}", body_style))
-                
-                if candidate.get('jd_coverage'):
+                    for gap in candidate["gaps"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(gap)}", body_style)
+                        )
+
+                if candidate.get("jd_coverage"):
                     content.append(Paragraph("JD Coverage:", body_style))
-                    for coverage in candidate['jd_coverage']:
-                        content.append(Paragraph(f"  • {display_value(coverage)}", body_style))
-                
-                if candidate.get('evidence'):
+                    for coverage in candidate["jd_coverage"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(coverage)}", body_style)
+                        )
+
+                if candidate.get("evidence"):
                     content.append(Paragraph("Evidence:", body_style))
-                    for evidence in candidate['evidence']:
-                        content.append(Paragraph(f"  • {display_value(evidence)}", body_style))
-                
+                    for evidence in candidate["evidence"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(evidence)}", body_style)
+                        )
+
                 content.append(Spacer(1, 0.2 * inch))
-        
+
         # Comparisons
-        if gpt4_result.get('comparisons'):
+        if gpt4_result.get("comparisons"):
             content.append(Paragraph("Detailed Comparisons", subsection_style))
-            for comparison in gpt4_result['comparisons']:
-                if comparison.get('criterion'):
-                    content.append(Paragraph(f"Criterion: {display_value(comparison['criterion'])}", body_style))
-                
-                if comparison.get('candidate_observations'):
-                    for obs in comparison['candidate_observations']:
+            for comparison in gpt4_result["comparisons"]:
+                if comparison.get("criterion"):
+                    content.append(
+                        Paragraph(
+                            f"Criterion: {display_value(comparison['criterion'])}",
+                            body_style,
+                        )
+                    )
+
+                if comparison.get("candidate_observations"):
+                    for obs in comparison["candidate_observations"]:
                         obs_text = f"  {obs.get('candidate_id', 'Unknown')}: {obs.get('status', 'Unknown')}"
-                        if obs.get('evidence'):
+                        if obs.get("evidence"):
                             obs_text += f" - {display_value(obs['evidence'])}"
                         content.append(Paragraph(obs_text, body_style))
-                
-                if comparison.get('summary'):
-                    content.append(Paragraph(f"Summary: {display_value(comparison['summary'])}", body_style))
-                
+
+                if comparison.get("summary"):
+                    content.append(
+                        Paragraph(
+                            f"Summary: {display_value(comparison['summary'])}",
+                            body_style,
+                        )
+                    )
+
                 content.append(Spacer(1, 0.1 * inch))
-    
+
     # GPT-5 Assessment
     if gpt5_result:
         content.append(PageBreak())
         content.append(Paragraph("GPT-5 Assessment", section_style))
-        
-        if gpt5_result.get('comparison_summary'):
+
+        if gpt5_result.get("comparison_summary"):
             content.append(Paragraph("Comparison Summary", subsection_style))
-            content.append(Paragraph(display_value(gpt5_result['comparison_summary']), body_style))
+            content.append(
+                Paragraph(display_value(gpt5_result["comparison_summary"]), body_style)
+            )
             content.append(Spacer(1, 0.2 * inch))
-        
+
         # Candidate details
-        if gpt5_result.get('candidates'):
-            for candidate in gpt5_result['candidates']:
-                candidate_name = candidate.get('candidate_name', 'Unknown')
-                content.append(Paragraph(f"Candidate: {candidate_name}", subsection_style))
-                
-                if candidate.get('strengths'):
+        if gpt5_result.get("candidates"):
+            for candidate in gpt5_result["candidates"]:
+                candidate_name = candidate.get("candidate_name", "Unknown")
+                content.append(
+                    Paragraph(f"Candidate: {candidate_name}", subsection_style)
+                )
+
+                if candidate.get("strengths"):
                     content.append(Paragraph("Strengths:", body_style))
-                    for strength in candidate['strengths']:
-                        content.append(Paragraph(f"  • {display_value(strength)}", body_style))
-                
-                if candidate.get('gaps'):
+                    for strength in candidate["strengths"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(strength)}", body_style)
+                        )
+
+                if candidate.get("gaps"):
                     content.append(Paragraph("Gaps:", body_style))
-                    for gap in candidate['gaps']:
-                        content.append(Paragraph(f"  • {display_value(gap)}", body_style))
-                
-                if candidate.get('jd_coverage'):
+                    for gap in candidate["gaps"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(gap)}", body_style)
+                        )
+
+                if candidate.get("jd_coverage"):
                     content.append(Paragraph("JD Coverage:", body_style))
-                    for coverage in candidate['jd_coverage']:
-                        content.append(Paragraph(f"  • {display_value(coverage)}", body_style))
-                
-                if candidate.get('evidence'):
+                    for coverage in candidate["jd_coverage"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(coverage)}", body_style)
+                        )
+
+                if candidate.get("evidence"):
                     content.append(Paragraph("Evidence:", body_style))
-                    for evidence in candidate['evidence']:
-                        content.append(Paragraph(f"  • {display_value(evidence)}", body_style))
-                
+                    for evidence in candidate["evidence"]:
+                        content.append(
+                            Paragraph(f"  • {display_value(evidence)}", body_style)
+                        )
+
                 content.append(Spacer(1, 0.2 * inch))
-        
+
         # Comparisons
-        if gpt5_result.get('comparisons'):
+        if gpt5_result.get("comparisons"):
             content.append(Paragraph("Detailed Comparisons", subsection_style))
-            for comparison in gpt5_result['comparisons']:
-                if comparison.get('criterion'):
-                    content.append(Paragraph(f"Criterion: {display_value(comparison['criterion'])}", body_style))
-                
-                if comparison.get('candidate_observations'):
-                    for obs in comparison['candidate_observations']:
+            for comparison in gpt5_result["comparisons"]:
+                if comparison.get("criterion"):
+                    content.append(
+                        Paragraph(
+                            f"Criterion: {display_value(comparison['criterion'])}",
+                            body_style,
+                        )
+                    )
+
+                if comparison.get("candidate_observations"):
+                    for obs in comparison["candidate_observations"]:
                         obs_text = f"  {obs.get('candidate_id', 'Unknown')}: {obs.get('status', 'Unknown')}"
-                        if obs.get('evidence'):
+                        if obs.get("evidence"):
                             obs_text += f" - {display_value(obs['evidence'])}"
                         content.append(Paragraph(obs_text, body_style))
-                
-                if comparison.get('summary'):
-                    content.append(Paragraph(f"Summary: {display_value(comparison['summary'])}", body_style))
-                
+
+                if comparison.get("summary"):
+                    content.append(
+                        Paragraph(
+                            f"Summary: {display_value(comparison['summary'])}",
+                            body_style,
+                        )
+                    )
+
                 content.append(Spacer(1, 0.1 * inch))
-    
+
     # Build PDF
     doc.build(content)
     buffer.seek(0)
