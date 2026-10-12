@@ -2307,6 +2307,116 @@ def verify_github_evidence_against_resume(resume_profile, github_evidence):
 # ==================================================
 
 
+_ALLOWED_LINKEDIN_HOSTS = {"linkedin.com", "www.linkedin.com"}
+
+
+def _extract_linkedin_path(url):
+    """Validate and extract the sanitized path/handle from a LinkedIn URL or handle.
+
+    Args:
+        url: LinkedIn profile URL or bare profile handle.
+
+    Returns:
+        tuple (cleaned_path, is_bare_handle) or (None, None) if invalid.
+    """
+    if not url or not isinstance(url, str):
+        return None, None
+
+    url = url.strip()
+    if not url:
+        return None, None
+
+    if "\\" in url or "\x00" in url:
+        return None, None
+
+    # Check for directory traversal attempts in raw and unquoted url
+    raw_unquoted = urllib.parse.unquote(url)
+    segments = [s for s in raw_unquoted.replace("\\", "/").split("/") if s]
+    if any(seg in (".", "..") or ".." in seg for seg in segments):
+        return None, None
+
+    is_bare = False
+    path = None
+
+    if "://" in url or url.startswith("//"):
+        try:
+            parsed = urllib.parse.urlsplit(
+                url if not url.startswith("//") else f"https:{url}"
+            )
+        except Exception:
+            return None, None
+
+        if parsed.scheme.lower() not in ("http", "https"):
+            return None, None
+
+        if parsed.username or parsed.password:
+            return None, None
+
+        if parsed.port not in (None, 80, 443):
+            return None, None
+
+        hostname = (parsed.hostname or "").lower()
+        if hostname not in _ALLOWED_LINKEDIN_HOSTS:
+            return None, None
+
+        path = parsed.path
+    else:
+        # Check if URL starts with a recognized LinkedIn host prefix
+        try:
+            parsed = urllib.parse.urlsplit(f"https://{url}")
+        except Exception:
+            return None, None
+
+        hostname = (parsed.hostname or "").lower()
+        if hostname in _ALLOWED_LINKEDIN_HOSTS:
+            if parsed.username or parsed.password:
+                return None, None
+            if parsed.port not in (None, 80, 443):
+                return None, None
+            path = parsed.path
+        else:
+            # Not a linkedin.com host. Check if it's a valid bare handle or handle with in/ prefix.
+            clean_url = url.rstrip("/")
+            if clean_url.startswith("in/"):
+                handle = clean_url[3:]
+                if (
+                    handle
+                    and re.match(r"^[a-zA-Z0-9_\-]+$", handle)
+                    and not re.search(
+                        r"\.(com|net|org|edu|gov|io|co|ai|app|dev|biz|info|me|tv|cc|xyz|attacker)$",
+                        handle.lower(),
+                    )
+                ):
+                    path = f"in/{handle}"
+                    is_bare = True
+            elif "/" not in clean_url:
+                # Bare handle without slash: must not look like an external host or domain
+                if (
+                    not re.search(
+                        r"\.(com|net|org|edu|gov|io|co|ai|app|dev|biz|info|me|tv|cc|xyz|attacker)$",
+                        clean_url.lower(),
+                    )
+                    and re.match(r"^[a-zA-Z0-9_\-]+$", clean_url)
+                ):
+                    path = clean_url
+                    is_bare = True
+
+            if path is None:
+                return None, None
+
+    # Collapse multiple slashes and strip leading/trailing slashes
+    path_segments = [s for s in path.split("/") if s]
+    if not path_segments or path_segments == ["in"]:
+        return None, None
+
+    # Ensure no path traversal in extracted path segments
+    if any(seg in (".", "..") or ".." in seg for seg in path_segments):
+        return None, None
+
+    cleaned_path = "/".join(path_segments)
+    return cleaned_path, is_bare
+
+
 def normalize_linkedin_url(url):
     """Normalize LinkedIn URL for consistent lookup.
 
@@ -2322,34 +2432,15 @@ def normalize_linkedin_url(url):
     Returns:
         Normalized URL or None if invalid
     """
-    if not url:
+    path, _ = _extract_linkedin_path(url)
+    if not path:
         return None
 
-    url = url.strip()
-
-    # Remove trailing slash
-    if url.endswith("/"):
-        url = url[:-1]
-
-    # Remove http/https
-    if url.startswith("http://"):
-        url = url[7:]
-    elif url.startswith("https://"):
-        url = url[8:]
-
-    # Remove www prefix
-    if url.startswith("www."):
-        url = url[4:]
-
-    # Normalize to linkedin.com
-    if url.startswith("linkedin.com/"):
-        url = url[len("linkedin.com/") :]
-
     # Ensure in/ prefix exists
-    if not url.startswith("in/"):
-        url = f"in/{url}"
+    if not path.startswith("in/"):
+        path = f"in/{path}"
 
-    return f"linkedin.com/{url}"
+    return f"linkedin.com/{path}"
 
 
 def persist_linkedin_profile(profile_data, linkedin_url=None):
@@ -2417,30 +2508,14 @@ def normalize_linkedin_profile_url(url):
     Returns:
         Normalized URL or None if invalid
     """
-    if not url:
+    path, is_bare = _extract_linkedin_path(url)
+    if not path:
         return None
 
-    url = url.strip()
+    if is_bare and not path.startswith("in/"):
+        path = f"in/{path}"
 
-    # Remove trailing slash
-    if url.endswith("/"):
-        url = url[:-1]
-
-    # Remove http/https
-    if url.startswith("http://"):
-        url = url[7:]
-    elif url.startswith("https://"):
-        url = url[8:]
-
-    # Remove www prefix
-    if url.startswith("www."):
-        url = url[4:]
-
-    # Ensure linkedin.com prefix
-    if not url.startswith("linkedin.com/"):
-        url = f"linkedin.com/{url}"
-
-    return f"https://{url}"
+    return f"https://linkedin.com/{path}"
 
 
 def normalize_captapi_response(raw_profile):

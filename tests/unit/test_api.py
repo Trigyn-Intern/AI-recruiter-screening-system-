@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import numpy as np
+import pytest
 from fastapi.testclient import TestClient
 
 from api import _build_persistable_file_cache, api, build_fit_bucket, serialize_jd_info
@@ -464,3 +465,114 @@ def test_evidence_rejects_malformed_upload_and_invalid_event(monkeypatch):
         },
     )
     assert response.status_code == 400
+
+
+def test_evidence_path_traversal_attempts_create_no_directories(monkeypatch, tmp_path):
+    import api as api_module
+
+    evidence_root = tmp_path / "evidence_root"
+    evidence_root.mkdir()
+    outside_dir = tmp_path / "outside_dir"
+
+    monkeypatch.setattr(api_module, "ASSESSMENT_EVIDENCE_DIR", evidence_root)
+    monkeypatch.setattr(
+        api_module,
+        "ASSESSMENT_EVIDENCE_METADATA_PATH",
+        evidence_root / "metadata.json",
+    )
+    monkeypatch.setattr(
+        "backend_question_generator.get_assessment_questions",
+        lambda assessment_id: {"candidate_id": "candidate-1", "questions": []},
+    )
+
+    # 1. Direct unit test of _assert_evidence_path with traversal inputs
+    with pytest.raises(Exception) as excinfo:
+        api_module._assert_evidence_path("../outside", "evidence1", "png")
+    assert getattr(excinfo.value, "status_code", None) == 400
+
+    with pytest.raises(Exception) as excinfo:
+        api_module._assert_evidence_path("valid_id", "../traversal", "png")
+    assert getattr(excinfo.value, "status_code", None) == 400
+
+    with pytest.raises(Exception) as excinfo:
+        api_module._assert_evidence_path("valid_id", "evidence1", "exe")
+    assert getattr(excinfo.value, "status_code", None) == 400
+
+    # 2. HTTP POST with traversal in assessment_id must fail and NOT create outside directories
+    traversal_id = "../outside_dir"
+    token = _token(monkeypatch, traversal_id, "candidate-1")
+    response = client.post(
+        "/api/assessment/evidence",
+        headers={"Authorization": f"Bearer {token}"},
+        data={
+            "assessment_id": traversal_id,
+            "candidate_id": "candidate-1",
+            "event_type": "copy_attempt",
+            "timestamp": _now(),
+            "duration_seconds": "1.0",
+            "evidence_type": "screen_screenshot",
+        },
+        files={"clip": ("clip.png", PNG_BYTES, "image/png")},
+    )
+    assert response.status_code == 400
+    assert not outside_dir.exists(), "Directory outside evidence root must not be created!"
+
+
+def test_evidence_alignment_masks_import_error_and_exception(monkeypatch):
+    import api as api_module
+
+    # Mock read_json_file to provide valid chunks so the function reaches the generation block
+    monkeypatch.setattr(
+        "backend.read_json_file",
+        lambda *args, **kwargs: [{"resume_id": "test-res-1", "text": "chunk"}],
+    )
+
+    # 1. Simulate ImportError during generate_evidence_alignment import
+    def raise_import_error(*args, **kwargs):
+        raise ImportError("internal_module_private_path_cannot_load")
+
+    monkeypatch.setattr(
+        "backend.generate_evidence_alignment",
+        raise_import_error,
+        raising=False,
+    )
+    # also patch inside sys.modules if needed or monkeypatch generate_evidence_alignment
+    resp = client.post(
+        "/evidence-alignment",
+        json={
+            "resume_id": "test-res-1",
+            "resume_name": "resume1.pdf",
+            "job_description": "Software Engineer",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["skipped"] is True
+    assert data["resume_id"] == "test-res-1"
+    assert data["reason"] == "Evidence alignment service unavailable."
+    assert "internal_module_private_path" not in data["reason"]
+
+    # 2. Simulate generic Exception with sensitive internal details
+    def raise_sensitive_error(*args, **kwargs):
+        raise RuntimeError("Database connection string postgres://secret:password@internal-db:5432 failed")
+
+    monkeypatch.setattr(
+        "backend.generate_evidence_alignment",
+        raise_sensitive_error,
+        raising=False,
+    )
+    resp = client.post(
+        "/evidence-alignment",
+        json={
+            "resume_id": "test-res-1",
+            "resume_name": "resume1.pdf",
+            "job_description": "Software Engineer",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["skipped"] is True
+    assert data["resume_id"] == "test-res-1"
+    assert data["reason"] == "Failed to generate evidence alignment."
+    assert "password" not in data["reason"]
+    assert "postgres" not in data["reason"]

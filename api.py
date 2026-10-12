@@ -3,6 +3,7 @@ import hashlib
 import html
 import io
 import json
+import logging
 import math
 import os
 import re
@@ -41,6 +42,8 @@ from dotenv import load_dotenv
 _env_path = pathlib.Path(__file__).resolve().parent / "backend" / ".env"
 if _env_path.exists():
     load_dotenv(_env_path)
+
+logger = logging.getLogger("api")
 
 from assessment_auth import (
     issue_assessment_token,
@@ -226,9 +229,18 @@ def _enforce_event_rate(rate_key, event_count):
 
 
 def _assert_evidence_path(assessment_id, evidence_id, extension):
+    assessment_id = validate_identifier(assessment_id, "assessment ID")
+    evidence_id = validate_identifier(evidence_id, "evidence ID")
+    if extension not in {"png", "webm"}:
+        raise HTTPException(status_code=400, detail="Invalid evidence file extension.")
+
     root = ASSESSMENT_EVIDENCE_DIR.resolve()
-    path = (root / assessment_id / f"{evidence_id}.{extension}").resolve()
-    if root not in path.parents:
+    target_dir = (root / assessment_id).resolve()
+    if not target_dir.is_relative_to(root) or target_dir == root:
+        raise HTTPException(status_code=400, detail="Invalid evidence path.")
+
+    path = (target_dir / f"{evidence_id}.{extension}").resolve()
+    if not path.is_relative_to(target_dir):
         raise HTTPException(status_code=400, detail="Invalid evidence path.")
     return path
 
@@ -843,23 +855,23 @@ async def get_evidence_alignment(request: EvidenceAlignmentRequest):
                 github_verification=request.github_verification,
                 resume_id=request.resume_id,
             )
-        except ImportError as e:
-            print(f"[EVIDENCE ALIGNMENT] Import error: {e}")
+        except ImportError:
+            logger.warning("[EVIDENCE ALIGNMENT] Failed to import evidence alignment function", exc_info=True)
             return {
                 "resume_id": request.resume_id,
                 "matches": [],
                 "skipped": True,
-                "reason": f"Failed to import evidence alignment function: {str(e)}",
+                "reason": "Evidence alignment service unavailable.",
             }
 
         return result
-    except Exception as e:
-        print(f"[EVIDENCE ALIGNMENT] Error: {e}")
+    except Exception:
+        logger.exception("[EVIDENCE ALIGNMENT] Unexpected error generating evidence alignment")
         return {
             "resume_id": request.resume_id,
             "matches": [],
             "skipped": True,
-            "reason": f"Error generating evidence alignment: {str(e)}",
+            "reason": "Failed to generate evidence alignment.",
         }
 
 
@@ -2480,10 +2492,9 @@ async def post_assessment_evidence_endpoint(
     _validate_evidence_bytes(evidence_type, content_type, clip_bytes)
 
     evidence_id = uuid.uuid4().hex
-    assessment_dir = ASSESSMENT_EVIDENCE_DIR / assessment_id
-    assessment_dir.mkdir(parents=True, exist_ok=True)
     extension = "png" if evidence_type == "screen_screenshot" else "webm"
     clip_path = _assert_evidence_path(assessment_id, evidence_id, extension)
+    clip_path.parent.mkdir(parents=True, exist_ok=True)
     clip_path.write_bytes(clip_bytes)
 
     evidence_item = {
