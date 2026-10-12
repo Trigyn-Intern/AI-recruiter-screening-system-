@@ -1,0 +1,34 @@
+# Gitleaks v8 configuration — extends default rules with targeted false-positive suppressions.
+# See https://github.com/gitleaks/gitleaks#configuration
+
+title = "AI Recruiter Screening System — Gitleaks Config"
+
+[extend]
+useDefault = true  # Inherit all built-in detection rules
+
+# ─────────────────────────────────────────────────────────
+# False-positive suppression: linkedin-client-id rule
+# ─────────────────────────────────────────────────────────
+# The default linkedin-client-id rule matches 14-character alphanumeric strings
+# near the word "linkedin". In frontend/src/App.jsx, the local variable
+# `linkedinCorpus` (used for corpus-based text matching against LinkedIn profile
+# data) triggers this rule. It is NOT a credential.
+#
+# Suppression scope:
+#   Rule:  linkedin-client-id only
+#   Path:  frontend/src/App.jsx only
+#   Match: the variable name "linkedinCorpus" only
+# ─────────────────────────────────────────────────────────
+
+[[rules]]
+id = "linkedin-client-id"
+
+  [[rules.allowlists]]
+    description = "False positive: linkedinCorpus is a local variable name, not a credential (App.jsx corpus matching logic)"
+    regexTarget = "match"
+    regexes = [
+      '''linkedinCorpus'''
+    ]
+    paths = [
+      '''frontend/src/App\.jsx'''
+    ]
