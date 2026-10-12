@@ -78,8 +78,6 @@ export function createOrUpdateAssessment(candKey, candidateData) {
   const existing = records[candKey] || {};
 
   const assessmentId = existing.assessmentId || candKey;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const generatedLink = `${origin}/assessment/start?assessmentId=${encodeURIComponent(assessmentId)}`;
 
   const updatedRecord = {
     ...existing,
@@ -90,11 +88,11 @@ export function createOrUpdateAssessment(candKey, candidateData) {
     jobRole: candidateData.job_role || candidateData.jobRole || existing.jobRole || "Engineer",
     shortlistId: candidateData.shortlist_id || existing.shortlistId || "default",
     status: existing.status || "Ready to Share",
-    generatedLink,
+    generatedLink: existing.generatedLink || null,
     duration: "45 Mins",
     questionCount: "15 Questions",
     createdAt: existing.createdAt || new Date().toISOString(),
-    linkGeneratedAt: existing.linkGeneratedAt || new Date().toISOString(),
+    linkGeneratedAt: existing.linkGeneratedAt || null,
     startedAt: existing.startedAt || null,
     completedAt: existing.completedAt || null,
   };

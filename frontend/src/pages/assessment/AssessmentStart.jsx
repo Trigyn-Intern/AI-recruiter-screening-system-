@@ -30,6 +30,7 @@ function AssessmentStart() {
   const assessmentId = searchParams.get("assessmentId") || "";
   const candidateId = searchParams.get("candidateId") || "";
   const queryRole = searchParams.get("role") || "";
+  const accessToken = searchParams.get("accessToken") || "";
 
   const { record } = findAssessmentRecord({ assessmentId, candidateId, role: queryRole });
   const jobRole = record?.jobRole || queryRole || "AI/ML Engineer";
@@ -76,7 +77,8 @@ function AssessmentStart() {
       const q = new URLSearchParams({
         ...(assessmentId ? { assessmentId } : {}),
         ...(candidateId ? { candidateId } : {}),
-        ...(jobRole ? { role: jobRole } : {})
+        ...(jobRole ? { role: jobRole } : {}),
+        ...(accessToken ? { accessToken } : {})
       }).toString();
       navigate(`/assessment/system-check?${q}`);
     }

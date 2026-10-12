@@ -110,6 +110,7 @@ function SystemCheckPage() {
   const assessmentId = searchParams.get("assessmentId") || "";
   const candidateId = searchParams.get("candidateId") || "";
   const role = searchParams.get("role") || "";
+  const accessToken = searchParams.get("accessToken") || "";
 
   const [screenEvidenceStatus, setScreenEvidenceStatus] = useState(
     getScreenEvidenceStream() ? STATUS.PASS : STATUS.IDLE
@@ -151,7 +152,8 @@ function SystemCheckPage() {
     const q = new URLSearchParams({
       ...(assessmentId ? { assessmentId } : {}),
       ...(candidateId ? { candidateId } : {}),
-      ...(role ? { role } : {})
+      ...(role ? { role } : {}),
+      ...(accessToken ? { accessToken } : {})
     }).toString();
     navigate(`/assessment/test?${q}`);
   };

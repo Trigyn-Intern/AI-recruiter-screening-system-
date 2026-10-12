@@ -25,7 +25,7 @@ import {
   Activity
 } from "lucide-react";
 import "./assessmentManagement.css";
-import { findAssessmentRecord } from "../../utils/assessmentStore";
+import { findAssessmentRecord, getRawAssessmentRecords, saveRawAssessmentRecords } from "../../utils/assessmentStore";
 import { getStoredToken } from "../../api/client";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -58,12 +58,7 @@ function AssessmentManagementPage({ result }) {
     }
   });
   const [records, setRecords] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
+    return getRawAssessmentRecords();
   });
 
   const userJson = localStorage.getItem("recruiter.user");
@@ -92,6 +87,27 @@ function AssessmentManagementPage({ result }) {
     loadShortlists();
   }, []);
 
+  // Detect and clear invalid links on mount
+  useEffect(() => {
+    const currentRecords = getRawAssessmentRecords();
+    let hasInvalidLinks = false;
+
+    Object.entries(currentRecords).forEach(([candKey, record]) => {
+      if (record.generatedLink && !record.generatedLink.includes('accessToken=')) {
+        console.error(`[AssessmentManagementPage] Clearing invalid link for candidate ${candKey} - missing accessToken`);
+        delete currentRecords[candKey].generatedLink;
+        delete currentRecords[candKey].linkGeneratedAt;
+        hasInvalidLinks = true;
+      }
+    });
+
+    if (hasInvalidLinks) {
+      saveRawAssessmentRecords(currentRecords);
+      setRecords(currentRecords);
+      console.error("[AssessmentManagementPage] Cleared invalid assessment links. Please regenerate using 'Generate Assessment Link' button.");
+    }
+  }, []);
+
   // Handle individual candidate removal from Assessment Management view & localStorage
   const handleRemoveCandidate = (candKey, candidateName, resumeId) => {
     const targetResumeId = resumeId || candKey;
@@ -105,11 +121,7 @@ function AssessmentManagementPage({ result }) {
     delete updatedRecords[candKey];
     delete updatedRecords[targetResumeId];
     setRecords(updatedRecords);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords));
-    } catch (err) {
-      console.error("Failed to update assessment records in localStorage:", err);
-    }
+    saveRawAssessmentRecords(updatedRecords);
 
     // 2. Add targetResumeId to recruiter.assessment_removed_candidates in localStorage
     try {
@@ -135,11 +147,7 @@ function AssessmentManagementPage({ result }) {
   // Save records to localStorage on change
   const updateRecords = (newRecords) => {
     setRecords(newRecords);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newRecords));
-    } catch (err) {
-      console.error("Failed to persist assessment records:", err);
-    }
+    saveRawAssessmentRecords(newRecords);
   };
 
   // Consolidate shortlisted candidates into assessment candidates list (deduplicated by stable resume_id)
@@ -562,6 +570,10 @@ function resolveAssessmentId(cand, record) {
                 ? "Ready to Share"
                 : rawStatus;
             const generatedLink = record.generatedLink || "";
+            const hasValidToken = generatedLink && generatedLink.includes('accessToken=');
+            if (generatedLink && !hasValidToken) {
+              console.error(`[AssessmentManagementPage] Invalid assessment link for candidate ${cand.resume_id} - missing accessToken. Please regenerate.`);
+            }
 
             return (
               <div key={cand.key} className="candidate-mgmt-card">
@@ -675,6 +687,11 @@ function resolveAssessmentId(cand, record) {
                     <div className="link-box-header">
                       <Sparkles size={15} />
                       <span>CANDIDATE ASSESSMENT LINK</span>
+                      {!hasValidToken && (
+                        <span style={{ color: '#EF4444', fontSize: '12px', marginLeft: '8px' }}>
+                          (Invalid - click Generate Assessment Link to fix)
+                        </span>
+                      )}
                     </div>
 
                     <div className="link-box-controls">
@@ -683,6 +700,7 @@ function resolveAssessmentId(cand, record) {
                         className="link-url-input"
                         readOnly
                         value={generatedLink}
+                        style={{ borderColor: hasValidToken ? '' : '#EF4444' }}
                       />
 
                       <div className="link-action-btns">
@@ -691,6 +709,8 @@ function resolveAssessmentId(cand, record) {
                           type="button"
                           className={`btn-copy-link ${copiedId === cand.key ? "copied" : ""}`}
                           onClick={() => handleCopyLink(cand.key, generatedLink)}
+                          disabled={!hasValidToken}
+                          title={!hasValidToken ? "Link is invalid - regenerate first" : "Copy link"}
                         >
                           {copiedId === cand.key ? (
                             <>
@@ -704,10 +724,16 @@ function resolveAssessmentId(cand, record) {
                         </button>
 
                         <a
-                          href={generatedLink}
+                          href={hasValidToken ? generatedLink : undefined}
                           target="_blank"
                           rel="noreferrer"
                           className="btn-preview-link"
+                          onClick={(e) => {
+                            if (!hasValidToken) {
+                              e.preventDefault();
+                            }
+                          }}
+                          style={!hasValidToken ? { pointerEvents: 'none', opacity: 0.5 } : {}}
                         >
                           <ExternalLink size={14} />
                           <span>Preview Assessment</span>
