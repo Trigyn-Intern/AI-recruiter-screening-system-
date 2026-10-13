@@ -165,10 +165,35 @@ jobs:
             --cov-fail-under=${{ env.COVERAGE_MIN }} \
             -q
 
+      - name: Start FastAPI server for integration tests
+        run: |
+          source .venv/bin/activate
+          mkdir -p reports
+          python -m uvicorn api:api --host 127.0.0.1 --port 8000 --workers 1 > reports/api-server.log 2>&1 &
+          echo $! > reports/api-server.pid
+          # Wait for server to be ready
+          timeout 60 bash -c 'until curl -s http://127.0.0.1:8000/health > /dev/null; do sleep 1; done' || { echo "Server failed to start"; cat reports/api-server.log; exit 1; }
+
       - name: Integration tests (non-e2e)
         run: |
           source .venv/bin/activate
           pytest tests/integration -m "not e2e" -q
+
+      - name: Print API server log
+        if: always()
+        run: |
+          if [ -f reports/api-server.log ]; then
+            cat reports/api-server.log
+          fi
+
+      - name: Stop FastAPI server
+        if: always()
+        run: |
+          if [ -f reports/api-server.pid ]; then
+            pid=$(cat reports/api-server.pid)
+            kill $pid 2>/dev/null || true
+            rm reports/api-server.pid
+          fi
 
       - name: Generate AI engineering reports
         if: always()

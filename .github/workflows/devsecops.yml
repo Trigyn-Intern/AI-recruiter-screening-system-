@@ -37,7 +37,7 @@ jobs:
       - run: pip install ruff
       - run: ruff check .
 
-      - run: npm install
+      - run: npm install && npm --prefix frontend install && npm --prefix frontend-test install
       - run: npm run build || true
 
   unit-tests:
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install
+      - run: npm install && npm --prefix frontend install && npm --prefix frontend-test install
       - run: npm run build
 
   lighthouse:
@@ -180,7 +180,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install
+      - run: npm install && npm --prefix frontend install && npm --prefix frontend-test install
       - run: npm install -g @lhci/cli
       - run: npm run build
       - name: Start server for Lighthouse
@@ -203,7 +203,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install
+      - run: npm install && npm --prefix frontend install && npm --prefix frontend-test install
       - name: Start Application Server
         run: |
           npm run build

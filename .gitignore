@@ -83,4 +83,32 @@ review_jobs.json
 .tmp/
 tmp/
 
+
 .ai/runtime/
+
+# ===== Local candidate and evaluation data =====
+data/
+evaluation_resumes/
+evaluation_output/
+evaluation/
+reports/
+evaluation_results*.json
+evaluation_metrics.json
+evaluation_cases.json
+evaluation_resume_profiles.json
+evaluation_resume_raw_texts.json
+test_resumes/
+test_request.json
+EVALUATION_REPORT*.md
+# ===== Local assessment evidence =====
+assessment_evidence/
+git_changes_review.txt
+*_REPORT.txt
+*_REPORT.md
+
+# ===== Local backup data =====
+*.backup
+*.backup_*
+
+# Root-level generated build output
+dist/

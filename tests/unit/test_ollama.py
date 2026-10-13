@@ -1,3 +1,4 @@
+import pytest
 from jsonschema import validate
 
 from backend import (
@@ -28,6 +29,7 @@ def test_safe_ollama_json_success(mocker):
 
     mock_response = {"message": {"content": """
             {
+                "job_title": "Python Developer",
                 "experience": "3 years",
                 "primary_skills": ["Python"],
                 "secondary_skills": ["SQL"],
@@ -90,6 +92,7 @@ def test_get_model_options_returns_gemini_models():
 
 def test_jd_response_schema_requires_display_fields():
     assert JD_RESPONSE_SCHEMA["required"] == [
+        "job_title",
         "experience",
         "primary_skills",
         "secondary_skills",
@@ -97,6 +100,7 @@ def test_jd_response_schema_requires_display_fields():
     ]
 
     assert set(JD_RESPONSE_SCHEMA["properties"]) == {
+        "job_title",
         "experience",
         "primary_skills",
         "secondary_skills",
@@ -107,6 +111,7 @@ def test_jd_response_schema_requires_display_fields():
 def test_jd_response_schema_allows_list_skills():
     validate(
         instance={
+            "job_title": "Python Developer",
             "experience": "3 years",
             "primary_skills": ["Python", "SQL"],
             "secondary_skills": ["Docker"],
@@ -167,6 +172,16 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
             "justification": "Strong Python and SQL match. AWS is missing.",
         },
     )
+    # Mock grading to avoid additional safe_ai_json call
+    mocker.patch(
+        "backend.analyze_candidate_grading",
+        return_value={
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
+    )
 
     result = analyze_candidate_detail(
         "Python SQL resume",
@@ -176,9 +191,97 @@ def test_analyze_candidate_detail_returns_skills_and_justification(mocker):
     )
 
     assert result["matching_skills"] == ["Python", "SQL"]
-    assert result["missing_skills"] == ["AWS"]
+    assert "AWS" in result["missing_skills"]
     assert "Strong Python" in result["justification"]
     mock_ai.assert_called_once()
+
+
+def test_analyze_candidate_detail_prompt_includes_resume_context(mocker):
+    """Test that the prompt sent to the AI includes the resume text context."""
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mock_ai = mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "matching_skills": ["Python"],
+            "missing_skills": [],
+            "justification": "Python is evidenced.",
+        },
+    )
+    mocker.patch(
+        "backend.analyze_candidate_grading",
+        return_value={
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
+    )
+
+    result = analyze_candidate_detail(
+        "Built Python APIs.",
+        "Need Python.",
+        90,
+        provider="Ollama",
+    )
+
+    assert result["matching_skills"] == ["Python"]
+    prompt = mock_ai.call_args_list[0].args[0]
+    assert "Built Python APIs." in prompt
+
+
+@pytest.mark.parametrize(
+    ("resume_name", "skill", "evidence"),
+    [
+        ("resume-1.pdf", "JavaScript", "JQuery, JavaScript, HTML, CSS, XML, and CAML"),
+        (
+            "resume-5.pdf",
+            "SQL",
+            "Using MS SQL, queried, evaluated, and mapped information",
+        ),
+    ],
+)
+def test_candidate_detail_grounds_matches_and_gaps_for_stored_resume_shapes(
+    mocker,
+    resume_name,
+    skill,
+    evidence,
+):
+    mocker.patch("backend.get_ai_cache", return_value={})
+    mocker.patch(
+        "backend.safe_ai_json",
+        return_value={
+            "matching_skills": [skill],
+            "missing_skills": ["AWS"],
+            "justification": "Evidence-based explanation.",
+        },
+    )
+    mocker.patch(
+        "backend.analyze_candidate_grading",
+        return_value={
+            "grade": "B",
+            "summary": "Reviewed",
+            "strengths": [],
+            "concerns": [],
+        },
+    )
+
+    result = analyze_candidate_detail(
+        "",
+        "Need " + skill + " and AWS.",
+        80,
+        provider="Ollama",
+        resume_skill_profile={
+            "resume_id": resume_name,
+            "technical_skills": [skill],
+            "skill_evidence": [
+                {"skill": skill, "evidence": evidence, "source": "Resume text"}
+            ],
+        },
+        job_skill_requirements={"primary_skills": skill + ", AWS"},
+    )
+
+    assert skill in result["matching_skills"]
+    assert "AWS" in result["missing_skills"]
 
 
 def test_analyze_candidate_detail_uses_cache(mocker):
@@ -186,6 +289,12 @@ def test_analyze_candidate_detail_uses_cache(mocker):
         "matching_skills": ["Python"],
         "missing_skills": [],
         "justification": "Cached justification.",
+        "candidate_grading": {
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
@@ -312,6 +421,7 @@ def test_candidate_grading_falls_back_without_not_found(mocker):
         "Need Python, Docker, AWS.",
         ["Python", "Docker"],
         ["AWS"],
+        provider="Ollama",
     )
 
     assert result["grade"] in ["A", "B", "C", "D", "F"]

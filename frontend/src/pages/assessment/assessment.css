@@ -1,0 +1,682 @@
+/* Candidate Assessment Module Styles */
+/* Design Theme: Warm neutral/cream + white + brown/orange accent style */
+
+:root {
+  --bg-cream: #FAF7F2;
+  --bg-cream-card: #FFFFFF;
+  --bg-cream-subtle: #F5EFE6;
+  --border-cream: #ECE3D4;
+  --border-cream-dark: #DDD1BE;
+  
+  --accent-orange: #D96B27;
+  --accent-orange-hover: #C25A19;
+  --accent-orange-active: #A8490E;
+  --accent-orange-light: #FDF3EB;
+  --accent-orange-border: #F7D7C4;
+
+  --accent-brown: #7C4A21;
+  --accent-brown-dark: #563113;
+
+  --text-dark: #2A241F;
+  --text-medium: #5C5248;
+  --text-muted: #8A7E73;
+  --text-light: #B0A59A;
+
+  --shadow-warm: 0 10px 30px rgba(160, 90, 30, 0.06);
+  --shadow-sm: 0 2px 8px rgba(140, 80, 30, 0.04);
+}
+
+.assessment-page-wrapper {
+  min-height: 100vh;
+  background-color: var(--bg-cream);
+  color: var(--text-dark);
+  font-family: Outfit, Inter, system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.assessment-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border-cream);
+  padding: 16px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.assessment-header-content {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assessment-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.assessment-brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-brown) 100%);
+  color: #FFFFFF;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(217, 107, 39, 0.25);
+}
+
+.assessment-brand-text h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.assessment-brand-text p {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.assessment-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assessment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--accent-orange-light);
+  color: var(--accent-orange);
+  border: 1px solid var(--accent-orange-border);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.help-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-cream-dark);
+  color: var(--text-medium);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.help-button:hover {
+  background-color: var(--bg-cream-subtle);
+  color: var(--text-dark);
+  border-color: var(--accent-brown);
+}
+
+/* Container */
+.assessment-container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 24px auto;
+  padding: 0 32px 48px 32px;
+  flex: 1;
+}
+
+/* Header Title Banner */
+.assessment-hero {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.assessment-hero-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-brown);
+  background-color: var(--bg-cream-subtle);
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-cream);
+}
+
+.assessment-hero h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.assessment-hero p {
+  font-size: 15px;
+  color: var(--text-medium);
+  margin: 0;
+}
+
+/* Card Styling */
+.assessment-card {
+  background-color: var(--bg-cream-card);
+  border: 1px solid var(--border-cream);
+  border-radius: 16px;
+  box-shadow: var(--shadow-warm);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.assessment-card-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border-cream);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FCFAFAF7 100%);
+}
+
+.assessment-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.assessment-title-row h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1.3;
+}
+
+.difficulty-tag {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background-color: #FFF6ED;
+  color: #C85A17;
+  border: 1px solid #FCD4B2;
+}
+
+.assessment-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-brown);
+  background-color: var(--bg-cream-subtle);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.assessment-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-medium);
+  margin: 0;
+}
+
+/* Meta Pills Grid */
+.assessment-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px 28px;
+  background-color: var(--bg-cream-subtle);
+  border-bottom: 1px solid var(--border-cream);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #FFFFFF;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-cream);
+  box-shadow: var(--shadow-sm);
+}
+
+.meta-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--accent-orange-light);
+  color: var(--accent-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.meta-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.meta-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Card Body & Rules */
+.assessment-card-body {
+  padding: 28px;
+}
+
+.rules-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 16px 0;
+}
+
+.rules-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  margin: 0 0 28px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: var(--bg-cream);
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-cream);
+}
+
+.rule-bullet-icon {
+  color: var(--accent-orange);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.rule-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.rule-text strong {
+  color: var(--accent-brown-dark);
+}
+
+/* Candidate Acknowledgement Section */
+.acknowledgement-box {
+  background-color: var(--accent-orange-light);
+  border: 1px solid var(--accent-orange-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+  transition: border-color 0.2s ease;
+}
+
+.acknowledgement-box:hover {
+  border-color: var(--accent-orange);
+}
+
+.acknowledgement-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-orange);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.acknowledgement-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.acknowledgement-subtext {
+  font-size: 12px;
+  color: var(--text-medium);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* Action Area */
+.action-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.proceed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--accent-orange) 0%, #C85A17 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(217, 107, 39, 0.3);
+  transition: all 0.2s ease;
+}
+
+.proceed-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-orange-hover) 0%, #B54F12 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(217, 107, 39, 0.4);
+}
+
+.proceed-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.proceed-btn:disabled {
+  background: #E5DDD3;
+  color: #A09488;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-disabled-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Modal / Drawer for Help */
+.help-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(40, 30, 20, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.help-modal-card {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  border: 1px solid var(--border-cream);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.help-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-cream);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-cream-subtle);
+}
+
+.help-modal-header h4 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-modal-btn:hover {
+  background-color: var(--border-cream);
+  color: var(--text-dark);
+}
+
+.help-modal-body {
+  padding: 24px;
+  font-size: 14px;
+  color: var(--text-medium);
+  line-height: 1.6;
+}
+
+.help-modal-body h5 {
+  margin: 16px 0 6px 0;
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.help-modal-body h5:first-child {
+  margin-top: 0;
+}
+
+.help-modal-footer {
+  padding: 16px 24px;
+  background-color: var(--bg-cream);
+  border-top: 1px solid var(--border-cream);
+  text-align: right;
+}
+
+/* System Check Placeholder Styling */
+.system-check-card {
+  background-color: var(--bg-cream-card);
+  border: 1px solid var(--border-cream);
+  border-radius: 16px;
+  box-shadow: var(--shadow-warm);
+  padding: 36px;
+  text-align: center;
+}
+
+.system-check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stepper-step.completed {
+  color: #15803D;
+}
+
+.stepper-step.active {
+  color: var(--accent-orange);
+}
+
+.stepper-step.pending {
+  color: var(--text-muted);
+}
+
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stepper-step.completed .step-num {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
+.stepper-step.active .step-num {
+  background-color: var(--accent-orange-light);
+  color: var(--accent-orange);
+  border: 1px solid var(--accent-orange-border);
+}
+
+.stepper-step.pending .step-num {
+  background-color: var(--bg-cream-subtle);
+  color: var(--text-muted);
+}
+
+.stepper-divider {
+  width: 40px;
+  height: 2px;
+  background-color: var(--border-cream-dark);
+}
+
+.check-preview-box {
+  background-color: var(--bg-cream);
+  border: 1px border var(--border-cream);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  margin: 24px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #FFFFFF;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-cream);
+}
+
+.check-item-icon {
+  color: var(--accent-brown);
+}
+
+.check-item-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Footer */
+.assessment-footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-cream);
+  background-color: #FFFFFF;
+  margin-top: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .assessment-header {
+    padding: 12px 16px;
+  }
+  
+  .assessment-container {
+    padding: 0 14px 32px 14px;
+    margin: 20px auto;
+  }
+
+  .assessment-card-header {
+    padding: 20px 18px;
+  }
+
+  .assessment-title-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .assessment-card-body {
+    padding: 20px 18px;
+  }
+
+  .assessment-meta-grid {
+    padding: 16px;
+    grid-template-columns: 1fr;
+  }
+
+  .action-area {
+    align-items: stretch;
+  }
+
+  .proceed-btn {
+    width: 100%;
+  }
+}

@@ -1,4 +1,4 @@
-export const defaultProviders = ["Gemini", "Ollama"];
+export const defaultProviders = ["Ollama", "Gemini"];
 
 export const defaultOllamaModels = [
   "llama3.2",

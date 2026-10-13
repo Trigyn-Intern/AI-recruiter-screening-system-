@@ -6,11 +6,13 @@ A recruiter-friendly web app that reads multiple resumes, understands a JD, scor
 
 License: MIT  Python  FastAPI  React  Vite  Sentence Transformers  FAISS  Ollama  Llama 3.2  Google Gemini  Playwright
 
-Built by Team Trigyn  ·  Internal prototype  ·  FastAPI + React + local LLMs
+Personal internship project  ·  FastAPI + React + local LLMs
 
 ---
 
 ## Table of Contents
+
+...
 
 - Overview
 - The Problem
@@ -362,7 +364,7 @@ Several parts of this codebase are generic enough to be lifted directly into oth
 | **Deterministic fallback grader** | `backend.py` → `grade_candidate_local()` | Scores a candidate purely from skill overlap when the LLM is unavailable; requires no external API call | Pull into any ranking system that needs a rule-based fallback for when the AI provider is down |
 | **LLM JSON output validator** | `backend.py` → `validate_llm_output()` | Wraps `jsonschema.validate` and logs schema violations; returns a safe default on failure | Use to harden any endpoint that parses LLM-generated JSON |
 | **Pluggable provider router** | `backend.py` → `call_llm()` | Dispatches to Ollama or Gemini based on a runtime config flag; easy to extend with a third provider | Adopt the same `if provider == "ollama"` / `elif provider == "gemini"` pattern for any multi-provider LLM integration |
-| **Prompt template manager** | `vector_store/prompt_config.json` + `backend.py` | Loads prompt templates from a JSON file at startup; falls back to `default_prompts.py` if the file is missing | Copy the load / fallback pattern to make any LLM prompt editable at runtime without a redeployment |
+| **Prompt template manager** | `vector_store/prompt_config.json` + `backend.py` | Loads prompt templates from a JSON file at startup; falls back to the built-in defaults defined in `backend.py` if the file is missing | Copy the load / fallback pattern to make any LLM prompt editable at runtime without a redeployment |
 
 #### Auth API (Node.js)
 
@@ -614,21 +616,20 @@ This project runs entirely on your laptop. Pick the platform section that matche
 
 - **Node.js 18 or above** (https://nodejs.org).
 - **Python 3.10 or above** (https://www.python.org). On Windows make sure `py` is on PATH (it ships with the official installer).
-- **Ollama** from https://ollama.com. After install, leave the desktop app running or run `ollama serve` once.
-- **Llama 3.2 pulled locally**: `ollama pull llama3.2` (the launcher does this for you on first run).
+- **Ollama** from https://ollama.com (optional, for local LLM provider). After install, leave the desktop app running or run `ollama serve` once.
+- **Llama 3.2 pulled locally** (optional, if using Ollama): `ollama pull llama3.2` (the launcher does this for you on first run).
 - **PowerShell 5+** (built into Windows 10/11) for the one-click launcher.
-- *(Optional)* Docker, only if you want to swap the JSON auth store for MongoDB.
 
 > Disk budget: the Python venv with PyTorch and FAISS is ~2.5 GB; the Llama 3.2 model is ~2 GB. Plan for at least 6 GB free.
 
 ### Clone and install
 
 ```bash
-git clone https://github.com/Trigyn-Intern/AI-recruiter-screening-system-.git
+git clone https://github.com/sapnarathore0810/AI-recruiter-screening-system-.git
 cd AI-recruiter-screening-system-
 ```
 
-The repository ships with sensible defaults in `backend/.env`, `frontend/.env`, and `frontend-test/.env`. Override them only if you need to.
+No secret-bearing `.env` files, candidate data, vector indexes, or runtime stores are committed. On a fresh Windows clone, open PowerShell at the repository root and run `.\start-app.ps1` (shown below). The launcher creates the local environment files and runtime directories. On first run, enter your own manager email and a manager password when prompted; password input is hidden. It generates a random JWT secret locally and saves the auth settings in the ignored `backend/.env`. Never commit that file.
 
 ---
 
@@ -640,6 +641,8 @@ The fastest way for a brand-new user. Open PowerShell **as yourself** (admin not
 .\start-app.ps1
 ```
 
+On first run, the launcher prompts for a manager email and password. Enter an email you control and a unique password of at least 12 characters; password characters are not echoed. The launcher generates the JWT secret automatically and stores it with the manager credentials in `backend/.env`. Those values are not printed. Later launches reuse the local settings. Keep `backend/.env` private and untracked.
+
 What it does, in order:
 
 1. Creates `backend/data/users.json` if it is missing.
@@ -648,7 +651,7 @@ What it does, in order:
 4. Creates the Python venv on first run and (re)installs `requirements.txt` only when the file changes.
 5. Installs Node dependencies for the auth API, the recruiter app, and the testing dashboard (idempotent).
 6. Launches the FastAPI analyzer on `http://127.0.0.1:8000` (4 workers, 90 s analyze timeout).
-7. Launches the Node auth API on `http://localhost:4000` (auto-seeds the manager account from `backend/.env`).
+7. Launches the Node auth API on `http://localhost:4000` (auto-seeds the manager account from your local `backend/.env`).
 8. Launches the React recruiter app on `http://localhost:5173`.
 9. Launches the React testing dashboard on `http://localhost:5174`.
 
@@ -664,6 +667,57 @@ To shut the stack down, close the PowerShell windows it opened, or run:
 ```powershell
 Get-Process node,python,ollama -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -ne '' } | Stop-Process -Force
 ```
+
+---
+
+## Assessment System and Evidence Storage
+
+The assessment system generates candidate-specific questions, tracks behavior events (tab switches, face presence), and stores screenshot/video evidence. This data is stored locally and must not be committed.
+
+### Assessment evidence storage
+
+- **Location:** `assessment_evidence/` directory at the repository root
+- **Contents:** PNG screenshots and WebM video clips from candidate assessment sessions
+- **Privacy:** Evidence files may contain candidate screen content and must be reviewed before any handover
+- **Retention:** Evidence is kept locally and never uploaded to external services
+
+### Required vs. optional features
+
+| Feature                        | Required Credentials                                              | Fallback Behavior                    |
+| ----------------------------- | ---------------------------------------------------------------- | ------------------------------------- |
+| Resume analysis (JD parsing)   | `GEMINI_API_KEY` or Ollama                                        | Deterministic local grader         |
+| Skill extraction               | `GEMINI_API_KEY` or Ollama                                        | Basic keyword extraction           |
+| Assessment question generation | `OPENAI_API_KEY`                                                | Hardcoded fallback questions        |
+| Candidate comparison (GPT-4)   | `OPENAI_API_KEY`                                                | Not available without key         |
+| Candidate comparison (GPT-5)   | `OPENAI_API_KEY`                                                | Not available without key         |
+| LinkedIn profile fetching      | `CAPTAPI_API_KEY`                                                | LinkedIn verification disabled       |
+| GitHub verification           | None (uses public API)                                         | Fully functional without config    |
+| Shortlist persistence          | None (local JSON)                                               | Fully functional without config    |
+
+### Assessment token configuration
+
+Assessment access tokens are generated by the recruiter API and passed to candidates via secure URLs. The token includes the assessment ID, candidate ID, and recruiter ID. Tokens are valid for 24 hours by default. To change the token lifetime, modify `ASSESSMENT_TOKEN_TTL_SECONDS` in `assessment_auth.py`.
+
+### Optional: CAPTAPI setup for LinkedIn profile fetching
+
+LinkedIn profile fetching and verification requires a CAPTAPI API key:
+
+1. Sign up for a CAPTAPI account at https://www.captapi.com
+2. Obtain your API key from the dashboard
+3. Add `CAPTAPI_API_KEY=your_api_key_here` to `.env` (copy from `.env.example` first)
+4. Restart the FastAPI analyzer
+
+Without `CAPTAPI_API_KEY`, LinkedIn verification will be disabled and the system will fall back to a default "UNVERIFIABLE" status for all candidates.
+
+### Optional: OpenAI configuration for assessments and comparison
+
+Assessment question generation and candidate comparison require OpenAI:
+
+1. Add `OPENAI_API_KEY=your_openai_api_key_here` to `.env`
+2. Add `OPENAI_ASSESSMENT_MODEL=o4-mini` (or your preferred model) to `.env`
+3. Restart the FastAPI analyzer
+
+Without `OPENAI_API_KEY`, assessment question generation will use hardcoded fallback questions and candidate comparison features will not be available.
 
 ---
 
@@ -723,7 +777,7 @@ cd frontend-test; npm run dev
 | Account   | Email                    | Password      | Where it is set                                  |
 | --------- | ------------------------ | ------------- | ------------------------------------------------ |
 | Recruiter | any (sign up on screen)  | your choice   | n/a - sign up at http://localhost:5173/signup    |
-| Manager   | `SEED_MANAGER_EMAIL`     | `SEED_MANAGER_PASSWORD` | `backend/.env`  |
+| Manager   | Your local `SEED_MANAGER_EMAIL` | Your local `SEED_MANAGER_PASSWORD` | `backend/.env` |
 
 The seeded manager account is created or rotated on every backend restart using `backend/seeders/seedManager.js`, so editing the env and restarting the auth API is the supported way to change the manager password.
 
@@ -804,7 +858,6 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 .
 |-- api.py                    # FastAPI entrypoint for the analyzer
 |-- backend.py                # Core analysis logic (LLM, FAISS, grading)
-|-- default_prompts.py        # Default prompt templates (Python mirror of UI)
 |-- requirements.txt          # Pinned Python dependencies
 |-- start-app.ps1             # One-click stack launcher (Windows)
 |-- backend/                  # Node + Express auth API
@@ -833,7 +886,7 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 |   `-- src/
 |       |-- App.jsx
 |       `-- pages/TestingDashboard.jsx
-|-- vector_store/             # FAISS index, resume metadata, prompt config, session log
+|-- vector_store/             # Local runtime store; create/populate locally, never commit contents
 |-- tests/                    # pytest + Playwright scenario matrix
 `-- skills/                   # Internal skill and security-review notes
 ```
@@ -847,12 +900,11 @@ lighthouse http://localhost:5173 --output=html --output-path=reports/lighthouse-
 | Variable                 | Purpose                                                              | Default               |
 | ------------------------ | -------------------------------------------------------------------- | --------------------- |
 | `PORT`                   | Port the auth API listens on.                                        | `4000`                |
-| `JWT_SECRET`             | Signing key for issued JWTs.                                         | random ephemeral      |
+| `JWT_SECRET`             | Signing key for issued JWTs; recommended minimum 32 characters (code does not enforce this limit). | required              |
 | `JWT_EXPIRES_IN`         | Token lifetime.                                                      | `7d`                  |
 | `CLIENT_ORIGIN`          | CORS allow-list for the React apps.                                  | `http://localhost:5173` |
-| `MONGO_URI`              | Reserved for a future MongoDB swap.                                 | unused with JSON store |
-| `SEED_MANAGER_EMAIL`     | Email used by `seedManager.js` to create the manager account.        |  |
-| `SEED_MANAGER_PASSWORD`  | Password for the seeded manager account. Edit + restart to rotate.   |          |
+| `SEED_MANAGER_EMAIL`     | Local email used by `seedManager.js` to create the manager account.  | entered on first run  |
+| `SEED_MANAGER_PASSWORD`  | Local manager password; edit + restart to rotate.                   | entered on first run  |
 | `SEED_MANAGER_NAME`      | Display name for the seeded manager.                                | `Test Manager`        |
 
 ### Frontend environment (`frontend/.env`)
@@ -873,12 +925,31 @@ VITE_FASTAPI_URL=http://localhost:8000
 
 | Variable          | Purpose                                                |
 | ----------------- | ------------------------------------------------------ |
-| `OLLAMA_HOST`     | Ollama base URL. Defaults to `http://127.0.0.1:11434`. |
-| `GEMINI_API_KEY`  | Enables the Gemini provider.                           |
-| `ANALYZE_MAX_INFLIGHT` | Concurrency cap for in-flight analyzes.            |
-| `ANALYZE_TIMEOUT_S`    | Hard timeout for a single analyze call (seconds).  |
+| `OLLAMA_HOST`           | Ollama base URL.                                                          | `http://127.0.0.1:11434`    |
+| `GEMINI_API_KEY`        | Enables the Gemini provider for JD analysis and skill extraction.       | required for Gemini          |
+| `OPENAI_API_KEY`         | Enables OpenAI provider for assessment generation and comparison.      | required for OpenAI          |
+| `ANALYZE_MAX_INFLIGHT`  | Concurrency cap for in-flight analyzes.                               | `4`                          |
+| `ANALYZE_TIMEOUT_S`     | Hard timeout for a single analyze call (seconds).                       | `600`                        |
 
 The analyzer falls back to a deterministic local grader when no LLM is reachable, so the dashboard never goes blank mid-demo.
+
+### Assessment system environment (optional)
+
+|| Variable                 | Purpose                                                                  | Default               |
+|| ------------------------ | -------------------------------------------------------------------- | --------------------- |
+|| `JWT_SECRET`             | Required for assessment access token signing (same as auth API); recommended minimum 32 characters (code does not enforce this limit). | required              |
+|| `OPENAI_API_KEY`         | Required for assessment question generation.                            | required for assessments  |
+|| `OPENAI_ASSESSMENT_MODEL` | OpenAI model used for generating assessment questions.                 | `o4-mini`              |
+
+### LinkedIn verification environment (optional)
+
+|| Variable        | Purpose                                                   | Default  |
+|| --------------- | --------------------------------------------------------- | -------- |
+|| `CAPTAPI_API_KEY` | Required for LinkedIn profile fetching and verification. | required |
+
+### GitHub verification (no configuration required)
+
+GitHub verification uses the public GitHub API and requires no authentication.
 
 ---
 
@@ -894,7 +965,7 @@ The repo is shaped to run locally today, but the components map cleanly to commo
 | Analyzer         | Render, Fly, or a VM     | Needs the FAISS volume and the embedding model cached.             |
 | LLM              | Local Ollama or a host   | Swap to Gemini for a fully serverless deployment.                  |
 
-For a quick serverless deploy, switch the AI provider to Gemini, build the recruiter UI with `npm run build` in `frontend/`, and serve the analyzer with `uvicorn api:api --host 0.0.0.0 --port $PORT`. The FAISS index can be rebuilt on first run from the resumes in `tests/data/resumes/`.
+For a quick serverless deploy, switch the AI provider to Gemini, build the recruiter UI with `npm run build` in `frontend/`, and serve the analyzer with `uvicorn api:api --host 0.0.0.0 --port $PORT`. A fresh clone must use synthetic or locally supplied resumes and create its own runtime vector store; no production candidate index is included.
 
 ---
 
@@ -903,22 +974,24 @@ For a quick serverless deploy, switch the AI provider to Gemini, build the recru
 **Current limitations**
 
 - One-time FAISS snapshot. There is no incremental refresh yet; re-uploading a resume with the same name rebuilds its vector.
-- The JSON user store is fine for demos but not for multi-instance production. Swap to MongoDB or Postgres before scaling.
+- The JSON user store is fine for demos but not for multi-instance production.
 - LLM grading is best-effort: the JSON output is validated by `jsonschema` and falls back to a deterministic local grader on failure.
 - Skill extraction depends on the LLM provider; switching providers changes recall.
 - Lighthouse and axe checks run in CI but are not enforced as PR-blocking gates yet.
+- Assessment evidence storage is local and not versioned; manual cleanup may be required.
 
 **Roadmap**
 
-- Persistent recruiter accounts on MongoDB or Postgres.
+- Persistent recruiter accounts on PostgreSQL or a hosted auth service.
 - Cross-encoder re-ranking on top of the FAISS top-K.
 - Larger embeddings (`BGE-M3` or `E5-large`) and embedding-store versioning.
 - Parallel resume processing with `ThreadPoolExecutor`.
-- Interview question generation per shortlisted candidate.
 - Resume summarization cards on the dashboard.
 - Cloud deployment recipes (Render + Vercel + a hosted LLM).
 - Role-based access for recruiters and hiring managers.
 - Lighthouse + axe budgets enforced in PR checks.
+- Incremental FAISS refresh for resume updates.
+- Per-assessment evidence retention policies.
 
 ---
 

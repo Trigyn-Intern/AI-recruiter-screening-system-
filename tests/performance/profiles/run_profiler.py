@@ -88,6 +88,7 @@ def run_heavy_ml_task() -> None:
                 matching_skills,
                 missing_skills,
                 resume_name=pdf_path.name,
+                provider="Ollama",
             )
             print("    graded OK")
         except Exception as e:  # noqa: BLE001

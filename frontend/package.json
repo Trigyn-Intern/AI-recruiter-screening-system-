@@ -4,13 +4,15 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "type": "module",
   "dependencies": {
+    "@mediapipe/face_detection": "^0.4.1646425229",
+    "@mediapipe/tasks-vision": "0.10.21",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest",
-    "react-router-dom": "^6.26.2"
-  },
-  "devDependencies": {}
+    "react-router-dom": "^7.18.2",
+    "vite": "latest"
+  }
 }

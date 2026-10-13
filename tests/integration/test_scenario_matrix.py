@@ -376,6 +376,7 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
 
     cached_vector = np.asarray([0.1] * EMBEDDING_DIMENSION, dtype="float32")
     index = mocker.Mock()
+    index.ntotal = 5
     index.reconstruct.return_value = cached_vector
     mocker.patch(
         "backend.load_resume_vector_store",
@@ -390,9 +391,15 @@ def test_get_or_create_resume_embedding_uses_cached_faiss_row(mocker):
             ],
         ),
     )
+    mocker.patch("backend.faiss_index_lookup", return_value=None)
     mock_encode = mocker.patch("backend.encode_text_embedding")
 
-    result = get_or_create_resume_embedding("resume-1", "resume.pdf", "resume text")
+    result = get_or_create_resume_embedding(
+        "resume-1",
+        "resume.pdf",
+        "resume text",
+        use_chunking=False,
+    )
 
     np.testing.assert_array_equal(
         result,
@@ -409,6 +416,7 @@ def test_safe_ollama_json_success_and_fallback(mocker):
 
     content = json.dumps(
         {
+            "job_title": "Python Developer",
             "experience": "3 years",
             "primary_skills": ["Python"],
             "secondary_skills": ["SQL"],
@@ -463,6 +471,12 @@ def test_analyze_candidate_detail_uses_cache_when_present(mocker):
         "matching_skills": ["Python"],
         "missing_skills": [],
         "justification": "Cached.",
+        "candidate_grading": {
+            "grade": "A",
+            "summary": "Strong match",
+            "strengths": ["Python"],
+            "concerns": [],
+        },
     }
     mocker.patch("backend.get_selected_provider", return_value="Gemini")
     mocker.patch("backend.get_selected_model", return_value="gemini-2.5-flash")
@@ -524,31 +538,129 @@ def test_models_endpoint_lists_providers():
     assert payload["gemini_models"]
 
 
+def _analyze_mock_context():
+    """Return a combined context manager that mocks all external LLM calls
+    and expensive embedding operations for the /analyze endpoint.
+
+    Uses ``unittest.mock.patch`` which is proven to work reliably across
+    ``asyncio.to_thread`` boundaries (unlike ``monkeypatch.setattr``
+    which can lose patches when the function runs on a worker thread).
+
+    Preserves the actual FastAPI route, multipart request handling,
+    PDF text extraction, validation, response schema, and sorting.
+    """
+    import contextlib
+    import unittest.mock as mock
+
+    import numpy as np
+
+    def _fake_embed(text, *args, **kwargs):
+        return np.zeros((1, 1024), dtype="float32")
+
+    def _fake_get_or_create(resume_id, resume_name, resume_text, use_chunking=False):
+        vec = np.zeros((1, 1024), dtype="float32")
+        score = float(50.0 + (abs(hash(resume_name)) % 45))
+        vec[0, 0] = score
+        if use_chunking:
+            return {
+                "embeddings": [vec],
+                "chunks": [
+                    {
+                        "chunk_id": f"{resume_id}_c0",
+                        "text": "sample chunk text",
+                        "faiss_row": 0,
+                    }
+                ],
+            }
+        return vec
+
+    def _fake_match_score(resume_embedding, job_text, *args, **kwargs):
+        if (
+            isinstance(resume_embedding, np.ndarray)
+            and resume_embedding.size > 0
+            and resume_embedding[0, 0] > 0
+        ):
+            return round(float(resume_embedding[0, 0]), 2)
+        return 75.0
+
+    def _fake_candidate_detail(*args, **kwargs):
+        return {
+            "matching_skills": ["Python", "FastAPI"],
+            "missing_skills": [],
+            "justification": "Matches requirements well.",
+            "candidate_grading": {
+                "grade": "A",
+                "summary": "Strong match",
+                "strengths": ["Python"],
+                "concerns": [],
+            },
+        }
+
+    jd_result = {
+        "job_title": "Software Engineer",
+        "experience": "3+ years",
+        "primary_skills": ["Python"],
+        "secondary_skills": ["SQL"],
+        "education": "Bachelor's Degree",
+    }
+    skill_result = {
+        "skills": ["Python"],
+        "experience_years": 3,
+        "education": "Bachelor's Degree",
+    }
+
+    def _fake_extract_text(file, preserve_structure=False):
+        name = getattr(file, "name", "candidate")
+        sample_text = f"Resume of {name}. Senior Software Engineer with skills in Python and FastAPI."
+        if preserve_structure:
+            return [{"page": 1, "text": sample_text}]
+        return sample_text
+
+    return contextlib.ExitStack(), [
+        mock.patch("api.extract_text", side_effect=_fake_extract_text),
+        mock.patch("api.analyze_job_description", return_value=jd_result),
+        mock.patch("api.get_resume_skill_profile", return_value=skill_result),
+        mock.patch("api.encode_text_embedding", side_effect=_fake_embed),
+        mock.patch(
+            "api.get_or_create_resume_embedding", side_effect=_fake_get_or_create
+        ),
+        mock.patch("api.calculate_match_score", side_effect=_fake_match_score),
+        mock.patch("api.analyze_candidate_detail", side_effect=_fake_candidate_detail),
+        mock.patch("api.faiss_semantic_search", return_value=[]),
+        mock.patch("api.get_active_resume_db_records", return_value={}),
+    ]
+
+
 @pytest.mark.integration
 def test_resume_upload_via_analyze_endpoint(scenario, data_root):
     """Replaces tests/ui/test_upload.py."""
-    jd_text = (data_root / scenario["jd_file"]).read_text(encoding="utf-8")
-    files = []
-    for resume_name in scenario["resume_files"]:
-        resume_path = data_root / resume_name
-        files.append(("resumes", resume_path.name, resume_path.read_bytes()))
+    from fastapi.testclient import TestClient
 
-    body, boundary = _multipart(
-        {
-            "job_description": jd_text,
-            "provider": "Ollama",
-            "model_name": scenario["model"],
-        },
-        files,
-    )
-    request = urllib.request.Request(
-        f"{API_BASE_URL}/analyze",
-        data=body,
-        method="POST",
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
-    )
-    with urllib.request.urlopen(request, timeout=120) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    from api import api
+
+    client = TestClient(api)
+    jd_text = (data_root / scenario["jd_file"]).read_text(encoding="utf-8")
+    files = [
+        (
+            "resumes",
+            (Path(name).name, (data_root / name).read_bytes(), "application/pdf"),
+        )
+        for name in scenario["resume_files"]
+    ]
+    data = {
+        "job_description": jd_text,
+        "provider": "Ollama",
+        "model_name": scenario["model"],
+    }
+
+    stack, patches = _analyze_mock_context()
+    with stack:
+        for p in patches:
+            stack.enter_context(p)
+        response = client.post("/analyze", data=data, files=files)
+
+    assert response.status_code == 200, f"Analyze failed: {response.text}"
+    payload = response.json()
 
     assert payload["ranking"], "Ranking should contain at least one candidate."
     assert all("match_score" in row for row in payload["ranking"])
@@ -593,27 +705,33 @@ def test_jd_input_required_field_via_analyze():
 @pytest.mark.integration
 def test_ranking_flow_orders_candidates_by_score(scenario, data_root):
     """Replaces tests/ui/test_rank_flow.py."""
+    from fastapi.testclient import TestClient
+
+    from api import api
+
+    client = TestClient(api)
     jd_text = (data_root / scenario["jd_file"]).read_text(encoding="utf-8")
     files = [
-        ("resumes", path.name, path.read_bytes())
-        for path in (data_root / name for name in scenario["resume_files"])
+        (
+            "resumes",
+            (Path(name).name, (data_root / name).read_bytes(), "application/pdf"),
+        )
+        for name in scenario["resume_files"]
     ]
-    body, boundary = _multipart(
-        {
-            "job_description": jd_text,
-            "provider": "Ollama",
-            "model_name": scenario["model"],
-        },
-        files,
-    )
-    request = urllib.request.Request(
-        f"{API_BASE_URL}/analyze",
-        data=body,
-        method="POST",
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
-    )
-    with urllib.request.urlopen(request, timeout=120) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    data = {
+        "job_description": jd_text,
+        "provider": "Ollama",
+        "model_name": scenario["model"],
+    }
+
+    stack, patches = _analyze_mock_context()
+    with stack:
+        for p in patches:
+            stack.enter_context(p)
+        response = client.post("/analyze", data=data, files=files)
+
+    assert response.status_code == 200, f"Analyze failed: {response.text}"
+    payload = response.json()
 
     scores = [row["match_score"] for row in payload["ranking"] if "match_score" in row]
     assert scores == sorted(

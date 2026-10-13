@@ -19,6 +19,7 @@ const app = express();
 // Allow the main recruiter app and the separate testing dashboard to
 // call this API. CLIENT_ORIGIN may be a comma-separated list; the
 // testing app on :5174 is always allowed.
+// For development, also allow localhost and 127.0.0.1 with any port.
 const envOrigins = (process.env.CLIENT_ORIGIN || "")
   .split(",")
   .map((o) => o.trim())
@@ -27,10 +28,26 @@ const allowedOrigins = Array.from(
   new Set([...envOrigins, "http://localhost:5174"])
 );
 
+// Development-friendly CORS: allow localhost and 127.0.0.1 with any port
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // Allow requests with no origin (e.g., server-to-server)
+  
+  // Check explicitly configured origins
+  if (allowedOrigins.includes(origin)) return true;
+  
+  // Allow localhost with any port
+  if (origin.match(/^http:\/\/localhost:\d+$/)) return true;
+  
+  // Allow 127.0.0.1 with any port (for browser previews)
+  if (origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) return true;
+  
+  return false;
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked for origin: ${origin}`));
